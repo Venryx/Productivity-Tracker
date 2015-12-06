@@ -1,0 +1,4 @@
+Main.MainActivity, Main;md5aab1eae5a23215e87b7ffc7728e5b85b.MainActivity
+Main.MainActivity, Main, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null;md5aab1eae5a23215e87b7ffc7728e5b85b.MainActivity
+Main.MainActivity;md5aab1eae5a23215e87b7ffc7728e5b85b.MainActivity
+main.MainActivity;md5aab1eae5a23215e87b7ffc7728e5b85b.MainActivity

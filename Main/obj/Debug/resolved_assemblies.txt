@@ -1,0 +1,9 @@
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\Main.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\Mono.Android.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\mscorlib.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.Core.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.Xml.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.Xml.Linq.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.Runtime.Serialization.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.ServiceModel.Internals.dll
