@@ -11,20 +11,18 @@ namespace Main
 	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
 	public class MainActivity : Activity
 	{
-		int count = 1;
-
+		int count;
 		protected override void OnCreate(Bundle bundle)
 		{
 			base.OnCreate(bundle);
 
-			// Set our view from the "main" layout resource
+			// set our view from the "main" layout resource
 			SetContentView(Resource.Layout.Main);
 
-			// Get our button from the layout resource,
-			// and attach an event to it
-			Button button = FindViewById<Button>(Resource.Id.MyButton);
+			// get our button from the layout resource, and attach an event to it
+			var button = FindViewById<Button>(Resource.Id.MainButton);
 
-			button.Click += delegate { button.Text = $"{count++} clicks!"; };
+			button.Click += delegate { button.Text = $"{++count} clicks!"; };
 		}
 	}
 }

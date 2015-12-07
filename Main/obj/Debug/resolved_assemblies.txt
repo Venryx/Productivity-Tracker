@@ -1,4 +1,4 @@
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\Main.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\Productivity Tracker.dll
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\Mono.Android.dll
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\mscorlib.dll
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\assemblies\System.Core.dll

@@ -1,11 +1,10 @@
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Main.dll
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Main.pdb
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Main.Main.apk
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Main.Main-Signed.apk
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\Main.csprojResolveAssemblyReference.cache
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\Main.dll
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\Main.pdb
-C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\android\bin\Main.Main.apk
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Productivity Tracker.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\Productivity Tracker.pdb
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\ProductivityTracker.Main.apk
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\bin\Debug\ProductivityTracker.Main-Signed.apk
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\Productivity Tracker.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\Productivity Tracker.pdb
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\android\bin\ProductivityTracker.Main.apk
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\res\layout\main.xml
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\res\values\strings.xml
 C:\Root\Programs\^Projects\Productivity-Tracker\Main\Main\obj\Debug\res\drawable\icon.png
