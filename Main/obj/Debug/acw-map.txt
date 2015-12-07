@@ -1,4 +1,0 @@
-Main.MainActivity, Productivity Tracker;md598173231fb6770d92690925dad8ebd4d.MainActivity
-Main.MainActivity, Productivity Tracker, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null;md598173231fb6770d92690925dad8ebd4d.MainActivity
-Main.MainActivity;md598173231fb6770d92690925dad8ebd4d.MainActivity
-main.MainActivity;md598173231fb6770d92690925dad8ebd4d.MainActivity

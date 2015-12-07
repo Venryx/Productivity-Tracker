@@ -1,1 +1,0 @@
-<LinearLayout _:orientation="vertical" _:layout_width="fill_parent" _:layout_height="fill_parent" xmlns:_="http://schemas.android.com/apk/res/android"><Button _:id="@+id/MainButton" _:layout_width="fill_parent" _:layout_height="wrap_content" _:text="Hello World, Click Me!" /></LinearLayout>

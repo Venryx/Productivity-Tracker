@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" _:orientation="vertical" _:layout_width="fill_parent" _:layout_height="fill_parent">
-	<Button _:id="@+id/MainButton" _:layout_width="fill_parent" _:layout_height="wrap_content" _:text="Hello World, Click Me!"/>
+	<Button _:id="@+id/MainButton" _:layout_width="fill_parent" _:layout_height="wrap_content" _:text="Hello World, Click Me!" />
 </LinearLayout>
