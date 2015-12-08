@@ -71,8 +71,8 @@ namespace Main
 		public partial class Drawable
 		{
 			
-			// aapt resource value: 0x7f020007
-			public const int blue = 2130837511;
+			// aapt resource value: 0x7f020008
+			public const int blue = 2130837512;
 			
 			// aapt resource value: 0x7f020000
 			public const int Border_10_Right = 2130837504;
@@ -89,14 +89,17 @@ namespace Main
 			// aapt resource value: 0x7f020004
 			public const int Clip_YPlus_Blue = 2130837508;
 			
-			// aapt resource value: 0x7f020008
-			public const int green = 2130837512;
+			// aapt resource value: 0x7f020009
+			public const int green = 2130837513;
 			
 			// aapt resource value: 0x7f020005
 			public const int Icon = 2130837509;
 			
+			// aapt resource value: 0x7f020007
+			public const int red = 2130837511;
+			
 			// aapt resource value: 0x7f020006
-			public const int red = 2130837510;
+			public const int Volume = 2130837510;
 			
 			static Drawable()
 			{

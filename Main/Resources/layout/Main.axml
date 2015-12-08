@@ -8,6 +8,7 @@
 			<Button _:id="@+id/Pause" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Pause"/>
 			<FrameLayout _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent" _:layout_gravity="center">
 				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_XMinus_Blue"/>
+				<!-- <ImageView _:id="@+id/SoundIcon" _:layout_centerHorizontal="true" _:layout_width="10dp" _:layout_height="10dp" _:src="@drawable/Volume"/> -->
 			</FrameLayout>
 		</LinearLayout>
 	</LinearLayout>
