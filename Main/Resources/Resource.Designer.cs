@@ -31,6 +31,33 @@ namespace Main
 		public partial class Attribute
 		{
 			
+			// aapt resource value: 0x7f010001
+			public const int layout_heightPercent = 2130771969;
+			
+			// aapt resource value: 0x7f010006
+			public const int layout_marginBottomPercent = 2130771974;
+			
+			// aapt resource value: 0x7f010008
+			public const int layout_marginEndPercent = 2130771976;
+			
+			// aapt resource value: 0x7f010003
+			public const int layout_marginLeftPercent = 2130771971;
+			
+			// aapt resource value: 0x7f010002
+			public const int layout_marginPercent = 2130771970;
+			
+			// aapt resource value: 0x7f010005
+			public const int layout_marginRightPercent = 2130771973;
+			
+			// aapt resource value: 0x7f010007
+			public const int layout_marginStartPercent = 2130771975;
+			
+			// aapt resource value: 0x7f010004
+			public const int layout_marginTopPercent = 2130771972;
+			
+			// aapt resource value: 0x7f010000
+			public const int layout_widthPercent = 2130771968;
+			
 			static Attribute()
 			{
 				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
@@ -44,8 +71,32 @@ namespace Main
 		public partial class Drawable
 		{
 			
+			// aapt resource value: 0x7f020007
+			public const int blue = 2130837511;
+			
 			// aapt resource value: 0x7f020000
-			public const int Icon = 2130837504;
+			public const int Border_10_Right = 2130837504;
+			
+			// aapt resource value: 0x7f020001
+			public const int Border_10_Top = 2130837505;
+			
+			// aapt resource value: 0x7f020002
+			public const int Border_5_RightBottom = 2130837506;
+			
+			// aapt resource value: 0x7f020003
+			public const int Clip_XMinus_Blue = 2130837507;
+			
+			// aapt resource value: 0x7f020004
+			public const int Clip_YPlus_Blue = 2130837508;
+			
+			// aapt resource value: 0x7f020008
+			public const int green = 2130837512;
+			
+			// aapt resource value: 0x7f020005
+			public const int Icon = 2130837509;
+			
+			// aapt resource value: 0x7f020006
+			public const int red = 2130837510;
 			
 			static Drawable()
 			{
@@ -60,8 +111,95 @@ namespace Main
 		public partial class Id
 		{
 			
+			// aapt resource value: 0x7f050001
+			public const int Pause = 2131034113;
+			
+			// aapt resource value: 0x7f050010
+			public const int Rest_0 = 2131034128;
+			
+			// aapt resource value: 0x7f05000f
+			public const int Rest_10 = 2131034127;
+			
+			// aapt resource value: 0x7f050006
+			public const int Rest_100 = 2131034118;
+			
+			// aapt resource value: 0x7f050005
+			public const int Rest_110 = 2131034117;
+			
+			// aapt resource value: 0x7f050004
+			public const int Rest_120 = 2131034116;
+			
+			// aapt resource value: 0x7f05000e
+			public const int Rest_20 = 2131034126;
+			
+			// aapt resource value: 0x7f05000d
+			public const int Rest_30 = 2131034125;
+			
+			// aapt resource value: 0x7f05000c
+			public const int Rest_40 = 2131034124;
+			
+			// aapt resource value: 0x7f05000b
+			public const int Rest_50 = 2131034123;
+			
+			// aapt resource value: 0x7f05000a
+			public const int Rest_60 = 2131034122;
+			
+			// aapt resource value: 0x7f050009
+			public const int Rest_70 = 2131034121;
+			
+			// aapt resource value: 0x7f050008
+			public const int Rest_80 = 2131034120;
+			
+			// aapt resource value: 0x7f050007
+			public const int Rest_90 = 2131034119;
+			
 			// aapt resource value: 0x7f050000
-			public const int MainButton = 2131034112;
+			public const int Stop = 2131034112;
+			
+			// aapt resource value: 0x7f050003
+			public const int TimeLeftBar = 2131034115;
+			
+			// aapt resource value: 0x7f050002
+			public const int TimeOverBar = 2131034114;
+			
+			// aapt resource value: 0x7f05001d
+			public const int Work_0 = 2131034141;
+			
+			// aapt resource value: 0x7f05001c
+			public const int Work_10 = 2131034140;
+			
+			// aapt resource value: 0x7f050013
+			public const int Work_100 = 2131034131;
+			
+			// aapt resource value: 0x7f050012
+			public const int Work_110 = 2131034130;
+			
+			// aapt resource value: 0x7f050011
+			public const int Work_120 = 2131034129;
+			
+			// aapt resource value: 0x7f05001b
+			public const int Work_20 = 2131034139;
+			
+			// aapt resource value: 0x7f05001a
+			public const int Work_30 = 2131034138;
+			
+			// aapt resource value: 0x7f050019
+			public const int Work_40 = 2131034137;
+			
+			// aapt resource value: 0x7f050018
+			public const int Work_50 = 2131034136;
+			
+			// aapt resource value: 0x7f050017
+			public const int Work_60 = 2131034135;
+			
+			// aapt resource value: 0x7f050016
+			public const int Work_70 = 2131034134;
+			
+			// aapt resource value: 0x7f050015
+			public const int Work_80 = 2131034133;
+			
+			// aapt resource value: 0x7f050014
+			public const int Work_90 = 2131034132;
 			
 			static Id()
 			{
@@ -104,6 +242,57 @@ namespace Main
 			}
 			
 			private String()
+			{
+			}
+		}
+		
+		public partial class Styleable
+		{
+			
+			public static int[] PercentLayout_Layout = new int[] {
+					2130771968,
+					2130771969,
+					2130771970,
+					2130771971,
+					2130771972,
+					2130771973,
+					2130771974,
+					2130771975,
+					2130771976};
+			
+			// aapt resource value: 1
+			public const int PercentLayout_Layout_layout_heightPercent = 1;
+			
+			// aapt resource value: 6
+			public const int PercentLayout_Layout_layout_marginBottomPercent = 6;
+			
+			// aapt resource value: 8
+			public const int PercentLayout_Layout_layout_marginEndPercent = 8;
+			
+			// aapt resource value: 3
+			public const int PercentLayout_Layout_layout_marginLeftPercent = 3;
+			
+			// aapt resource value: 2
+			public const int PercentLayout_Layout_layout_marginPercent = 2;
+			
+			// aapt resource value: 5
+			public const int PercentLayout_Layout_layout_marginRightPercent = 5;
+			
+			// aapt resource value: 7
+			public const int PercentLayout_Layout_layout_marginStartPercent = 7;
+			
+			// aapt resource value: 4
+			public const int PercentLayout_Layout_layout_marginTopPercent = 4;
+			
+			// aapt resource value: 0
+			public const int PercentLayout_Layout_layout_widthPercent = 0;
+			
+			static Styleable()
+			{
+				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
+			}
+			
+			private Styleable()
 			{
 			}
 		}

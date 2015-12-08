@@ -1,6 +1,7 @@
 ﻿using System;
 using Android.App;
 using Android.Content;
+using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -15,14 +16,18 @@ namespace Main
 		protected override void OnCreate(Bundle bundle)
 		{
 			base.OnCreate(bundle);
-
-			// set our view from the "main" layout resource
 			SetContentView(Resource.Layout.Main);
 
-			// get our button from the layout resource, and attach an event to it
-			var button = FindViewById<Button>(Resource.Id.MainButton);
-
+			var button = FindViewById<Button>(Resource.Id.Rest_100);
 			button.Click += delegate { button.Text = $"{++count} clicks!"; };
+
+			var timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
+			var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Drawable;
+			timeLeftBar_clip.SetLevel((int)(10000 * .5));
+
+			var timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
+			var timeOverBar_clip = (ClipDrawable)timeOverBar.Drawable;
+			timeOverBar_clip.SetLevel((int)(10000 * .5));
 		}
 	}
 }
