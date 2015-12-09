@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="fill_parent">
-	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".9" _:layout_height="fill_parent">
+	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent">
 		<LinearLayout _:orientation="vertical" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".93" _:background="@drawable/Border_5_RightBottom">
 		</LinearLayout>
 		<LinearLayout _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".07">
 			<Button _:id="@+id/Stop" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Stop"/>
 			<Button _:id="@+id/Pause" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Pause"/>
-			<FrameLayout _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent" _:layout_gravity="center">
-				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_XMinus_Blue"/>
+			<FrameLayout _:id="@+id/TimeOverPanel" _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent" _:layout_gravity="center">
+				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_XPlus_Blue"/>
 				<!-- <ImageView _:id="@+id/SoundIcon" _:layout_centerHorizontal="true" _:layout_width="10dp" _:layout_height="10dp" _:src="@drawable/Volume"/> -->
 			</FrameLayout>
 		</LinearLayout>
 	</LinearLayout>
 	<LinearLayout _:orientation="horizontal" _:layout_width="0dp" _:layout_weight=".15" _:layout_height="fill_parent">
-		<FrameLayout _:layout_width="0dp" _:layout_weight=".333" _:layout_height="fill_parent" _:layout_gravity="center">
+		<FrameLayout _:id="@+id/TimeLeftPanel" _:layout_width="0dp" _:layout_weight=".5" _:layout_height="fill_parent" _:layout_gravity="center">
 			<ImageView _:id="@+id/TimeLeftBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_YPlus_Blue"/>
 		</FrameLayout>
-		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".333" _:layout_height="fill_parent">
+		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
 			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Rest"></TextView>
 			<Button _:id="@+id/Rest_120" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="120"/>
 			<Button _:id="@+id/Rest_110" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="110"/>
@@ -32,7 +32,7 @@
 			<Button _:id="@+id/Rest_10" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="10"/>
 			<Button _:id="@+id/Rest_0" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="0"/>
 		</LinearLayout>
-		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".333" _:layout_height="fill_parent">
+		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
 			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Work"></TextView>
 			<Button _:id="@+id/Work_120" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="120"/>
 			<Button _:id="@+id/Work_110" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="110"/>
