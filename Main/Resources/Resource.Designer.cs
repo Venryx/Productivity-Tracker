@@ -68,47 +68,93 @@ namespace Main
 			}
 		}
 		
+		public partial class Color
+		{
+			
+			// aapt resource value: 0x7f050002
+			public const int daidalos_active_file = 2131034114;
+			
+			// aapt resource value: 0x7f050001
+			public const int daidalos_backgroud = 2131034113;
+			
+			// aapt resource value: 0x7f050000
+			public const int daidalos_gray = 2131034112;
+			
+			// aapt resource value: 0x7f050003
+			public const int daidalos_inactive_file = 2131034115;
+			
+			static Color()
+			{
+				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
+			}
+			
+			private Color()
+			{
+			}
+		}
+		
 		public partial class Drawable
 		{
 			
-			// aapt resource value: 0x7f02000b
-			public const int blue = 2130837515;
-			
 			// aapt resource value: 0x7f020000
-			public const int Border_10_Right = 2130837504;
+			public const int add = 2130837504;
+			
+			// aapt resource value: 0x7f020012
+			public const int blue = 2130837522;
 			
 			// aapt resource value: 0x7f020001
-			public const int Border_10_Top = 2130837505;
+			public const int Border_10_Right = 2130837505;
 			
 			// aapt resource value: 0x7f020002
-			public const int Border_1_Top_Black = 2130837506;
+			public const int Border_10_Top = 2130837506;
 			
 			// aapt resource value: 0x7f020003
-			public const int Border_1_Top_LightGray = 2130837507;
+			public const int Border_1_Top_Black = 2130837507;
 			
 			// aapt resource value: 0x7f020004
-			public const int Border_5_RightBottom = 2130837508;
+			public const int Border_1_Top_LightGray = 2130837508;
 			
 			// aapt resource value: 0x7f020005
-			public const int Clip_XMinus_Blue = 2130837509;
+			public const int Border_5_RightBottom = 2130837509;
 			
 			// aapt resource value: 0x7f020006
-			public const int Clip_XPlus_Blue = 2130837510;
+			public const int Clip_XMinus_Blue = 2130837510;
 			
 			// aapt resource value: 0x7f020007
-			public const int Clip_YPlus_Blue = 2130837511;
-			
-			// aapt resource value: 0x7f02000c
-			public const int green = 2130837516;
+			public const int Clip_XPlus_Blue = 2130837511;
 			
 			// aapt resource value: 0x7f020008
-			public const int Icon = 2130837512;
-			
-			// aapt resource value: 0x7f02000a
-			public const int red = 2130837514;
+			public const int Clip_YPlus_Blue = 2130837512;
 			
 			// aapt resource value: 0x7f020009
-			public const int Volume = 2130837513;
+			public const int document = 2130837513;
+			
+			// aapt resource value: 0x7f02000a
+			public const int document_gray = 2130837514;
+			
+			// aapt resource value: 0x7f02000b
+			public const int folder = 2130837515;
+			
+			// aapt resource value: 0x7f020013
+			public const int green = 2130837523;
+			
+			// aapt resource value: 0x7f02000c
+			public const int ic_launcher = 2130837516;
+			
+			// aapt resource value: 0x7f02000d
+			public const int Icon = 2130837517;
+			
+			// aapt resource value: 0x7f02000e
+			public const int no = 2130837518;
+			
+			// aapt resource value: 0x7f020011
+			public const int red = 2130837521;
+			
+			// aapt resource value: 0x7f02000f
+			public const int tick = 2130837519;
+			
+			// aapt resource value: 0x7f020010
+			public const int Volume = 2130837520;
 			
 			static Drawable()
 			{
@@ -123,107 +169,131 @@ namespace Main
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f060021
-			public const int About = 2131099681;
+			// aapt resource value: 0x7f070029
+			public const int About = 2131165225;
 			
-			// aapt resource value: 0x7f060001
-			public const int Pause = 2131099649;
+			// aapt resource value: 0x7f070009
+			public const int Pause = 2131165193;
 			
-			// aapt resource value: 0x7f060012
-			public const int Rest_0 = 2131099666;
+			// aapt resource value: 0x7f07001a
+			public const int Rest_0 = 2131165210;
 			
-			// aapt resource value: 0x7f060011
-			public const int Rest_10 = 2131099665;
+			// aapt resource value: 0x7f070019
+			public const int Rest_10 = 2131165209;
 			
-			// aapt resource value: 0x7f060008
-			public const int Rest_100 = 2131099656;
+			// aapt resource value: 0x7f070010
+			public const int Rest_100 = 2131165200;
 			
-			// aapt resource value: 0x7f060007
-			public const int Rest_110 = 2131099655;
+			// aapt resource value: 0x7f07000f
+			public const int Rest_110 = 2131165199;
 			
-			// aapt resource value: 0x7f060006
-			public const int Rest_120 = 2131099654;
+			// aapt resource value: 0x7f07000e
+			public const int Rest_120 = 2131165198;
 			
-			// aapt resource value: 0x7f060010
-			public const int Rest_20 = 2131099664;
+			// aapt resource value: 0x7f070018
+			public const int Rest_20 = 2131165208;
 			
-			// aapt resource value: 0x7f06000f
-			public const int Rest_30 = 2131099663;
+			// aapt resource value: 0x7f070017
+			public const int Rest_30 = 2131165207;
 			
-			// aapt resource value: 0x7f06000e
-			public const int Rest_40 = 2131099662;
+			// aapt resource value: 0x7f070016
+			public const int Rest_40 = 2131165206;
 			
-			// aapt resource value: 0x7f06000d
-			public const int Rest_50 = 2131099661;
+			// aapt resource value: 0x7f070015
+			public const int Rest_50 = 2131165205;
 			
-			// aapt resource value: 0x7f06000c
-			public const int Rest_60 = 2131099660;
+			// aapt resource value: 0x7f070014
+			public const int Rest_60 = 2131165204;
 			
-			// aapt resource value: 0x7f06000b
-			public const int Rest_70 = 2131099659;
+			// aapt resource value: 0x7f070013
+			public const int Rest_70 = 2131165203;
 			
-			// aapt resource value: 0x7f06000a
-			public const int Rest_80 = 2131099658;
+			// aapt resource value: 0x7f070012
+			public const int Rest_80 = 2131165202;
 			
-			// aapt resource value: 0x7f060009
-			public const int Rest_90 = 2131099657;
+			// aapt resource value: 0x7f070011
+			public const int Rest_90 = 2131165201;
 			
-			// aapt resource value: 0x7f060020
-			public const int Settings = 2131099680;
+			// aapt resource value: 0x7f070028
+			public const int Settings = 2131165224;
 			
-			// aapt resource value: 0x7f060000
-			public const int Stop = 2131099648;
+			// aapt resource value: 0x7f070008
+			public const int Stop = 2131165192;
 			
-			// aapt resource value: 0x7f060005
-			public const int TimeLeftBar = 2131099653;
+			// aapt resource value: 0x7f07000d
+			public const int TimeLeftBar = 2131165197;
 			
-			// aapt resource value: 0x7f060004
-			public const int TimeLeftPanel = 2131099652;
+			// aapt resource value: 0x7f07000c
+			public const int TimeLeftPanel = 2131165196;
 			
-			// aapt resource value: 0x7f060003
-			public const int TimeOverBar = 2131099651;
+			// aapt resource value: 0x7f07000b
+			public const int TimeOverBar = 2131165195;
 			
-			// aapt resource value: 0x7f060002
-			public const int TimeOverPanel = 2131099650;
+			// aapt resource value: 0x7f07000a
+			public const int TimeOverPanel = 2131165194;
 			
-			// aapt resource value: 0x7f06001f
-			public const int Work_0 = 2131099679;
+			// aapt resource value: 0x7f070027
+			public const int Work_0 = 2131165223;
 			
-			// aapt resource value: 0x7f06001e
-			public const int Work_10 = 2131099678;
+			// aapt resource value: 0x7f070026
+			public const int Work_10 = 2131165222;
 			
-			// aapt resource value: 0x7f060015
-			public const int Work_100 = 2131099669;
+			// aapt resource value: 0x7f07001d
+			public const int Work_100 = 2131165213;
 			
-			// aapt resource value: 0x7f060014
-			public const int Work_110 = 2131099668;
+			// aapt resource value: 0x7f07001c
+			public const int Work_110 = 2131165212;
 			
-			// aapt resource value: 0x7f060013
-			public const int Work_120 = 2131099667;
+			// aapt resource value: 0x7f07001b
+			public const int Work_120 = 2131165211;
 			
-			// aapt resource value: 0x7f06001d
-			public const int Work_20 = 2131099677;
+			// aapt resource value: 0x7f070025
+			public const int Work_20 = 2131165221;
 			
-			// aapt resource value: 0x7f06001c
-			public const int Work_30 = 2131099676;
+			// aapt resource value: 0x7f070024
+			public const int Work_30 = 2131165220;
 			
-			// aapt resource value: 0x7f06001b
-			public const int Work_40 = 2131099675;
+			// aapt resource value: 0x7f070023
+			public const int Work_40 = 2131165219;
 			
-			// aapt resource value: 0x7f06001a
-			public const int Work_50 = 2131099674;
+			// aapt resource value: 0x7f070022
+			public const int Work_50 = 2131165218;
 			
-			// aapt resource value: 0x7f060019
-			public const int Work_60 = 2131099673;
+			// aapt resource value: 0x7f070021
+			public const int Work_60 = 2131165217;
 			
-			// aapt resource value: 0x7f060018
-			public const int Work_70 = 2131099672;
+			// aapt resource value: 0x7f070020
+			public const int Work_70 = 2131165216;
 			
-			// aapt resource value: 0x7f060017
-			public const int Work_80 = 2131099671;
+			// aapt resource value: 0x7f07001f
+			public const int Work_80 = 2131165215;
 			
-			// aapt resource value: 0x7f060016
-			public const int Work_90 = 2131099670;
+			// aapt resource value: 0x7f07001e
+			public const int Work_90 = 2131165214;
+			
+			// aapt resource value: 0x7f070004
+			public const int buttonAdd = 2131165188;
+			
+			// aapt resource value: 0x7f070005
+			public const int buttonOk = 2131165189;
+			
+			// aapt resource value: 0x7f070006
+			public const int imageViewIcon = 2131165190;
+			
+			// aapt resource value: 0x7f070003
+			public const int linearLayoutButtons = 2131165187;
+			
+			// aapt resource value: 0x7f070002
+			public const int linearLayoutFiles = 2131165186;
+			
+			// aapt resource value: 0x7f070000
+			public const int rootLayout = 2131165184;
+			
+			// aapt resource value: 0x7f070001
+			public const int scrollView1 = 2131165185;
+			
+			// aapt resource value: 0x7f070007
+			public const int textViewLabel = 2131165191;
 			
 			static Id()
 			{
@@ -239,7 +309,13 @@ namespace Main
 		{
 			
 			// aapt resource value: 0x7f030000
-			public const int Main = 2130903040;
+			public const int daidalos_file_chooser = 2130903040;
+			
+			// aapt resource value: 0x7f030001
+			public const int daidalos_file_item = 2130903041;
+			
+			// aapt resource value: 0x7f030002
+			public const int Main = 2130903042;
 			
 			static Layout()
 			{
@@ -254,8 +330,8 @@ namespace Main
 		public partial class Menu
 		{
 			
-			// aapt resource value: 0x7f050000
-			public const int Main_Menu = 2131034112;
+			// aapt resource value: 0x7f060000
+			public const int Main_Menu = 2131099648;
 			
 			static Menu()
 			{
@@ -275,6 +351,57 @@ namespace Main
 			
 			// aapt resource value: 0x7f040000
 			public const int Hello = 2130968576;
+			
+			// aapt resource value: 0x7f04000a
+			public const int daidalos_accept = 2130968586;
+			
+			// aapt resource value: 0x7f040003
+			public const int daidalos_app_name = 2130968579;
+			
+			// aapt resource value: 0x7f040005
+			public const int daidalos_cancel = 2130968581;
+			
+			// aapt resource value: 0x7f040010
+			public const int daidalos_confirm_create_file = 2130968592;
+			
+			// aapt resource value: 0x7f040012
+			public const int daidalos_confirm_create_folder = 2130968594;
+			
+			// aapt resource value: 0x7f04000f
+			public const int daidalos_confirm_select_file = 2130968591;
+			
+			// aapt resource value: 0x7f040011
+			public const int daidalos_confirm_select_folder = 2130968593;
+			
+			// aapt resource value: 0x7f040008
+			public const int daidalos_create_file = 2130968584;
+			
+			// aapt resource value: 0x7f040009
+			public const int daidalos_create_folder = 2130968585;
+			
+			// aapt resource value: 0x7f04000b
+			public const int daidalos_enter_file_name = 2130968587;
+			
+			// aapt resource value: 0x7f04000c
+			public const int daidalos_enter_folder_name = 2130968588;
+			
+			// aapt resource value: 0x7f040002
+			public const int daidalos_hello = 2130968578;
+			
+			// aapt resource value: 0x7f040007
+			public const int daidalos_new_file = 2130968583;
+			
+			// aapt resource value: 0x7f04000e
+			public const int daidalos_no = 2130968590;
+			
+			// aapt resource value: 0x7f040006
+			public const int daidalos_ok = 2130968582;
+			
+			// aapt resource value: 0x7f040004
+			public const int daidalos_select = 2130968580;
+			
+			// aapt resource value: 0x7f04000d
+			public const int daidalos_yes = 2130968589;
 			
 			static String()
 			{

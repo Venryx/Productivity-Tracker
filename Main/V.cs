@@ -1,14 +1,4 @@
-﻿using System;
-using Android.App;
-using Android.Content;
-using Android.Graphics;
-using Android.Graphics.Drawables;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using Android.OS;
-
-public static class V
+﻿public static class V
 {
 }
 public enum DebugType
@@ -21,6 +11,8 @@ public static class VDebug
 {
 	public static void Log(string message, string tag = "main", DebugType type = DebugType.Info)
 	{
+		//Console.WriteLine(message);
+		//System.Diagnostics.Debug.WriteLine(message, tag);
 		if (type == DebugType.Info)
 			Android.Util.Log.Info(tag, message);
 		else if (type == DebugType.Warning)

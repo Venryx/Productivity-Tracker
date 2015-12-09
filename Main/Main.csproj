@@ -72,6 +72,12 @@
     <Compile Include="VDF\VDFSaver.cs" />
     <Compile Include="VDF\VDFTokenParser.cs" />
     <Compile Include="VDF\VDFTypeInfo.cs" />
+    <Compile Include="VFileChooser\FileChooser.cs" />
+    <Compile Include="VFileChooser\FileChooserActivity.cs" />
+    <Compile Include="VFileChooser\FileChooserCore.cs" />
+    <Compile Include="VFileChooser\FileChooserDialog.cs" />
+    <Compile Include="VFileChooser\FileChooserLabels.cs" />
+    <Compile Include="VFileChooser\FileItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -125,6 +131,33 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Border_1_Top_LightGray.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\daidalos_file_chooser.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\daidalos_file_item.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\document.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\document_gray.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\folder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ic_launcher.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\no.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\tick.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

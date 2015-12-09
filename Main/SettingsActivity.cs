@@ -28,7 +28,10 @@ namespace Main
 			var alarmSoundPanel = AddRow(root);
 			alarmSoundPanel.Append(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 			alarmSoundPanel.Append(new TextView(this) {Text = "[none]", TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			alarmSoundPanel.Click += delegate { VDebug.Log("hi there 1:" + MainActivity.main); };
+			alarmSoundPanel.Click += delegate
+			{
+				// todo; break point
+			};
 
 			var maxVolumePanel = AddRow(root);
 			maxVolumePanel.Append(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
