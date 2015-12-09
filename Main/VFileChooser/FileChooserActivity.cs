@@ -64,8 +64,8 @@ namespace VFileChooser
 
 			// Set the background color.
 			LinearLayout layout = FindViewById<LinearLayout>(Resource.Id.rootLayout);
-			//layout.BackgroundColor = Resources.getColor(R.color.daidalos_backgroud);
-			layout.SetBackgroundColor(Resources.GetColor(Resource.Color.daidalos_backgroud, null));
+			//layout.SetBackgroundColor(context.Resources.GetColor(Resource.Color.daidalos_background, null));
+			layout.SetBackgroundColor(Resources.GetColor(Resource.Color.daidalos_background));
 
 			// Initialize fields.
 			useBackButton = false;
@@ -106,37 +106,32 @@ namespace VFileChooser
 			startFolder = core.CurrentFolder;
 
 			// Add a listener for when a file is selected.
-			core.addListener(new OnFileSelectedListenerAnonymousInnerClassHelper(this));
-		}
-
-        private class OnFileSelectedListenerAnonymousInnerClassHelper : FileChooserCore.OnFileSelectedListener
-		{
-			public OnFileSelectedListenerAnonymousInnerClassHelper(FileChooserActivity outerInstance) { this.outerInstance = outerInstance; }
-
-			private readonly FileChooserActivity outerInstance;
-			public virtual void OnFileSelected(File folder, string name)
+			core.addListener((file, create)=>
 			{
-				// Pass the data through an intent.
-				Intent intent = new Intent();
-				Bundle bundle = new Bundle();
-				bundle.PutSerializable(OUTPUT_FILE_OBJECT, folder);
-				bundle.PutString(OUTPUT_NEW_FILE_NAME, name);
-				intent.PutExtras(bundle);
+				if (create)
+				{
+					// Pass the data through an intent.
+					Intent intent = new Intent();
+					Bundle bundle = new Bundle();
+					bundle.PutSerializable(OUTPUT_FILE_OBJECT, file.ParentFile);
+					bundle.PutString(OUTPUT_NEW_FILE_NAME, file.Name);
+					intent.PutExtras(bundle);
 
-				outerInstance.SetResult(Result.Ok, intent);
-				outerInstance.Finish();
-			}
-			public virtual void OnFileSelected(File file)
-			{
-				// Pass the data through an intent.
-				Intent intent = new Intent();
-				Bundle bundle = new Bundle();
-				bundle.PutSerializable(OUTPUT_FILE_OBJECT, file);
-				intent.PutExtras(bundle);
+					SetResult(Result.Ok, intent);
+					Finish();
+				}
+				else
+				{
+					// Pass the data through an intent.
+					Intent intent = new Intent();
+					Bundle bundle = new Bundle();
+					bundle.PutSerializable(OUTPUT_FILE_OBJECT, file);
+					intent.PutExtras(bundle);
 
-				outerInstance.SetResult(Result.Ok, intent);
-				outerInstance.Finish();
-			}
+					SetResult(Result.Ok, intent);
+					Finish();
+				}
+			});
 		}
 
 		/// <summary>Called when the user push the 'back' button.</summary>

@@ -146,9 +146,11 @@ namespace VFileChooser
 
 			// Change the color of the text.
 			if (icon != Resource.Drawable.document_gray)
-				label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_active_file, null));
+				//label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_active_file, null));
+				label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_active_file));
 			else
-				label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_inactive_file, null));
+				//label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_inactive_file, null));
+				label.SetTextColor(Resources.GetColor(Resource.Color.daidalos_inactive_file));
 		}
 
 		// events

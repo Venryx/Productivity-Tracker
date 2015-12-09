@@ -9,6 +9,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Java.IO;
 
 public static class ClassExtensions
 {
@@ -20,4 +21,7 @@ public static class ClassExtensions
 			s.AddView(view);
 		return view;
 	}
+
+	// File
+	public static File GetFile(this File s, string name) { return new File(s, name); }
 }

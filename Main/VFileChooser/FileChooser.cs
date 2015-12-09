@@ -16,6 +16,6 @@ namespace VFileChooser
 
 		/// <summary>Returns the current context of the file chooser.</summary>
 		/// <returns>The current context.</returns>
-		Context Context {get;}
+		Context Context { get; }
 	}
 }

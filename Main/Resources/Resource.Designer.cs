@@ -75,7 +75,7 @@ namespace Main
 			public const int daidalos_active_file = 2131034114;
 			
 			// aapt resource value: 0x7f050001
-			public const int daidalos_backgroud = 2131034113;
+			public const int daidalos_background = 2131034113;
 			
 			// aapt resource value: 0x7f050000
 			public const int daidalos_gray = 2131034112;

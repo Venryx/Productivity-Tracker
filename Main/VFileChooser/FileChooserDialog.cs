@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Content;
+using Android.Content.Res;
 using Android.Views;
 using Android.Widget;
 using Java.IO;
@@ -18,7 +20,7 @@ namespace VFileChooser
 		FileChooserCore core;
 
 		/// <summary>The listeners for the event of select a file.</summary>
-		IList<OnFileSelectedListener> listeners;
+		List<Action<File, bool>> listeners;
 
 		// constructors
 		// ==========
@@ -49,34 +51,20 @@ namespace VFileChooser
 			core.loadFolder(folderPath);
 
 			// Initialize attributes.
-			listeners = new List<OnFileSelectedListener>();
+			listeners = new List<Action<File, bool>>();
 
 			// Set the background color.
 			LinearLayout layout = FindViewById<LinearLayout>(Resource.Id.rootLayout);
-			layout.SetBackgroundColor(context.Resources.GetColor(Resource.Color.daidalos_backgroud, null));
+			//layout.SetBackgroundColor(context.Resources.GetColor(Resource.Color.daidalos_background, null));
+			layout.SetBackgroundColor(context.Resources.GetColor(Resource.Color.daidalos_background));
 
 			// Add a listener for when a file is selected.
-			core.addListener(new OnFileSelectedListenerAnonymousInnerClassHelper(this));
-		}
-
-		class OnFileSelectedListenerAnonymousInnerClassHelper : FileChooserCore.OnFileSelectedListener
-		{
-			readonly FileChooserDialog outerInstance;
-
-			public OnFileSelectedListenerAnonymousInnerClassHelper(FileChooserDialog outerInstance) { this.outerInstance = outerInstance; }
-
-			public virtual void OnFileSelected(File folder, string name)
+			core.addListener((file, create)=>
 			{
 				// call to the listeners
-				for (int i = 0; i < outerInstance.listeners.Count; i++)
-					outerInstance.listeners[i].onFileSelected(outerInstance, folder, name);
-			}
-			public virtual void OnFileSelected(File file)
-			{
-				// call to the listeners
-				for (int i = 0; i < outerInstance.listeners.Count; i++)
-					outerInstance.listeners[i].onFileSelected(outerInstance, file);
-			}
+				foreach (var listener in listeners)
+					listener(file, create);
+			});
 		}
 
 		// events methods
@@ -84,27 +72,14 @@ namespace VFileChooser
 
 		/// <summary>Add a listener for the event of a file selected.</summary>
 		/// <param name = "listener"> The listener to add. </param>
-		public virtual void addListener(OnFileSelectedListener listener) { listeners.Add(listener); }
+		public virtual void addListener(Action<File, bool> listener) { listeners.Add(listener); }
 
 		/// <summary>Removes a listener for the event of a file selected.</summary>
 		/// <param name = "listener"> The listener to remove. </param>
-		public virtual void removeListener(OnFileSelectedListener listener) { listeners.Remove(listener); }
+		public virtual void removeListener(Action<File, bool> listener) { listeners.Remove(listener); }
 
 		/// <summary>Removes all the listeners for the event of a file selected.</summary>
 		public virtual void removeAllListeners() { listeners.Clear(); }
-
-		/// <summary>Interface definition for a callback to be invoked when a file is selected.</summary>
-		public interface OnFileSelectedListener
-		{
-			/// <summary>Called when a file has been selected.</summary>
-			/// <param name = "file"> The file selected. </param>
-			void onFileSelected(Dialog source, File file);
-
-			/// <summary>Called when an user wants to be create a file.</summary>
-			/// <param name = "folder"> The file's parent folder. </param>
-			/// <param name = "name"> The file's name. </param>
-			void onFileSelected(Dialog source, File folder, string name);
-		}
 
 		// miscellaneous methods
 		// ==========

@@ -8,6 +8,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using VFileChooser;
 
 namespace Main
 {
@@ -30,7 +31,13 @@ namespace Main
 			alarmSoundPanel.Append(new TextView(this) {Text = "[none]", TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 			alarmSoundPanel.Click += delegate
 			{
-				// todo; break point
+				FileChooserDialog dialog = new FileChooserDialog(this);
+				dialog.addListener((file, create)=>
+				{
+					VDebug.Log($"File:{file.Path};Create:{create}");
+					dialog.Dismiss();
+                });
+				dialog.Show();
 			};
 
 			var maxVolumePanel = AddRow(root);

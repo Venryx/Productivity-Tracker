@@ -22,7 +22,7 @@ namespace VFileChooser
 		FileChooser chooser;
 
 		/// <summary>The listeners for the event of select a file.</summary>
-		IList<OnFileSelectedListener> listeners;
+		List<Action<File, bool>> listeners;
 
 		/// <summary>A regular expression for filter the files.</summary>
 		string filter;
@@ -68,7 +68,7 @@ namespace VFileChooser
 			// Initialize attributes.
 			chooser = fileChooser;
 			//listeners = new LinkedList<OnFileSelectedListener>();
-			listeners = new List<OnFileSelectedListener>();
+			listeners = new List<Action<File, bool>>();
 			filter = null;
 			showOnlySelectable = false;
 			CanCreateFiles = false;
@@ -142,27 +142,14 @@ namespace VFileChooser
 
 		/// <summary>Add a listener for the event of a file selected.</summary>
 		/// <param name = "listener"> The listener to add. </param>
-		public virtual void addListener(OnFileSelectedListener listener) { listeners.Add(listener); }
+		public virtual void addListener(Action<File, bool> listener) { listeners.Add(listener); }
 
 		/// <summary>Removes a listener for the event of a file selected.</summary>
 		/// <param name = "listener"> The listener to remove. </param>
-		public virtual void removeListener(OnFileSelectedListener listener) { listeners.Remove(listener); }
+		public virtual void removeListener(Action<File, bool> listener) { listeners.Remove(listener); }
 
 		/// <summary>Removes all the listeners for the event of a file selected.</summary>
 		public virtual void removeAllListeners() { listeners.Clear(); }
-
-		/// <summary>Interface definition for a callback to be invoked when a file is selected.</summary>
-		public interface OnFileSelectedListener
-		{
-			/// <summary>Called when a file has been selected.</summary>
-			/// <param name = "file"> The file selected. </param>
-			void OnFileSelected(File file);
-
-			/// <summary>Called when an user wants to be create a file.</summary>
-			/// <param name = "folder"> The file's parent folder. </param>
-			/// <param name = "name"> The file's name. </param>
-			void OnFileSelected(File folder, string name);
-		}
 
 		/// <summary>Notify to all listeners that a file has been selected or created.</summary>
 		/// <param name = "file"> The file or folder selected or the folder in which the file must be created. </param>
@@ -170,8 +157,9 @@ namespace VFileChooser
 		///     created). </param>
 		//JAVA TO C# CONVERTER WARNING: 'final' parameters are not allowed in .NET:
 		//ORIGINAL LINE: private void notifyListeners(final File file, final String name)
-		void notifyListeners(File file, string name)
+		void notifyListeners(File fileOrFolder, string name)
 		{
+			var file = fileOrFolder.IsDirectory ? fileOrFolder.GetFile(name) : fileOrFolder;
 			// Determine if a file has been selected or created.
 			//JAVA TO C# CONVERTER WARNING: The original Java variable was marked 'final':
 			//ORIGINAL LINE: final boolean creation = name != null && name.length() > 0;
@@ -202,10 +190,7 @@ namespace VFileChooser
 				alert.SetPositiveButton(posButton, (sender, e)=>
 				{
 					foreach (var listener in listeners) // notify to listeners
-						if (creation)
-							listener.OnFileSelected(file, name);
-						else
-							listener.OnFileSelected(file);
+						listener(file, creation);
 				});
 				alert.SetNegativeButton(negButton, (sender, e)=>
 				{
@@ -217,10 +202,7 @@ namespace VFileChooser
 			}
 			else
 				foreach (var listener in listeners) // notify to listeners
-					if (creation)
-						listener.OnFileSelected(file, name);
-					else
-						listener.OnFileSelected(file);
+					listener(file, creation);
 		}
 
 		// get and set methods
