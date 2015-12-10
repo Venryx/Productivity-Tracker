@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VUI.cs" />
     <Compile Include="V.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
@@ -123,13 +124,17 @@
     <AndroidResource Include="Resources\drawable\Clip_XPlus_Blue.xml" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\menu\Main_Menu.xml" />
+    <AndroidResource Include="Resources\menu\Main_Menu.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Border_1_Top_Black.xml" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_1_Top_LightGray.xml" />
+    <AndroidResource Include="Resources\drawable\Border_1_Top_LightGray.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\daidalos_file_chooser.xml" />

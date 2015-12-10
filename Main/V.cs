@@ -1,5 +1,6 @@
 ﻿public static class V
 {
+	public static void Nothing(params object[] args) {}
 }
 public enum DebugType
 {

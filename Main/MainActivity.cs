@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -7,13 +8,43 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.OS;
+using Java.IO;
+
+using File = System.IO.File;
 
 namespace Main
 {
+	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
+	[VDFType(propIncludeRegexL1:"", popOutL1: true)] public class Settings
+	{
+		public string alarmSoundFilePath;
+		public int maxVolume = 50;
+		public int timeToMaxVolume = 10;
+	}
+
 	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
 	public class MainActivity : Activity
 	{
 		public static MainActivity main;
+
+		public Settings settings = new Settings();
+
+		public void LoadSettings()
+		{
+			//var settingsFile = new File("/storage/sdcard0/Productivity Tracker/Settings.vdf");
+			var settingsFile = new FileInfo("/storage/sdcard0/Productivity Tracker/Settings.vdf");
+			if (settingsFile.Exists)
+			{
+				var settingsVDF = File.ReadAllText(settingsFile.FullName);
+				settings = VDF.Deserialize<Settings>(settingsVDF);
+			}
+		}
+		public void SaveSettings()
+		{
+			var settingsFile = new FileInfo("/storage/sdcard0/Productivity Tracker/Settings.vdf").CreateFolders();
+			var settingsVDF = VDF.Serialize<Settings>(settings);
+			File.WriteAllText(settingsFile.FullName, settingsVDF);
+		}
 
 		int count;
 		protected override void OnCreate(Bundle bundle)
@@ -21,6 +52,8 @@ namespace Main
 			main = this;
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
+
+			LoadSettings();
 
 			var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
 			{
