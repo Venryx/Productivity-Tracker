@@ -92,6 +92,23 @@ namespace Main
 				StartActivity(new Intent(this, typeof(SettingsActivity)));
 			else if (item.ItemId == Resource.Id.About)
 			{
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.SetTitle("About Productivity Tracker");
+				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
+
+				LinearLayout linear = new LinearLayout(this) { Orientation = Orientation.Vertical };
+				var text = linear.Append(new TextView(this));
+				text.Text = @"
+Author: Stephen Wicklund (Venryx)
+
+This is an open source project, under the GPLv2 license.
+The source code is available for anyone to view and modify.
+Link: http://github.com/Venryx/Productivity-Tracker".Trim();
+                text.SetPadding(10, 10, 10, 10);
+				alert.SetView(linear);
+
+				alert.SetPositiveButton("Ok", (sender, e)=>{});
+				alert.Show();
 			}
 			return base.OnOptionsItemSelected(item);
 		}
