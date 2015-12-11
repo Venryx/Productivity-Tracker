@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Android.App;
 using Android.Content;
@@ -15,16 +16,35 @@ using File = System.IO.File;
 namespace Main
 {
 	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
-	[VDFType(propIncludeRegexL1: "", popOutL1: true)]
-	public class Settings
+	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class Settings
 	{
 		public string alarmSoundFilePath;
+		public int minVolume;
 		public int maxVolume = 50;
 		public int timeToMaxVolume = 10;
 		public int numberOfTimerSteps = 11;
 		public int timeIncrementForTimerSteps = 10;
-	}
 
+		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
+	}
+	public enum VKey
+	{
+		None,
+		VolumeUp,
+		VolumeDown
+	}
+	public enum HotkeyAction
+	{
+		None,
+		StartTimer_Rest,
+		StartTimer_Work
+	}
+	[VDFType(propIncludeRegexL1: "")] public class Hotkey
+	{
+		public VKey key;
+		public HotkeyAction action;
+		public int action_startTimer_length = 10;
+	}
 
 	public enum TimerType
 	{
@@ -71,7 +91,7 @@ namespace Main
 				var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Drawable;
 				timeLeftBar_clip.SetLevel((int)(10000 * .5));
 
-				var timeLeftLabel = timeLeftPanel.Append(new TextView(this) {Gravity = GravityFlags.Center, TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.Center});
+				var timeLeftLabel = timeLeftPanel.AddChild(new TextView(this) {Gravity = GravityFlags.Center, TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.Center});
 				timeLeftLabel.SetSingleLine(true);
 				timeLeftLabel.Text = "10:10";
 			}
@@ -82,10 +102,10 @@ namespace Main
 				var timeOverBar_clip = (ClipDrawable)timeOverBar.Drawable;
 				timeOverBar_clip.SetLevel((int)(10000 * 1));
 
-				var soundIconButton = timeOverPanel.Append(new ImageButton(this), new FrameLayout.LayoutParams(30, 30) {Gravity = GravityFlags.CenterVertical});
+				var soundIconButton = timeOverPanel.AddChild(new ImageButton(this), new FrameLayout.LayoutParams(30, 30) {Gravity = GravityFlags.CenterVertical});
 				soundIconButton.SetBackgroundResource(Resource.Drawable.Volume);
 
-				var timeOverLabel = timeOverPanel.Append(new TextView(this) {Gravity = GravityFlags.Center, TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.Center});
+				var timeOverLabel = timeOverPanel.AddChild(new TextView(this) {Gravity = GravityFlags.Center, TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.Center});
 				timeOverLabel.SetSingleLine(true);
 				timeOverLabel.Text = "10:10";
 			}
@@ -99,7 +119,7 @@ namespace Main
 				restButtonsPanel.RemoveViewAt(1);
 			for (var i = 0; i < settings.numberOfTimerSteps; i++)
 			{
-				var timerStepButton = restButtonsPanel.Append(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
+				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
 				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
 				var timerStepLength = settings.timeIncrementForTimerSteps * i;
                 timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
@@ -110,7 +130,7 @@ namespace Main
 				workButtonsPanel.RemoveViewAt(1);
 			for (var i = 0; i < settings.numberOfTimerSteps; i++)
 			{
-				var timerStepButton = workButtonsPanel.Append(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
+				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
 				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
 				var timerStepLength = settings.timeIncrementForTimerSteps * i;
 				timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
@@ -152,7 +172,7 @@ namespace Main
 				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
 
 				LinearLayout linear = new LinearLayout(this) { Orientation = Orientation.Vertical };
-				var text = linear.Append(new TextView(this));
+				var text = linear.AddChild(new TextView(this));
 				text.Text = @"
 Author: Stephen Wicklund (Venryx)
 
@@ -167,5 +187,25 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 			}
 			return base.OnOptionsItemSelected(item);
 		}
+
+		public override bool OnKeyDown(Keycode keyCode, KeyEvent e)
+		{
+			var usedKey = false;
+			foreach (Hotkey hotkey in settings.hotkeys)
+				if ((keyCode == Keycode.VolumeDown && hotkey.key == VKey.VolumeDown) || (keyCode == Keycode.VolumeUp && hotkey.key == VKey.VolumeUp))
+				{
+					usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
+					if (hotkey.action == HotkeyAction.StartTimer_Rest || hotkey.action == HotkeyAction.StartTimer_Work)
+						StartTimer(hotkey.action == HotkeyAction.StartTimer_Rest ? TimerType.Rest : TimerType.Work, hotkey.action_startTimer_length);
+				}
+
+			if (usedKey)
+				return true;
+			return base.OnKeyDown(keyCode, e);
+		}
+		/*public override bool OnKeyUp(Keycode keyCode, KeyEvent e)
+		{
+			return base.OnKeyUp(keyCode, e);
+		}*/
 	}
 }

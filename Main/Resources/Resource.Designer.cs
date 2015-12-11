@@ -99,8 +99,8 @@ namespace Main
 			// aapt resource value: 0x7f020000
 			public const int add = 2130837504;
 			
-			// aapt resource value: 0x7f020012
-			public const int blue = 2130837522;
+			// aapt resource value: 0x7f020013
+			public const int blue = 2130837523;
 			
 			// aapt resource value: 0x7f020001
 			public const int Border_10_Right = 2130837505;
@@ -109,52 +109,55 @@ namespace Main
 			public const int Border_10_Top = 2130837506;
 			
 			// aapt resource value: 0x7f020003
-			public const int Border_1_Top_Black = 2130837507;
+			public const int Border_1_Bottom_LightGray = 2130837507;
 			
 			// aapt resource value: 0x7f020004
-			public const int Border_1_Top_LightGray = 2130837508;
+			public const int Border_1_Top_Black = 2130837508;
 			
 			// aapt resource value: 0x7f020005
-			public const int Border_5_RightBottom = 2130837509;
+			public const int Border_1_Top_LightGray = 2130837509;
 			
 			// aapt resource value: 0x7f020006
-			public const int Clip_XMinus_Blue = 2130837510;
+			public const int Border_5_RightBottom = 2130837510;
 			
 			// aapt resource value: 0x7f020007
-			public const int Clip_XPlus_Blue = 2130837511;
+			public const int Clip_XMinus_Blue = 2130837511;
 			
 			// aapt resource value: 0x7f020008
-			public const int Clip_YPlus_Blue = 2130837512;
+			public const int Clip_XPlus_Blue = 2130837512;
 			
 			// aapt resource value: 0x7f020009
-			public const int document = 2130837513;
+			public const int Clip_YPlus_Blue = 2130837513;
 			
 			// aapt resource value: 0x7f02000a
-			public const int document_gray = 2130837514;
+			public const int document = 2130837514;
 			
 			// aapt resource value: 0x7f02000b
-			public const int folder = 2130837515;
-			
-			// aapt resource value: 0x7f020013
-			public const int green = 2130837523;
+			public const int document_gray = 2130837515;
 			
 			// aapt resource value: 0x7f02000c
-			public const int ic_launcher = 2130837516;
+			public const int folder = 2130837516;
+			
+			// aapt resource value: 0x7f020014
+			public const int green = 2130837524;
 			
 			// aapt resource value: 0x7f02000d
-			public const int Icon = 2130837517;
+			public const int ic_launcher = 2130837517;
 			
 			// aapt resource value: 0x7f02000e
-			public const int no = 2130837518;
-			
-			// aapt resource value: 0x7f020011
-			public const int red = 2130837521;
+			public const int Icon = 2130837518;
 			
 			// aapt resource value: 0x7f02000f
-			public const int tick = 2130837519;
+			public const int no = 2130837519;
+			
+			// aapt resource value: 0x7f020012
+			public const int red = 2130837522;
 			
 			// aapt resource value: 0x7f020010
-			public const int Volume = 2130837520;
+			public const int tick = 2130837520;
+			
+			// aapt resource value: 0x7f020011
+			public const int Volume = 2130837521;
 			
 			static Drawable()
 			{

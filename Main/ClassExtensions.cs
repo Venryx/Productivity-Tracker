@@ -15,12 +15,12 @@ using File = Java.IO.File;
 
 public static class ClassExtensions
 {
-	public static T Append<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null) where T : View
+	public static T AddChild<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null, int index = -1) where T : View
 	{
 		if (layout != null)
-			s.AddView(view, layout);
+			s.AddView(view, index, layout);
 		else
-			s.AddView(view);
+			s.AddView(view, index);
 		return view;
 	}
 
