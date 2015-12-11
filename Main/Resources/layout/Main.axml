@@ -16,37 +16,11 @@
 		<FrameLayout _:id="@+id/TimeLeftPanel" _:layout_width="0dp" _:layout_weight=".5" _:layout_height="fill_parent" _:layout_gravity="center">
 			<ImageView _:id="@+id/TimeLeftBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_YPlus_Blue"/>
 		</FrameLayout>
-		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
+		<LinearLayout _:id="@+id/RestButtons" _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
 			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Rest"></TextView>
-			<Button _:id="@+id/Rest_120" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="120"/>
-			<Button _:id="@+id/Rest_110" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="110"/>
-			<Button _:id="@+id/Rest_100" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="100"/>
-			<Button _:id="@+id/Rest_90" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="90"/>
-			<Button _:id="@+id/Rest_80" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="80"/>
-			<Button _:id="@+id/Rest_70" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="70"/>
-			<Button _:id="@+id/Rest_60" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="60"/>
-			<Button _:id="@+id/Rest_50" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="50"/>
-			<Button _:id="@+id/Rest_40" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="40"/>
-			<Button _:id="@+id/Rest_30" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="30"/>
-			<Button _:id="@+id/Rest_20" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="20"/>
-			<Button _:id="@+id/Rest_10" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="10"/>
-			<Button _:id="@+id/Rest_0" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="0"/>
 		</LinearLayout>
-		<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
+		<LinearLayout _:id="@+id/WorkButtons" _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
 			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Work"></TextView>
-			<Button _:id="@+id/Work_120" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="120"/>
-			<Button _:id="@+id/Work_110" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="110"/>
-			<Button _:id="@+id/Work_100" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="100"/>
-			<Button _:id="@+id/Work_90" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="90"/>
-			<Button _:id="@+id/Work_80" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="80"/>
-			<Button _:id="@+id/Work_70" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="70"/>
-			<Button _:id="@+id/Work_60" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="60"/>
-			<Button _:id="@+id/Work_50" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="50"/>
-			<Button _:id="@+id/Work_40" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="40"/>
-			<Button _:id="@+id/Work_30" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="30"/>
-			<Button _:id="@+id/Work_20" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="20"/>
-			<Button _:id="@+id/Work_10" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="10"/>
-			<Button _:id="@+id/Work_0" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".75" _:text="0"/>
 		</LinearLayout>
 	</LinearLayout>
 </LinearLayout>

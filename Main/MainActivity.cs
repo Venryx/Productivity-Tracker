@@ -15,11 +15,21 @@ using File = System.IO.File;
 namespace Main
 {
 	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
-	[VDFType(propIncludeRegexL1:"", popOutL1: true)] public class Settings
+	[VDFType(propIncludeRegexL1: "", popOutL1: true)]
+	public class Settings
 	{
 		public string alarmSoundFilePath;
 		public int maxVolume = 50;
 		public int timeToMaxVolume = 10;
+		public int numberOfTimerSteps = 11;
+		public int timeIncrementForTimerSteps = 10;
+	}
+
+
+	public enum TimerType
+	{
+		Rest,
+		Work
 	}
 
 	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
@@ -79,6 +89,51 @@ namespace Main
 				timeOverLabel.SetSingleLine(true);
 				timeOverLabel.Text = "10:10";
 			}
+
+			RefreshTimerStepButtons();
+		}
+		public void RefreshTimerStepButtons()
+		{
+			var restButtonsPanel = FindViewById<LinearLayout>(Resource.Id.RestButtons);
+			while (restButtonsPanel.ChildCount > 1)
+				restButtonsPanel.RemoveViewAt(1);
+			for (var i = 0; i < settings.numberOfTimerSteps; i++)
+			{
+				var timerStepButton = restButtonsPanel.Append(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
+				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
+				var timerStepLength = settings.timeIncrementForTimerSteps * i;
+                timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
+			}
+
+			var workButtonsPanel = FindViewById<LinearLayout>(Resource.Id.WorkButtons);
+			while (workButtonsPanel.ChildCount > 1)
+				workButtonsPanel.RemoveViewAt(1);
+			for (var i = 0; i < settings.numberOfTimerSteps; i++)
+			{
+				var timerStepButton = workButtonsPanel.Append(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
+				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
+				var timerStepLength = settings.timeIncrementForTimerSteps * i;
+				timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
+			}
+		}
+		protected override void OnResume()
+		{
+			base.OnResume();
+			
+			RefreshTimerStepButtons();
+		}
+
+		void StartTimer(TimerType type, int length)
+		{
+			// todo
+		}
+		void PauseTimer()
+		{
+			// todo
+		}
+		void StopTimer()
+		{
+			// todo
 		}
 
 		public override bool OnCreateOptionsMenu(IMenu menu)
@@ -104,7 +159,7 @@ Author: Stephen Wicklund (Venryx)
 This is an open source project, under the GPLv2 license.
 The source code is available for anyone to view and modify.
 Link: http://github.com/Venryx/Productivity-Tracker".Trim();
-                text.SetPadding(10, 10, 10, 10);
+                text.SetPadding(30, 30, 30, 30);
 				alert.SetView(linear);
 
 				alert.SetPositiveButton("Ok", (sender, e)=>{});

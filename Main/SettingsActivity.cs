@@ -108,6 +108,58 @@ namespace Main
 				alert.SetNegativeButton("Cancel", (sender, e)=>{});
 				alert.Show();
 			};
+
+			var numberOfTimerStepsPanel = AddRow(root);
+			numberOfTimerStepsPanel.Append(new TextView(this) {Text = "Number of timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+			var numberOfTimerStepsLabel = numberOfTimerStepsPanel.Append(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+			numberOfTimerStepsLabel.Text = settings.numberOfTimerSteps.ToString();
+			numberOfTimerStepsPanel.Click += delegate
+			{
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.SetTitle("Number of timer steps");
+
+				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+				var text = linear.Append(new TextView(this) {Text = settings.numberOfTimerSteps.ToString(), Gravity = GravityFlags.CenterHorizontal});
+				text.SetPadding(10, 10, 10, 10);
+				SeekBar seek = linear.Append(new SeekBar(this) {Max = 21});
+				seek.Progress = settings.numberOfTimerSteps;
+				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress.ToString(); };
+				alert.SetView(linear);
+
+				alert.SetPositiveButton("Ok", (sender, e)=>
+				{
+					settings.numberOfTimerSteps = seek.Progress;
+					numberOfTimerStepsLabel.Text = settings.numberOfTimerSteps.ToString();
+				});
+				alert.SetNegativeButton("Cancel", (sender, e)=>{});
+				alert.Show();
+			};
+
+			var timeIncrementForTimerStepsPanel = AddRow(root);
+			timeIncrementForTimerStepsPanel.Append(new TextView(this) {Text = "Time increment for timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+			var timeIncrementForTimerStepsLabel = timeIncrementForTimerStepsPanel.Append(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+			timeIncrementForTimerStepsLabel.Text = settings.timeIncrementForTimerSteps + " minutes";
+			timeIncrementForTimerStepsPanel.Click += delegate
+			{
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.SetTitle("Time increment for timer steps");
+
+				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+				var text = linear.Append(new TextView(this) {Text = settings.timeIncrementForTimerSteps + " minutes", Gravity = GravityFlags.CenterHorizontal});
+				text.SetPadding(10, 10, 10, 10);
+				SeekBar seek = linear.Append(new SeekBar(this) {Max = 60});
+				seek.Progress = settings.timeIncrementForTimerSteps;
+				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
+				alert.SetView(linear);
+
+				alert.SetPositiveButton("Ok", (sender, e)=>
+				{
+					settings.timeIncrementForTimerSteps = seek.Progress;
+					timeIncrementForTimerStepsLabel.Text = settings.timeIncrementForTimerSteps + " minutes";
+				});
+				alert.SetNegativeButton("Cancel", (sender, e)=>{});
+				alert.Show();
+			};
 		}
 
 		protected override void OnPause()
