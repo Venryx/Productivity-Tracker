@@ -124,7 +124,9 @@ public static class VDFLoader
 			else if (firstNonMetadataToken.text.Contains(".") || firstNonMetadataToken.text.Contains("e"))
 				node.primitiveValue = double.Parse(firstNonMetadataToken.text);
 			else
-				node.primitiveValue = int.Parse(firstNonMetadataToken.text);
+				// custom replaced
+				//node.primitiveValue = int.Parse(firstNonMetadataToken.text);
+				node.primitiveValue = long.Parse(firstNonMetadataToken.text);
 		else if (firstNonMetadataToken.type == VDFTokenType.String)
 			node.primitiveValue = firstNonMetadataToken.text;
 

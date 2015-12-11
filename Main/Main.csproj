@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="UpdateService.cs" />
     <Compile Include="VUI.cs" />
     <Compile Include="V.cs" />
     <Compile Include="MainActivity.cs" />

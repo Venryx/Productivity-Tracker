@@ -33,29 +33,110 @@ namespace Main
 			var root = new LinearLayout(this) {Orientation = Orientation.Vertical};
 			SetContentView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 
-			var settings = MainActivity.main.settings;
+			var settings = MainActivity.main.mainData.settings;
 
-			//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
-			var alarmSoundPanel = AddRow(root);
-			alarmSoundPanel.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			var alarmSoundLabel = alarmSoundPanel.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			alarmSoundLabel.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
-			alarmSoundPanel.Click += delegate
 			{
-				FileChooserDialog dialog = new FileChooserDialog(this);
-				if (settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Directory.Exists)
-					dialog.loadFolder(new FileInfo(settings.alarmSoundFilePath).Directory.FullName);
-				dialog.addListener((file, create)=>
-				{
-					settings.alarmSoundFilePath = file.Path;
-					alarmSoundLabel.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
-					dialog.Dismiss();
+				var row = AddRow(root, vertical: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {Text = "Keep screen on while open", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				//var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				//var rightSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				//var checkbox = rightSide.AddChild(new CheckBox(this) {Gravity = GravityFlags.Right | GravityFlags.CenterVertical, Checked = settings.keepScreenOnWhileRunning});
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.keepScreenOnWhileOpen}, layoutParams);
 
-					//MainActivity.main.SaveSettings();
-					//Reload();
-				});
-				dialog.Show();
-			};
+				row.Click += delegate
+				{
+					settings.keepScreenOnWhileOpen = !checkbox.Checked;
+					checkbox.Checked = settings.keepScreenOnWhileOpen;
+					MainActivity.main.RefreshKeepScreenOn();
+				};
+			}
+
+			{
+				var row = AddRow(root);
+				row.AddChild(new TextView(this) {Text = "Number of timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.numberOfTimerSteps.ToString();
+				row.Click += delegate
+				{
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Number of timer steps");
+
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.numberOfTimerSteps.ToString(), Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 21});
+					seek.Progress = settings.numberOfTimerSteps;
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress.ToString(); };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.numberOfTimerSteps = seek.Progress;
+						label.Text = settings.numberOfTimerSteps.ToString();
+						MainActivity.main.RefreshTimerStepButtons();
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.Show();
+				};
+			}
+
+			{
+				var row = AddRow(root);
+				row.AddChild(new TextView(this) {Text = "Time increment for timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.timeIncrementForTimerSteps + " minutes";
+				row.Click += delegate
+				{
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Time increment for timer steps");
+
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.timeIncrementForTimerSteps + " minutes", Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
+					seek.Progress = settings.timeIncrementForTimerSteps;
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.timeIncrementForTimerSteps = seek.Progress;
+						label.Text = settings.timeIncrementForTimerSteps + " minutes";
+						MainActivity.main.RefreshTimerStepButtons();
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.Show();
+				};
+			}
+
+			{
+				//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
+				var row = AddRow(root);
+				row.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
+				row.Click += delegate
+				{
+					FileChooserDialog dialog = new FileChooserDialog(this);
+					if (settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Directory.Exists)
+						dialog.loadFolder(new FileInfo(settings.alarmSoundFilePath).Directory.FullName);
+					dialog.addListener((file, create)=>
+					{
+						settings.alarmSoundFilePath = file.Path;
+						label.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
+						dialog.Dismiss();
+
+						//MainActivity.main.SaveSettings();
+						//Reload();
+					});
+					dialog.Show();
+				};
+			}
 
 			{
 				var row = AddRow(root);
@@ -85,109 +166,61 @@ namespace Main
 				};
 			}
 
-			var maxVolumePanel = AddRow(root);
-			maxVolumePanel.AddChild(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			var maxVolumeLabel = maxVolumePanel.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			maxVolumeLabel.Text = settings.maxVolume + "%";
-			maxVolumePanel.Click += delegate
 			{
-				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-				alert.SetTitle("Max volume");
-
-				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-				var text = linear.AddChild(new TextView(this) {Text = settings.maxVolume + "%", Gravity = GravityFlags.CenterHorizontal});
-				text.SetPadding(10, 10, 10, 10);
-				SeekBar seek = linear.AddChild(new SeekBar(this));
-				seek.Progress = settings.maxVolume;
-				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
-				alert.SetView(linear);
-
-				alert.SetPositiveButton("Ok", (sender, e)=>
+				var row = AddRow(root);
+				row.AddChild(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.maxVolume + "%";
+				row.Click += delegate
 				{
-					settings.maxVolume = seek.Progress;
-					maxVolumeLabel.Text = settings.maxVolume + "%";
-				});
-				alert.SetNegativeButton("Cancel", (sender, e)=>{});
-				alert.Show();
-			};
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Max volume");
 
-			var timeToMaxVolumePanel = AddRow(root);
-			timeToMaxVolumePanel.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			var timeToMaxVolumeLabel = timeToMaxVolumePanel.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			timeToMaxVolumeLabel.Text = settings.timeToMaxVolume + " minutes";
-			timeToMaxVolumePanel.Click += delegate
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.maxVolume + "%", Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this));
+					seek.Progress = settings.maxVolume;
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.maxVolume = seek.Progress;
+						label.Text = settings.maxVolume + "%";
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.Show();
+				};
+			}
+
 			{
-				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-				alert.SetTitle("Time to max volume");
-
-				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-				var text = linear.AddChild(new TextView(this) {Text = settings.timeToMaxVolume + " minutes", Gravity = GravityFlags.CenterHorizontal});
-				text.SetPadding(10, 10, 10, 10);
-				SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
-				seek.Progress = settings.timeToMaxVolume;
-				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
-				alert.SetView(linear);
-
-				alert.SetPositiveButton("Ok", (sender, e)=>
+				var row = AddRow(root);
+				row.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.timeToMaxVolume + " minutes";
+				row.Click += delegate
 				{
-					settings.timeToMaxVolume = seek.Progress;
-					timeToMaxVolumeLabel.Text = settings.timeToMaxVolume + " minutes";
-				});
-				alert.SetNegativeButton("Cancel", (sender, e)=>{});
-				alert.Show();
-			};
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Time to max volume");
 
-			var numberOfTimerStepsPanel = AddRow(root);
-			numberOfTimerStepsPanel.AddChild(new TextView(this) {Text = "Number of timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			var numberOfTimerStepsLabel = numberOfTimerStepsPanel.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			numberOfTimerStepsLabel.Text = settings.numberOfTimerSteps.ToString();
-			numberOfTimerStepsPanel.Click += delegate
-			{
-				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-				alert.SetTitle("Number of timer steps");
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.timeToMaxVolume + " minutes", Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
+					seek.Progress = settings.timeToMaxVolume;
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
+					alert.SetView(linear);
 
-				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-				var text = linear.AddChild(new TextView(this) {Text = settings.numberOfTimerSteps.ToString(), Gravity = GravityFlags.CenterHorizontal});
-				text.SetPadding(10, 10, 10, 10);
-				SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 21});
-				seek.Progress = settings.numberOfTimerSteps;
-				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress.ToString(); };
-				alert.SetView(linear);
-
-				alert.SetPositiveButton("Ok", (sender, e)=>
-				{
-					settings.numberOfTimerSteps = seek.Progress;
-					numberOfTimerStepsLabel.Text = settings.numberOfTimerSteps.ToString();
-				});
-				alert.SetNegativeButton("Cancel", (sender, e)=>{});
-				alert.Show();
-			};
-
-			var timeIncrementForTimerStepsPanel = AddRow(root);
-			timeIncrementForTimerStepsPanel.AddChild(new TextView(this) {Text = "Time increment for timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			var timeIncrementForTimerStepsLabel = timeIncrementForTimerStepsPanel.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-			timeIncrementForTimerStepsLabel.Text = settings.timeIncrementForTimerSteps + " minutes";
-			timeIncrementForTimerStepsPanel.Click += delegate
-			{
-				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-				alert.SetTitle("Time increment for timer steps");
-
-				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-				var text = linear.AddChild(new TextView(this) {Text = settings.timeIncrementForTimerSteps + " minutes", Gravity = GravityFlags.CenterHorizontal});
-				text.SetPadding(10, 10, 10, 10);
-				SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
-				seek.Progress = settings.timeIncrementForTimerSteps;
-				seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
-				alert.SetView(linear);
-
-				alert.SetPositiveButton("Ok", (sender, e)=>
-				{
-					settings.timeIncrementForTimerSteps = seek.Progress;
-					timeIncrementForTimerStepsLabel.Text = settings.timeIncrementForTimerSteps + " minutes";
-				});
-				alert.SetNegativeButton("Cancel", (sender, e)=>{});
-				alert.Show();
-			};
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.timeToMaxVolume = seek.Progress;
+						label.Text = settings.timeToMaxVolume + " minutes";
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.Show();
+				};
+			}
 
 			{
 				var row = AddRow(root, ViewGroup.LayoutParams.WrapContent);
@@ -247,10 +280,10 @@ namespace Main
 									text.SetPadding(10, 10, 10, 10);
 									SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 180});
 									seek.Progress = hotkey.action_startTimer_length;
-									seek.ProgressChanged += (sender3, e3)=> { text.Text = seek.Progress + " minutes"; };
+									seek.ProgressChanged += (sender3, e3)=>{ text.Text = seek.Progress + " minutes"; };
 									alert.SetView(linear);
 
-									alert.SetPositiveButton("Ok", (sender3, e3) =>
+									alert.SetPositiveButton("Ok", (sender3, e3)=>
 									{
 										hotkey.action_startTimer_length = seek.Progress;
 										refreshHotkeys();
@@ -287,12 +320,12 @@ namespace Main
 		{
 			base.OnPause();
 
-			MainActivity.main.SaveSettings();
+			MainActivity.main.SaveMainData();
 		}
 
-		LinearLayout AddRow(LinearLayout root, int height = 110)
+		LinearLayout AddRow(LinearLayout root, int height = 110, bool vertical = true)
 		{
-			var result = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
+			var result = root.AddChild(new LinearLayout(this) {Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
 			result.SetPadding(15, 15, 15, 15);
 			//if (root.ChildCount > 1)
 			result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);

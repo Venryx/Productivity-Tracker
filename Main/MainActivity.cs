@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Timers;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -10,21 +11,37 @@ using Android.Views;
 using Android.Widget;
 using Android.OS;
 using Java.IO;
-
+using Java.Lang;
 using File = System.IO.File;
 
 namespace Main
 {
+	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class MainData
+	{
+		[VDFPreDeserialize] public MainData() {} // makes-so in-code defaults are used, for props that aren't set in the VDF
+
+		public Settings settings = new Settings();
+
+		public bool currentTimerExists;
+		public long currentTimer_lastResumeTime = -1;
+		public int currentTimer_timeLeft;
+		public bool currentTimer_paused;
+		public TimerType currentTimer_type;
+	}
 	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
 	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class Settings
 	{
+		[VDFPreDeserialize] public Settings() {}
+
+		public bool keepScreenOnWhileOpen = true;
+		public int numberOfTimerSteps = 11;
+		public int timeIncrementForTimerSteps = 10;
+
 		public string alarmSoundFilePath;
 		public int minVolume;
 		public int maxVolume = 50;
 		public int timeToMaxVolume = 10;
-		public int numberOfTimerSteps = 11;
-		public int timeIncrementForTimerSteps = 10;
-
+		
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
 	}
 	public enum VKey
@@ -57,23 +74,21 @@ namespace Main
 	{
 		public static MainActivity main;
 
-		public Settings settings = new Settings();
-
-		public void LoadSettings()
+		public MainData mainData = new MainData();
+		public void LoadMainData()
 		{
-			//var settingsFile = new File("/storage/sdcard0/Productivity Tracker/Settings.vdf");
-			var settingsFile = new FileInfo("/storage/sdcard0/Productivity Tracker/Settings.vdf");
-			if (settingsFile.Exists)
+			var file = new FileInfo("/storage/sdcard0/Productivity Tracker/MainData.vdf");
+			if (file.Exists)
 			{
-				var settingsVDF = File.ReadAllText(settingsFile.FullName);
-				settings = VDF.Deserialize<Settings>(settingsVDF);
+				var vdf = File.ReadAllText(file.FullName);
+				mainData = VDF.Deserialize<MainData>(vdf);
 			}
 		}
-		public void SaveSettings()
+		public void SaveMainData()
 		{
-			var settingsFile = new FileInfo("/storage/sdcard0/Productivity Tracker/Settings.vdf").CreateFolders();
-			var settingsVDF = VDF.Serialize<Settings>(settings);
-			File.WriteAllText(settingsFile.FullName, settingsVDF);
+			var file = new FileInfo("/storage/sdcard0/Productivity Tracker/MainData.vdf").CreateFolders();
+			var vdf = VDF.Serialize<MainData>(mainData);
+			File.WriteAllText(file.FullName, vdf);
 		}
 
 		int count;
@@ -83,7 +98,17 @@ namespace Main
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
 
-			LoadSettings();
+			LoadMainData();
+			RefreshKeepScreenOn();
+			RefreshTimerStepButtons();
+			RefreshDynamicUI();
+			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost on device reboot)
+			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
+			if (mainData.currentTimerExists && !mainData.currentTimer_paused)
+			{
+				PauseTimer();
+				ResumeTimer();
+			}
 
 			var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
 			{
@@ -110,50 +135,128 @@ namespace Main
 				timeOverLabel.Text = "10:10";
 			}
 
-			RefreshTimerStepButtons();
+			FindViewById<Button>(Resource.Id.Pause).Click += delegate
+			{
+				if (mainData.currentTimer_paused)
+					ResumeTimer();
+				else
+					PauseTimer();
+			};
+			FindViewById<Button>(Resource.Id.Stop).Click += delegate { StopTimer(); };
+		}
+		public void RefreshKeepScreenOn()
+		{
+			if (mainData.settings.keepScreenOnWhileOpen)
+				Window.AddFlags(WindowManagerFlags.KeepScreenOn);
+			else
+				Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
 		}
 		public void RefreshTimerStepButtons()
 		{
 			var restButtonsPanel = FindViewById<LinearLayout>(Resource.Id.RestButtons);
 			while (restButtonsPanel.ChildCount > 1)
 				restButtonsPanel.RemoveViewAt(1);
-			for (var i = 0; i < settings.numberOfTimerSteps; i++)
+			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
 			{
 				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
-				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
-				var timerStepLength = settings.timeIncrementForTimerSteps * i;
+				timerStepButton.Text = ((mainData.settings.numberOfTimerSteps - (i + 1)) * mainData.settings.timeIncrementForTimerSteps).ToString();
+				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i;
                 timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
 			}
 
 			var workButtonsPanel = FindViewById<LinearLayout>(Resource.Id.WorkButtons);
 			while (workButtonsPanel.ChildCount > 1)
 				workButtonsPanel.RemoveViewAt(1);
-			for (var i = 0; i < settings.numberOfTimerSteps; i++)
+			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
 			{
 				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical });
-				timerStepButton.Text = ((settings.numberOfTimerSteps - (i + 1)) * settings.timeIncrementForTimerSteps).ToString();
-				var timerStepLength = settings.timeIncrementForTimerSteps * i;
+				timerStepButton.Text = ((mainData.settings.numberOfTimerSteps - (i + 1)) * mainData.settings.timeIncrementForTimerSteps).ToString();
+				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i;
 				timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
 			}
+		}
+		protected override void OnPause()
+		{
+			base.OnPause();
+			if (refreshDynamicUITimer != null && refreshDynamicUITimer.Enabled)
+				refreshDynamicUITimer.Enabled = false;
+			SaveMainData();
 		}
 		protected override void OnResume()
 		{
 			base.OnResume();
-			
-			RefreshTimerStepButtons();
+			if (mainData.currentTimer_lastResumeTime != -1)
+				StartRefreshDynamicUITimer();
+		}
+		/*protected override void OnStop()
+		{
+			base.OnStop();
+			SaveMainData();
+		}*/
+
+		PendingIntent GetLaunchUpdateServicePendingIntent()
+		{
+			var launchUpdateService = new Intent(this, typeof(UpdateService));
+			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);
 		}
 
-		void StartTimer(TimerType type, int length)
+		Timer refreshDynamicUITimer;
+		void StartRefreshDynamicUITimer()
 		{
-			// todo
+			refreshDynamicUITimer = new Timer(1000);
+			//refreshDynamicUITimer.Elapsed += delegate { RefreshDynamicUI(); };
+			//refreshDynamicUITimer.Elapsed += delegate { new Handler().Post(RefreshDynamicUI); };
+			refreshDynamicUITimer.Elapsed += delegate { RunOnUiThread(RefreshDynamicUI); ; };
+			refreshDynamicUITimer.Enabled = true;
+		}
+		void RefreshDynamicUI()
+		{
+			FindViewById<Button>(Resource.Id.Stop).Enabled = mainData.currentTimerExists;
+			FindViewById<Button>(Resource.Id.Pause).Enabled = mainData.currentTimerExists;
+			FindViewById<Button>(Resource.Id.Pause).Text = mainData.currentTimerExists && mainData.currentTimer_paused ? "Resume" : "Pause";
+			
+			// make-so: time-left and time-over uis get updated
+			// make-so: time-left and time-over uis get darkened/undarkened if timer is paused/resumed
+		}
+
+		void StartTimer(TimerType type, int minutes)
+		{
+			if (mainData.currentTimerExists)
+				StopTimer();
+			mainData.currentTimerExists = true;
+            mainData.currentTimer_lastResumeTime = JavaSystem.CurrentTimeMillis();
+			mainData.currentTimer_timeLeft = minutes * 60 * 1000;
+			mainData.currentTimer_paused = false;
+            mainData.currentTimer_type = type;
+			((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, mainData.currentTimer_lastResumeTime + mainData.currentTimer_timeLeft, GetLaunchUpdateServicePendingIntent());
+			
+			RefreshDynamicUI();
+			StartRefreshDynamicUITimer();
 		}
 		void PauseTimer()
 		{
-			// todo
+			var timePassedFromLastTimerResume = (int)(JavaSystem.CurrentTimeMillis() - mainData.currentTimer_lastResumeTime);
+            mainData.currentTimer_timeLeft -= timePassedFromLastTimerResume;
+            mainData.currentTimer_paused = true;
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetLaunchUpdateServicePendingIntent());
+			RefreshDynamicUI();
+		}
+		void ResumeTimer()
+		{
+			mainData.currentTimer_paused = false;
+			mainData.currentTimer_lastResumeTime = JavaSystem.CurrentTimeMillis();
+			((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, mainData.currentTimer_lastResumeTime + mainData.currentTimer_timeLeft, GetLaunchUpdateServicePendingIntent());
+			RefreshDynamicUI();
 		}
 		void StopTimer()
 		{
-			// todo
+			mainData.currentTimerExists = false;
+			refreshDynamicUITimer.Enabled = false;
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetLaunchUpdateServicePendingIntent());
+			RefreshDynamicUI();
+
+			// make-so: time-left and time-over uis get cleared
 		}
 
 		public override bool OnCreateOptionsMenu(IMenu menu)
@@ -191,7 +294,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 		public override bool OnKeyDown(Keycode keyCode, KeyEvent e)
 		{
 			var usedKey = false;
-			foreach (Hotkey hotkey in settings.hotkeys)
+			foreach (Hotkey hotkey in mainData.settings.hotkeys)
 				if ((keyCode == Keycode.VolumeDown && hotkey.key == VKey.VolumeDown) || (keyCode == Keycode.VolumeUp && hotkey.key == VKey.VolumeUp))
 				{
 					usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
