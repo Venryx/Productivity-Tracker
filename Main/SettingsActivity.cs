@@ -33,7 +33,7 @@ namespace Main
 			var root = new LinearLayout(this) {Orientation = Orientation.Vertical};
 			SetContentView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 
-			var settings = MainActivity.main.mainData.settings;
+			var settings = MainActivity.main.data.settings;
 
 			{
 				var row = AddRow(root, vertical: false);
@@ -320,7 +320,7 @@ namespace Main
 		{
 			base.OnPause();
 
-			MainActivity.main.SaveMainData();
+			MainActivity.main.SaveData();
 		}
 
 		LinearLayout AddRow(LinearLayout root, int height = 110, bool vertical = true)

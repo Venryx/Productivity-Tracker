@@ -60,7 +60,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VectorStructs.cs" />
     <Compile Include="UpdateService.cs" />
+    <Compile Include="Drawables.cs" />
     <Compile Include="VUI.cs" />
     <Compile Include="V.cs" />
     <Compile Include="MainActivity.cs" />
@@ -96,21 +98,9 @@
     <None Include="Properties\AndroidManifest.xml" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_10_Right.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_10_Top.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Clip_YPlus_Blue.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\values\Colors.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Clip_XMinus_Blue.xml" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Border_5_RightBottom.xml" />
@@ -120,9 +110,6 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Volume.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Clip_XPlus_Blue.xml" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\menu\Main_Menu.xml">

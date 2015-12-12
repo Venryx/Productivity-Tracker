@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Android.App;
 using Android.Content;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -60,4 +62,27 @@ public static class ClassExtensions
 
 	// FileInfo
 	public static FileInfo CreateFolders(this FileInfo s) { s.Directory.Create(); return s; }
+
+	// View
+	public static FrameLayout GetRootFrameLayout(this View s) { return (FrameLayout)((ViewGroup)((ViewGroup)s.RootView).GetChildAt(0)).GetChildAt(0); }
+	public static Vector2i GetPositionFrom(this View s, View fromControl = null)
+	{
+		if (fromControl != null)
+			return s.GetPositionFrom() - fromControl.GetPositionFrom();
+		var x = 0;
+		var y = 0;
+		View currentChild = s;
+		while (true)
+		{
+			x += currentChild.Left;
+			y += currentChild.Top;
+			if (!(currentChild.Parent is View) || currentChild.Parent == currentChild.GetRootFrameLayout())
+				break;
+			currentChild = (View)currentChild.Parent;
+		}
+		return new Vector2i(x, y);
+	}
+	
+	// ColorDrawable
+	public static ColorDrawable Clone(this ColorDrawable s) { return new ColorDrawable(s.Color); }
 }

@@ -1,6 +1,10 @@
-﻿public static class V
+﻿using System;
+
+public static class V
 {
 	public static void Nothing(params object[] args) {}
+
+	public static double Clamp(double min, double max, double val) { return Math.Min(max, Math.Max(min, val)); }
 }
 public enum DebugType
 {

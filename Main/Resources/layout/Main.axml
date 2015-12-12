@@ -1,26 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="fill_parent">
-	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent">
+	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".82" _:layout_height="fill_parent">
 		<LinearLayout _:orientation="vertical" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".93" _:background="@drawable/Border_5_RightBottom">
 		</LinearLayout>
 		<LinearLayout _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".07">
 			<Button _:id="@+id/Stop" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Stop"/>
 			<Button _:id="@+id/Pause" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Pause"/>
-			<FrameLayout _:id="@+id/TimeOverPanel" _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent" _:layout_gravity="center">
-				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_XPlus_Blue"/>
-				<!-- <ImageView _:id="@+id/SoundIcon" _:layout_centerHorizontal="true" _:layout_width="10dp" _:layout_height="10dp" _:src="@drawable/Volume"/> -->
+			<FrameLayout _:id="@+id/TimeOverPanel" _:layout_marginLeft="3dp" _:layout_width="0dp" _:layout_weight=".85" _:layout_height="fill_parent">
+				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent"/>
 			</FrameLayout>
 		</LinearLayout>
 	</LinearLayout>
-	<LinearLayout _:orientation="horizontal" _:layout_width="0dp" _:layout_weight=".15" _:layout_height="fill_parent">
-		<FrameLayout _:id="@+id/TimeLeftPanel" _:layout_width="0dp" _:layout_weight=".5" _:layout_height="fill_parent" _:layout_gravity="center">
-			<ImageView _:id="@+id/TimeLeftBar" _:layout_width="fill_parent" _:layout_height="fill_parent" _:src="@drawable/Clip_YPlus_Blue"/>
+	<LinearLayout _:orientation="horizontal" _:layout_width="0dp" _:layout_weight=".18" _:layout_height="fill_parent">
+		<FrameLayout _:id="@+id/TimeLeftPanel" _:layout_width="0dp" _:layout_weight=".5" _:layout_height="fill_parent">
+			<ImageView _:id="@+id/TimeLeftBar" _:layout_width="fill_parent" _:layout_height="fill_parent"/>
 		</FrameLayout>
 		<LinearLayout _:id="@+id/RestButtons" _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
-			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Rest"></TextView>
 		</LinearLayout>
 		<LinearLayout _:id="@+id/WorkButtons" _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".25" _:layout_height="fill_parent">
-			<TextView _:layout_width="fill_parent" _:layout_height="20dp" _:text="Work"></TextView>
 		</LinearLayout>
 	</LinearLayout>
 </LinearLayout>
