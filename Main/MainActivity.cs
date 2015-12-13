@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Timers;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.Media;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -13,8 +13,11 @@ using Android.OS;
 using Android.Text;
 using Java.IO;
 using Java.Lang;
+using Java.Util;
 using File = System.IO.File;
 using Math = System.Math;
+using Orientation = Android.Widget.Orientation;
+using Timer = System.Timers.Timer;
 
 namespace Main
 {
@@ -49,6 +52,7 @@ namespace Main
 		public int minVolume;
 		public int maxVolume = 50;
 		public int timeToMaxVolume = 10;
+		//public VolumeScaleType volumeFadeType = VolumeScaleType.Loudness;
 		
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
 
@@ -139,7 +143,7 @@ namespace Main
 			countdownLabel.Click += delegate
 			{
 				data.currentTimer_locked = !data.currentTimer_locked;
-				RefreshDynamicUI();
+				UpdateDynamicUI();
 			};
 
 			/*var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
@@ -167,7 +171,7 @@ namespace Main
 
 			RefreshKeepScreenOn();
 			RefreshTimerStepButtons();
-			RefreshDynamicUI();
+			UpdateDynamicUI();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost on device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
 			if (data.currentTimerExists && !data.currentTimer_paused)
@@ -207,7 +211,7 @@ namespace Main
 			for (var i = 0; i < data.settings.numberOfTimerSteps; i++)
 			{
 				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
-				var timerStepLength = data.settings.timeIncrementForTimerSteps * i;
+				var timerStepLength = data.settings.timeIncrementForTimerSteps * i; // in minutes
 				timerStepButton.Text = timerStepLength.ToString();
 				timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
 			}
@@ -218,7 +222,7 @@ namespace Main
 			for (var i = 0; i < data.settings.numberOfTimerSteps; i++)
 			{
 				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
-				var timerStepLength = data.settings.timeIncrementForTimerSteps * i;
+				var timerStepLength = data.settings.timeIncrementForTimerSteps * i; // in minutes
 				timerStepButton.Text = timerStepLength.ToString();
 				timerStepButton.Click += (sender, e)=> { StartTimer(TimerType.Work, timerStepLength); };
 			}
@@ -226,15 +230,15 @@ namespace Main
 		protected override void OnPause()
 		{
 			base.OnPause();
-			if (refreshDynamicUITimer != null && refreshDynamicUITimer.Enabled)
-				refreshDynamicUITimer.Enabled = false;
+			if (currentTimer != null && currentTimer.Enabled)
+				currentTimer.Enabled = false;
 			SaveData();
 		}
 		protected override void OnResume()
 		{
 			base.OnResume();
 			if (data.currentTimerExists)
-				StartRefreshDynamicUITimer();
+				StartCurrentTimer();
 		}
 		/*protected override void OnStop()
 		{
@@ -242,23 +246,18 @@ namespace Main
 			SaveMainData();
 		}*/
 
-		PendingIntent GetLaunchUpdateServicePendingIntent()
+		Timer currentTimer;
+		MediaPlayer alarmPlayer;
+		void StartCurrentTimer()
 		{
-			var launchUpdateService = new Intent(this, typeof(UpdateService));
-			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
-			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);
-		}
-
-		Timer refreshDynamicUITimer;
-		void StartRefreshDynamicUITimer()
-		{
-			if (refreshDynamicUITimer == null)
+			if (currentTimer == null)
 			{
-				refreshDynamicUITimer = new Timer(1000);
+				currentTimer = new Timer(1000);
 				//refreshDynamicUITimer.Elapsed += delegate { RefreshDynamicUI(); };
 				//refreshDynamicUITimer.Elapsed += delegate { new Handler().Post(RefreshDynamicUI); };
-				refreshDynamicUITimer.Elapsed += delegate
+				currentTimer.Elapsed += delegate
 				{
+					// update data
 					if (!data.currentTimer_paused)
 						if (data.currentTimer_timeLeft > 0) // if time-out hasn't occurred yet
 						{
@@ -272,12 +271,44 @@ namespace Main
 								data.currentTimer_timeOver_withLocking++;
 						}
 					data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
-					RunOnUiThread(RefreshDynamicUI);
+					
+					// update outflow (audio and dynamic-ui)
+					UpdateAudio();
+					RunOnUiThread(UpdateDynamicUI);
 				};
 			}
-			refreshDynamicUITimer.Enabled = true;
+			currentTimer.Enabled = true;
 		}
-		void RefreshDynamicUI()
+		void UpdateAudio()
+		{
+			if (!data.currentTimerExists || data.currentTimer_timeLeft > 0 || data.currentTimer_paused)
+			{
+				if (alarmPlayer != null && alarmPlayer.IsPlaying)
+					alarmPlayer.Stop();
+			}
+			else
+			{
+				var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
+				var timeOverForClipEmpty = data.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var percentThroughTimeOverBar = V.Clamp(0, 1, (double)timeOver_withLocking / timeOverForClipEmpty);
+
+				if (alarmPlayer != null && !alarmPlayer.IsPlaying) // if alarm-player was stopped, it's as good as null ™ (you'd have to call reset(), which makes it lose all its data anyway)
+					alarmPlayer = null;
+				if (alarmPlayer == null)
+				{
+					alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					alarmPlayer.Looping = true;
+					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
+					//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
+					alarmPlayer.Start();
+				}
+
+				var volume = V.Lerp(data.settings.minVolume / 100d, data.settings.maxVolume / 100d, percentThroughTimeOverBar);
+                alarmPlayer.SetVolume((float)volume, (float)volume);
+				//alarmPlayer.VSetVolume(V.Lerp(data.settings.minVolume / 100d, data.settings.maxVolume / 100d, percentThroughTimeOverBar), data.settings.volumeFadeType);
+			}
+		}
+		void UpdateDynamicUI()
 		{
 			FindViewById<Button>(Resource.Id.Stop).Enabled = data.currentTimerExists;
 			FindViewById<Button>(Resource.Id.Pause).Enabled = data.currentTimerExists;
@@ -346,6 +377,18 @@ namespace Main
 			}
 		}
 
+		//PendingIntent GetLaunchUpdateServicePendingIntent()
+        PendingIntent GetPendingIntent_LaunchMain()
+		{
+			/*var launchUpdateService = new Intent(this, typeof(UpdateService));
+			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);*/
+
+			var launchMain = new Intent(this, typeof(MainActivity));
+			launchMain.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchMain, PendingIntentFlags.UpdateCurrent);
+        }
+
 		void StartTimer(TimerType type, int minutes)
 		{
 			if (data.currentTimerExists)
@@ -368,32 +411,36 @@ namespace Main
 		{
             data.currentTimer_paused = true;
 
+			UpdateAudio();
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
 			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
-			RefreshDynamicUI();
+            UpdateDynamicUI();
 
-			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetLaunchUpdateServicePendingIntent());
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 		void ResumeTimer()
 		{
 			data.currentTimer_paused = false;
 			data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
 
+			UpdateAudio();
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
 			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
-			RefreshDynamicUI();
-			StartRefreshDynamicUITimer();
+			UpdateDynamicUI();
+			StartCurrentTimer();
 
-			((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_timeAtLastTick + (data.currentTimer_timeLeft * SecondsPerMinute * 1000), GetLaunchUpdateServicePendingIntent());
+			if (data.currentTimer_timeLeft > 0)
+				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_timeAtLastTick + (data.currentTimer_timeLeft * 1000), GetPendingIntent_LaunchMain());
 		}
 		void StopTimer()
 		{
 			data.currentTimerExists = false;
 
-			refreshDynamicUITimer.Enabled = false;
-			RefreshDynamicUI();
+			currentTimer.Enabled = false;
+			UpdateAudio();
+			UpdateDynamicUI();
 
-			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetLaunchUpdateServicePendingIntent());
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 
 		public override bool OnCreateOptionsMenu(IMenu menu)

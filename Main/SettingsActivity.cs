@@ -223,6 +223,29 @@ namespace Main
 				};
 			}
 
+			/*{
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {Text = "Volume fade type", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.volumeFadeType.ToString();
+				row.Click += delegate
+				{
+					AlertDialog dialog = null;
+					var builder = new AlertDialog.Builder(this);
+                    builder.SetTitle("Volume fade type");
+					var keys = Enum.GetValues(typeof(VolumeScaleType)).OfType<VolumeScaleType>().ToList();
+					builder.SetSingleChoiceItems(keys.Select(a=>a.ToString()).ToArray(), keys.IndexOf(settings.volumeFadeType), (sender2, e2)=>{});
+					builder.SetPositiveButton("Ok", (sender2, e2)=>
+					{
+						ListView listView = dialog.ListView;
+						settings.volumeFadeType = (VolumeScaleType)Enum.Parse(typeof(VolumeScaleType), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
+						label.Text = settings.volumeFadeType.ToString();
+					});
+					builder.SetNegativeButton("Cancel", (sender2, e2)=>{});
+					dialog = builder.Show();
+				};
+			}*/
+
 			{
 				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent);
 				row.AddChild(new TextView(this) {Text = "Hotkeys", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));

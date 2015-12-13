@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -57,9 +57,9 @@ namespace Main
 
 			NotificationManager notificationManager = (NotificationManager)GetSystemService(NotificationService);
 			// we use a layout id because it is a unique number; we use it later to cancel.
-			notificationManager.Notify(Resource.Layout.Main, notification);*/
+			notificationManager.Notify(Resource.Layout.Main, notification);*#/
 		}
 
 		public override IBinder OnBind(Intent arg0) { return null; }
 	}
-}
+}*/
