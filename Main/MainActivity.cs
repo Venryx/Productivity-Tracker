@@ -18,6 +18,7 @@ using Java.Util;
 using File = System.IO.File;
 using Math = System.Math;
 using Orientation = Android.Widget.Orientation;
+using Stream = Android.Media.Stream;
 using Timer = System.Timers.Timer;
 
 namespace Main
@@ -121,6 +122,7 @@ namespace Main
 			
 			LoadData();
 
+			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
@@ -145,6 +147,7 @@ namespace Main
 			{
 				data.currentTimer_locked = !data.currentTimer_locked;
 				UpdateDynamicUI();
+				UpdateNotification();
 			};
 
 			/*var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
@@ -173,6 +176,7 @@ namespace Main
 			RefreshKeepScreenOn();
 			RefreshTimerStepButtons();
 			UpdateDynamicUI();
+			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost on device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
 			if (data.currentTimerExists && !data.currentTimer_paused)
@@ -300,10 +304,14 @@ namespace Main
 
 				if (alarmPlayer == null)
 				{
-					alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					//alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					alarmPlayer = new MediaPlayer();
+					alarmPlayer.SetAudioStreamType(Stream.Alarm);
+					alarmPlayer.SetDataSource(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer.Looping = true;
 					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
 					//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
+					alarmPlayer.Prepare();
 					alarmPlayer.Start();
 				}
 
@@ -412,7 +420,7 @@ namespace Main
 					notificationBuilder.SetOngoing(true);
 				}
 
-				notificationBuilder.SetContentText($"{(data.currentTimer_type == TimerType.Rest ? "Rest" : "Work")} timer running. Time left: " + timeLeftText);
+				notificationBuilder.SetContentText($"{(data.currentTimer_type == TimerType.Rest ? "Rest" : "Work")} timer {(data.currentTimer_paused ? "paused" : "running")}. Time left: " + timeLeftText);
 				var notification = notificationBuilder.Build();
 				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
 				// we use a layout id because it is a unique number; we use it later to cancel
@@ -473,6 +481,7 @@ namespace Main
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
 			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
             UpdateDynamicUI();
+			UpdateNotification();
 
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
@@ -485,6 +494,7 @@ namespace Main
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
 			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
 			UpdateDynamicUI();
+			UpdateNotification();
 			StartCurrentTimer();
 
 			if (data.currentTimer_timeLeft > 0)
@@ -497,6 +507,7 @@ namespace Main
 			currentTimer.Enabled = false;
 			UpdateAudio();
 			UpdateDynamicUI();
+			UpdateNotification();
 
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
@@ -552,5 +563,5 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 		{
 			return base.OnKeyUp(keyCode, e);
 		}*/
-		}
 	}
+}
