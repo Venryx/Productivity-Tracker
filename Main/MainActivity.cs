@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Timers;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -227,16 +228,17 @@ namespace Main
 				timerStepButton.Click += (sender, e)=> { StartTimer(TimerType.Work, timerStepLength); };
 			}
 		}
+		public bool paused;
 		protected override void OnPause()
 		{
 			base.OnPause();
-			if (currentTimer != null && currentTimer.Enabled)
-				currentTimer.Enabled = false;
+			paused = true;
 			SaveData();
 		}
 		protected override void OnResume()
 		{
 			base.OnResume();
+			paused = false;
 			if (data.currentTimerExists)
 				StartCurrentTimer();
 		}
@@ -246,7 +248,7 @@ namespace Main
 			SaveMainData();
 		}*/
 
-		Timer currentTimer;
+		public Timer currentTimer;
 		MediaPlayer alarmPlayer;
 		void StartCurrentTimer()
 		{
@@ -271,10 +273,11 @@ namespace Main
 								data.currentTimer_timeOver_withLocking++;
 						}
 					data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
-					
+
 					// update outflow (audio and dynamic-ui)
 					UpdateAudio();
 					RunOnUiThread(UpdateDynamicUI);
+					UpdateNotification();
 				};
 			}
 			currentTimer.Enabled = true;
@@ -284,7 +287,10 @@ namespace Main
 			if (!data.currentTimerExists || data.currentTimer_timeLeft > 0 || data.currentTimer_paused)
 			{
 				if (alarmPlayer != null && alarmPlayer.IsPlaying)
+				{
 					alarmPlayer.Stop();
+					alarmPlayer = null;  // if alarm-player was stopped, it's as good as null ™ (you'd have to call reset(), which makes it lose all its data anyway), so nullify it
+				}
 			}
 			else
 			{
@@ -292,8 +298,6 @@ namespace Main
 				var timeOverForClipEmpty = data.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
 				var percentThroughTimeOverBar = V.Clamp(0, 1, (double)timeOver_withLocking / timeOverForClipEmpty);
 
-				if (alarmPlayer != null && !alarmPlayer.IsPlaying) // if alarm-player was stopped, it's as good as null ™ (you'd have to call reset(), which makes it lose all its data anyway)
-					alarmPlayer = null;
 				if (alarmPlayer == null)
 				{
 					alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
@@ -376,9 +380,63 @@ namespace Main
 				countdownLabel.Visibility = ViewStates.Gone;
 			}
 		}
+		Notification.Builder notificationBuilder;
+		void UpdateNotification()
+		{
+			var timeLeft = data.currentTimer_timeLeft; // in seconds
+			//var timeOver = -timeLeft; // in seconds
+			//var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
+			if (data.currentTimerExists && timeLeft > 0)
+			{
+				var minutesLeft = Math.Abs(timeLeft / SecondsPerMinute);
+				var secondsLeft = Math.Abs(timeLeft % SecondsPerMinute);
+				var timeLeftText = (timeLeft < 0 ? "-" : "") + minutesLeft + ":" + secondsLeft.ToString("D2");
+
+				if (notificationBuilder == null)
+				{
+					// the PendingIntent to launch MainActivity if the user selects this notification
+					Intent launchMain = new Intent(this, typeof(MainActivity));
+					launchMain.SetFlags(ActivityFlags.SingleTop);
+					var launchMain_pending = PendingIntent.GetActivity(this, 0, launchMain, 0);
+
+					//launchMain_pending.Send(Result.Ok);
+					//StartActivity(launchMain);
+
+					// set the icon, scrolling text and timestamp
+					notificationBuilder = new Notification.Builder(this);
+					notificationBuilder.SetContentTitle("Productivity tracker");
+					//notificationBuilder.SetContentText("Timer running. Time left: " + timeLeftText);
+					//notificationBuilder.SetSubText("[Extra info]");
+					notificationBuilder.SetSmallIcon(Resource.Drawable.Icon);
+					notificationBuilder.SetContentIntent(launchMain_pending);
+					notificationBuilder.SetOngoing(true);
+				}
+
+				notificationBuilder.SetContentText($"{(data.currentTimer_type == TimerType.Rest ? "Rest" : "Work")} timer running. Time left: " + timeLeftText);
+				var notification = notificationBuilder.Build();
+				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
+				// we use a layout id because it is a unique number; we use it later to cancel
+				notificationManager.Notify(Resource.Layout.Main, notification);
+			}
+			else // if stopped
+			{
+				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
+				notificationManager.Cancel(Resource.Layout.Main);
+				if (timeLeft == 0) // if timer just timed-out
+				{
+					var launchMain = Intent;
+					//Intent launchMain = new Intent(this, typeof(MainActivity));
+					//launchMain.SetAction(Intent.ActionMain);
+					//launchMain.AddCategory(Intent.CategoryLauncher);
+					//launchMain.SetFlags(ActivityFlags.SingleTop);
+					launchMain.SetFlags(ActivityFlags.ReorderToFront);
+					StartActivity(launchMain);
+				}
+			}
+		}
 
 		//PendingIntent GetLaunchUpdateServicePendingIntent()
-        PendingIntent GetPendingIntent_LaunchMain()
+		PendingIntent GetPendingIntent_LaunchMain()
 		{
 			/*var launchUpdateService = new Intent(this, typeof(UpdateService));
 			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
