@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Threading.Tasks;
 using System.Timers;
 using Android.App;
 using Android.Content;
@@ -123,6 +125,7 @@ namespace Main
 			LoadData();
 
 			VolumeControlStream = Stream.Alarm;
+			waker = (GetSystemService(PowerService) as PowerManager).NewWakeLock(WakeLockFlags.AcquireCausesWakeup | WakeLockFlags.ScreenDim, "TimerWentOff");
 			baseTypeface = new Button(this).Typeface;
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
@@ -251,7 +254,7 @@ namespace Main
 			base.OnStop();
 			SaveMainData();
 		}*/
-
+		
 		public Timer currentTimer;
 		MediaPlayer alarmPlayer;
 		void StartCurrentTimer()
@@ -281,7 +284,8 @@ namespace Main
 					// update outflow (audio and dynamic-ui)
 					UpdateAudio();
 					RunOnUiThread(UpdateDynamicUI);
-					UpdateNotification();
+					//UpdateNotification();
+					RunOnUiThread(UpdateNotification);
 				};
 			}
 			currentTimer.Enabled = true;
@@ -389,6 +393,7 @@ namespace Main
 			}
 		}
 		Notification.Builder notificationBuilder;
+		PowerManager.WakeLock waker;
 		void UpdateNotification()
 		{
 			var timeLeft = data.currentTimer_timeLeft; // in seconds
@@ -426,7 +431,7 @@ namespace Main
 				// we use a layout id because it is a unique number; we use it later to cancel
 				notificationManager.Notify(Resource.Layout.Main, notification);
 			}
-			else // if stopped
+			else // if stopped, or timer timed-out
 			{
 				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
 				notificationManager.Cancel(Resource.Layout.Main);
@@ -439,6 +444,11 @@ namespace Main
 					//launchMain.SetFlags(ActivityFlags.SingleTop);
 					launchMain.SetFlags(ActivityFlags.ReorderToFront);
 					StartActivity(launchMain);
+
+					// also turn on screen
+					//Window.AddFlags(WindowManagerFlags.DismissKeyguard | WindowManagerFlags.ShowWhenLocked | WindowManagerFlags.TurnScreenOn);
+					waker.Acquire();
+					waker.Release();
 				}
 			}
 		}
