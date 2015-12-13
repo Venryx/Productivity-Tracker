@@ -10,6 +10,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.OS;
+using Android.Text;
 using Java.IO;
 using Java.Lang;
 using File = System.IO.File;
@@ -24,10 +25,14 @@ namespace Main
 		public Settings settings = new Settings();
 
 		public bool currentTimerExists;
-		public long currentTimer_lastResumeTime = -1;
-		public int currentTimer_timeLeftAtLastPause;
-		public bool currentTimer_paused;
 		public TimerType currentTimer_type;
+		/// <summary>Time till timer 'runs out' to zero, in seconds. (negative if past timeout, causing alarm volume to progressively increase)</summary>
+		public int currentTimer_timeLeft;
+		public int currentTimer_timeOver_withLocking; // 'time over' counter that will say lower than the actual, if locking was used; used for time-over progress-bar
+		/// <summary>Time since standard-base, in milliseconds.</summary>
+		public long currentTimer_timeAtLastTick;
+		public bool currentTimer_paused;
+		public bool currentTimer_locked;
 	}
 	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
 	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class Settings
@@ -46,6 +51,8 @@ namespace Main
 		public int timeToMaxVolume = 10;
 		
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
+
+		public bool fastMode;
 	}
 	public enum VKey
 	{
@@ -94,9 +101,9 @@ namespace Main
 			File.WriteAllText(file.FullName, vdf);
 		}
 
-		//const int secondsPerMinute = 60;
-		const int secondsPerMinute = 1; // for testing
+		int SecondsPerMinute=>data.settings.fastMode ? 1 : 60;
 
+		Typeface baseTypeface;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
 		//TextView countdownLabel;
@@ -106,9 +113,10 @@ namespace Main
 			main = this;
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
-
+			
 			LoadData();
 
+			baseTypeface = new Button(this).Typeface;
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
 
@@ -128,6 +136,11 @@ namespace Main
 			countdownLabel = overlayHolder.AddChild(new Button(this) {TextSize = 30, Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(230, 110));
 			countdownLabel.SetPadding(0, 0, 0, 0);
 			countdownLabel.Text = "10:10";
+			countdownLabel.Click += delegate
+			{
+				data.currentTimer_locked = !data.currentTimer_locked;
+				RefreshDynamicUI();
+			};
 
 			/*var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
 			{
@@ -159,6 +172,22 @@ namespace Main
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
 			if (data.currentTimerExists && !data.currentTimer_paused)
 			{
+				// reduce time-left by no. of seconds since last actual tick (simulate the ticks that should have occurred while program wasn't running)
+				var currentTime = JavaSystem.CurrentTimeMillis();
+                var timeSinceLastTick = currentTime - data.currentTimer_timeAtLastTick;
+				if (data.currentTimer_timeLeft > 0) // if time-out hasn't occurred yet
+				{
+					if (!data.currentTimer_locked)
+						data.currentTimer_timeLeft -= (int)(timeSinceLastTick / 1000);
+				}
+				else
+				{
+					data.currentTimer_timeLeft -= (int)(timeSinceLastTick / 1000);
+					if (!data.currentTimer_locked)
+						data.currentTimer_timeOver_withLocking++;
+				}
+				//data.currentTimer_timeAtLastTick = currentTime;
+
 				PauseTimer();
 				ResumeTimer();
 			}
@@ -204,7 +233,7 @@ namespace Main
 		protected override void OnResume()
 		{
 			base.OnResume();
-			if (data.currentTimer_lastResumeTime != -1)
+			if (data.currentTimerExists)
 				StartRefreshDynamicUITimer();
 		}
 		/*protected override void OnStop()
@@ -228,7 +257,23 @@ namespace Main
 				refreshDynamicUITimer = new Timer(1000);
 				//refreshDynamicUITimer.Elapsed += delegate { RefreshDynamicUI(); };
 				//refreshDynamicUITimer.Elapsed += delegate { new Handler().Post(RefreshDynamicUI); };
-				refreshDynamicUITimer.Elapsed += delegate { RunOnUiThread(RefreshDynamicUI); };
+				refreshDynamicUITimer.Elapsed += delegate
+				{
+					if (!data.currentTimer_paused)
+						if (data.currentTimer_timeLeft > 0) // if time-out hasn't occurred yet
+						{
+							if (!data.currentTimer_locked)
+								data.currentTimer_timeLeft--;
+						}
+						else
+						{
+							data.currentTimer_timeLeft--;
+							if (!data.currentTimer_locked)
+								data.currentTimer_timeOver_withLocking++;
+						}
+					data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
+					RunOnUiThread(RefreshDynamicUI);
+				};
 			}
 			refreshDynamicUITimer.Enabled = true;
 		}
@@ -247,15 +292,16 @@ namespace Main
 			if (data.currentTimerExists)
 			{
 				//if (!data.currentTimer_paused)
-				var timeLeft = data.currentTimer_paused ? data.currentTimer_timeLeftAtLastPause : data.currentTimer_timeLeftAtLastPause - (int)(JavaSystem.CurrentTimeMillis() - data.currentTimer_lastResumeTime);
-				var timeOver = -timeLeft;
+				var timeLeft = data.currentTimer_timeLeft; // in seconds
+				//var timeOver = -timeLeft; // in seconds
+				var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
 
-				var timeLeftForClipFull = (data.settings.numberOfTimerSteps * data.settings.timeIncrementForTimerSteps) * secondsPerMinute * 1000;
+				var timeLeftForClipFull = data.settings.numberOfTimerSteps * data.settings.timeIncrementForTimerSteps * SecondsPerMinute; // in seconds
 				var timeLeft_clipPercent = V.Clamp(0, 1, (double)timeLeft / timeLeftForClipFull);
 				timeLeftBar_clip.SetLevel((int)(10000 * timeLeft_clipPercent));
 
-				var timeOverForClipEmpty = data.settings.timeToMaxVolume * secondsPerMinute * 1000;
-				var timeOver_clipPercent = V.Clamp(0, 1, 1 - ((double)timeOver / timeOverForClipEmpty));
+				var timeOverForClipEmpty = data.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var timeOver_clipPercent = V.Clamp(0, 1, 1 - ((double)timeOver_withLocking / timeOverForClipEmpty));
 				timeOverBar_clip.SetLevel((int)(10000 * timeOver_clipPercent));
 
 				if (timeLeft >= 0) // if still in time-left panel
@@ -276,10 +322,20 @@ namespace Main
 					layoutParams.TopMargin = timeOverBar_center_y - (countdownLabel.Height / 2);
 					countdownLabel.LayoutParameters = layoutParams;
 				}
-				var timeLeft_inSeconds = (int)Math.Round(timeLeft / 1000d);
-                var minutesLeft = timeLeft_inSeconds / secondsPerMinute;
-				var secondsLeft = timeLeft_inSeconds % secondsPerMinute;
-				countdownLabel.Text = minutesLeft + ":" + secondsLeft.ToString("D2");
+                var minutesLeft = Math.Abs(timeLeft / SecondsPerMinute);
+				var secondsLeft = Math.Abs(timeLeft % SecondsPerMinute);
+				countdownLabel.Text = (timeLeft < 0 ? "-" : "") + minutesLeft + ":" + secondsLeft.ToString("D2");
+				/*var countdownText = minutesLeft + ":" + secondsLeft.ToString("D2");
+				if (data.currentTimer_locked)
+				{
+					//countdownLabel.TextFormatted = Html.FromHtml("<u>" + countdownText + "</u>");
+					countdownLabel.TextFormatted = new SpannedString(Html.FromHtml("<u>" + countdownText + "</u>"));
+					//countdownLabel.TextFormatted = new SpannableString().AddSpan(new Span { Text = countdownText, FontAttributes = FontAttributes.Underlined }, 0, 1, SpanTypes.Composing);
+				}
+				else
+					countdownLabel.Text = countdownText;*/
+				
+                countdownLabel.SetTypeface(baseTypeface, data.currentTimer_locked ? TypefaceStyle.BoldItalic : TypefaceStyle.Normal);
 				countdownLabel.Visibility = ViewStates.Visible;
 			}
 			else // if stopped
@@ -295,11 +351,13 @@ namespace Main
 			if (data.currentTimerExists)
 				StopTimer();
 			data.currentTimerExists = true;
-            data.currentTimer_lastResumeTime = JavaSystem.CurrentTimeMillis();
-			data.currentTimer_timeLeftAtLastPause = minutes * secondsPerMinute * 1000;
-            data.currentTimer_type = type;
-
+			data.currentTimer_type = type;
+			data.currentTimer_timeLeft = minutes * SecondsPerMinute;
+			data.currentTimer_timeOver_withLocking = 0;
+			//data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
 			//data.currentTimer_paused = false;
+			data.currentTimer_locked = false;
+
 			//RefreshDynamicUI();
 			//StartRefreshDynamicUITimer();
 			//((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_lastResumeTime + data.currentTimer_timeLeft, GetLaunchUpdateServicePendingIntent());
@@ -308,8 +366,6 @@ namespace Main
 		}
 		void PauseTimer()
 		{
-			var timePassedFromLastTimerResume = (int)(JavaSystem.CurrentTimeMillis() - data.currentTimer_lastResumeTime);
-            data.currentTimer_timeLeftAtLastPause -= timePassedFromLastTimerResume;
             data.currentTimer_paused = true;
 
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
@@ -321,14 +377,14 @@ namespace Main
 		void ResumeTimer()
 		{
 			data.currentTimer_paused = false;
-			data.currentTimer_lastResumeTime = JavaSystem.CurrentTimeMillis();
+			data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
 
 			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
 			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
 			RefreshDynamicUI();
 			StartRefreshDynamicUITimer();
 
-			((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_lastResumeTime + data.currentTimer_timeLeftAtLastPause, GetLaunchUpdateServicePendingIntent());
+			((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_timeAtLastTick + (data.currentTimer_timeLeft * SecondsPerMinute * 1000), GetLaunchUpdateServicePendingIntent());
 		}
 		void StopTimer()
 		{

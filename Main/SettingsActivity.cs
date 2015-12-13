@@ -30,13 +30,14 @@ namespace Main
 			base.OnCreate(bundle);
 			//SetContentView(Resource.Layout.Settings);
 
-			var root = new LinearLayout(this) {Orientation = Orientation.Vertical};
-			SetContentView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-
+			var root = new ScrollView(this);
+			SetContentView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			var list = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+			
 			var settings = MainActivity.main.data.settings;
 
 			{
-				var row = AddRow(root, vertical: false);
+				var row = AddRow(list, vertical: false);
 				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
 				leftSide.AddChild(new TextView(this) {Text = "Keep screen on while open", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				//var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
@@ -57,8 +58,8 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(root);
-				row.AddChild(new TextView(this) {Text = "Number of timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Number of timer steps"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.numberOfTimerSteps.ToString();
 				row.Click += delegate
@@ -80,14 +81,14 @@ namespace Main
 						label.Text = settings.numberOfTimerSteps.ToString();
 						MainActivity.main.RefreshTimerStepButtons();
 					});
-					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.SetNegativeButton("Cancel", (sender, e)=>{});
 					alert.Show();
 				};
 			}
 
 			{
-				var row = AddRow(root);
-				row.AddChild(new TextView(this) {Text = "Time increment for timer steps", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Time increment for timer steps"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.timeIncrementForTimerSteps + " minutes";
 				row.Click += delegate
@@ -109,14 +110,14 @@ namespace Main
 						label.Text = settings.timeIncrementForTimerSteps + " minutes";
 						MainActivity.main.RefreshTimerStepButtons();
 					});
-					alert.SetNegativeButton("Cancel", (sender, e)=> { });
+					alert.SetNegativeButton("Cancel", (sender, e)=>{});
 					alert.Show();
 				};
 			}
 
 			{
 				//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
-				var row = AddRow(root);
+				var row = AddRow(list);
 				row.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
@@ -139,7 +140,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(root);
+				var row = AddRow(list);
 				row.AddChild(new TextView(this) {Text = "Min volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.minVolume + "%";
@@ -167,7 +168,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(root);
+				var row = AddRow(list);
 				row.AddChild(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.maxVolume + "%";
@@ -195,7 +196,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(root);
+				var row = AddRow(list);
 				row.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.timeToMaxVolume + " minutes";
@@ -223,7 +224,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(root, ViewGroup.LayoutParams.WrapContent);
+				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent);
 				row.AddChild(new TextView(this) {Text = "Hotkeys", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));
 
 				var header = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal});
@@ -313,6 +314,26 @@ namespace Main
 				};
 
 				refreshHotkeys();
+			}
+
+			{
+				var row = AddRow(list, vertical: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Fast mode"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Have each 'minute' last only a second (for testing)"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				//var rightSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				//var checkbox = rightSide.AddChild(new CheckBox(this) {Gravity = GravityFlags.Right | GravityFlags.CenterVertical, Checked = settings.keepScreenOnWhileRunning});
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.fastMode }, layoutParams);
+
+				row.Click += delegate
+				{
+					settings.fastMode = !checkbox.Checked;
+					checkbox.Checked = settings.fastMode;
+				};
 			}
 		}
 
