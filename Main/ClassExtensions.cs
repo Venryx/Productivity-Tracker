@@ -29,7 +29,35 @@ public static class ClassExtensions
 	}
 
 	// double
+	public static double FloorToMultipleOf(this double s, double val) { return Math.Floor(s / val) * val; }
+	public static double RoundToMultipleOf(this double s, double val) { return Math.Round(s / val) * val; }
+	public static double CeilingToMultipleOf(this double s, double val) { return Math.Ceiling(s / val) * val; }
+	public static double Modulus(this double s, double modulus, bool keepSignOfFirst = false, bool keepSignOfSecond = true)
+	{
+		double result = s % modulus;
+		if (keepSignOfFirst && result >= 0 != s >= 0) //result.Sign() != s.Sign())
+			result = -result;
+		else if (keepSignOfSecond && result >= 0 != modulus >= 0) //result.Sign() != modulus.Sign())
+			result = -result;
+		return result;
+	}
+	public static double DivideBy(this double s, double other, bool keepSignOfFirst = true, bool keepSignOfSecond = false)
+	{
+		double result = s / other;
+		if (keepSignOfFirst && result >= 0 != s >= 0) //result.Sign() != s.Sign())
+			result = -result;
+		else if (keepSignOfSecond && result >= 0 != other >= 0) //result.Sign() != other.Sign())
+			result = -result;
+		return result;
+	}
 	public static double ToPower(this double s, double power) { return Math.Pow(s, power); }
+	//public static bool EqualsAbout(this double s, double val) { return Math.Abs(s - val) / Math.Max(Math.Abs(s), Math.Abs(val)) <= double.Epsilon; }
+	public static bool EqualsAbout(this double s, double val, double maxDifForEquals = .000000000000001) { return Math.Abs(s - val) <= maxDifForEquals; }
+
+	// long
+	/*public static double FloorToMultipleOf(this long s, double val) { return Math.Floor(s / val) * val; }
+	public static double RoundToMultipleOf(this long s, double val) { return Math.Round(s / val) * val; }
+	public static double CeilingToMultipleOf(this long s, double val) { return Math.Ceiling(s / val) * val; }*/
 
 	// File
 	public static File GetFile(this File s, string name) { return new File(s, name); }

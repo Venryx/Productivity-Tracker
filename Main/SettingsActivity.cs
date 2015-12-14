@@ -83,6 +83,39 @@ namespace Main
 				};
 			}
 
+			AddSeparator(list, "Productivity Graph");
+			// ==========
+
+			{
+				var row = AddRow(list, addSeparator: false);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Days visible at once"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				label.Text = settings.daysVisibleAtOnce.ToString();
+				row.Click += delegate
+				{
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Days visible at once");
+
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.daysVisibleAtOnce.ToString(), Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 100});
+					seek.Progress = settings.daysVisibleAtOnce;
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress.ToString(); };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.daysVisibleAtOnce = seek.Progress;
+						label.Text = settings.daysVisibleAtOnce.ToString();
+						//MainActivity.main.RefreshProductivityGraph();
+						//MainActivity.main.RefreshProductivityGraphRowSizes();
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=>{});
+					alert.Show();
+				};
+			}
+
 			AddSeparator(list, "Timer");
 			// ==========
 

@@ -37,7 +37,7 @@ namespace Main
 		public int currentTimer_timeLeft;
 		public int currentTimer_timeOver_withLocking; // 'time over' counter that will say lower than the actual, if locking was used; used for time-over progress-bar
 		/// <summary>Time since standard-base, in milliseconds.</summary>
-		public long currentTimer_timeAtLastTick;
+		public long currentTimer_processedTimeExtent;
 		public bool currentTimer_paused;
 		public bool currentTimer_locked;
 	}
@@ -197,26 +197,10 @@ namespace Main
 			RefreshTimerStepButtons();
 			UpdateDynamicUI();
 			UpdateNotification();
-			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost on device reboot)
+			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
 			if (data.currentTimerExists && !data.currentTimer_paused)
 			{
-				// reduce time-left by no. of seconds since last actual tick (simulate the ticks that should have occurred while program wasn't running)
-				var currentTime = JavaSystem.CurrentTimeMillis();
-                var timeSinceLastTick = currentTime - data.currentTimer_timeAtLastTick;
-				if (data.currentTimer_timeLeft > 0) // if time-out hasn't occurred yet
-				{
-					if (!data.currentTimer_locked)
-						data.currentTimer_timeLeft -= (int)(timeSinceLastTick / 1000);
-				}
-				else
-				{
-					data.currentTimer_timeLeft -= (int)(timeSinceLastTick / 1000);
-					if (!data.currentTimer_locked)
-						data.currentTimer_timeOver_withLocking++;
-				}
-				//data.currentTimer_timeAtLastTick = currentTime;
-
 				PauseTimer();
 				ResumeTimer();
 			}
@@ -252,60 +236,123 @@ namespace Main
 				timerStepButton.Click += (sender, e)=> { StartTimer(TimerType.Work, timerStepLength); };
 			}
 		}
-		public bool paused;
 		protected override void OnPause()
 		{
 			base.OnPause();
-			paused = true;
+			//if (currentTimer != null)
+			//	currentTimer.Enabled = false;
 			SaveData();
 		}
-		protected override void OnResume()
+		/*protected override void OnResume()
 		{
 			base.OnResume();
-			paused = false;
-			if (data.currentTimerExists)
-				StartCurrentTimer();
-		}
+			//ProcessTimeUpToNowAndUpdateOutflow(); // update instantly (instead of waiting for next timer-tick)
+			//if (currentTimer != null)
+			//	currentTimer.Enabled = true;
+		}*/
 		/*protected override void OnStop()
 		{
 			base.OnStop();
 			SaveMainData();
 		}*/
 		
-		public Timer currentTimer;
-		MediaPlayer alarmPlayer;
-		void StartCurrentTimer()
+		//PendingIntent GetLaunchUpdateServicePendingIntent()
+		PendingIntent GetPendingIntent_LaunchMain()
 		{
+			/*var launchUpdateService = new Intent(this, typeof(UpdateService));
+			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);*/
+
+			var launchMain = new Intent(this, typeof(MainActivity));
+			launchMain.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchMain, PendingIntentFlags.UpdateCurrent);
+        }
+
+		void StartTimer(TimerType type, int minutes)
+		{
+			// data
+			if (data.currentTimerExists)
+				StopTimer();
+			data.currentTimerExists = true;
+			data.currentTimer_type = type;
+			data.currentTimer_timeLeft = minutes * SecondsPerMinute;
+			data.currentTimer_timeOver_withLocking = 0;
+			//data.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
+			//data.currentTimer_paused = false;
+			data.currentTimer_locked = false;
+
+			// actors
+			ResumeTimer();
+		}
+		void PauseTimer()
+		{
+			// data
+            data.currentTimer_paused = true;
+			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
+			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
+
+			// actors
+			ProcessTimeUpToNowAndUpdateOutflow();
+			if (currentTimer != null) // (for if called from OnCreate method)
+				currentTimer.Enabled = false;
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
+		}
+		void ResumeTimer()
+		{
+			// data
+			data.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
+			data.currentTimer_paused = false;
+			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
+			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
+
+			// actors
+			ProcessTimeUpToNowAndUpdateOutflow();
 			if (currentTimer == null)
 			{
 				currentTimer = new Timer(1000);
-				//refreshDynamicUITimer.Elapsed += delegate { RefreshDynamicUI(); };
-				//refreshDynamicUITimer.Elapsed += delegate { new Handler().Post(RefreshDynamicUI); };
-				currentTimer.Elapsed += delegate
-				{
-					// update data
-					if (!data.currentTimer_paused)
-						if (data.currentTimer_timeLeft > 0) // if time-out hasn't occurred yet
-						{
-							if (!data.currentTimer_locked)
-								data.currentTimer_timeLeft--;
-						}
-						else
-						{
-							data.currentTimer_timeLeft--;
-							if (!data.currentTimer_locked)
-								data.currentTimer_timeOver_withLocking++;
-						}
-					data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
-
-					// update outflow (audio and dynamic-ui)
-					UpdateAudio();
-					RunOnUiThread(UpdateDynamicUI);
-					//UpdateNotification();
-					RunOnUiThread(UpdateNotification);
-				};
+				currentTimer.Elapsed += delegate { ProcessTimeUpToNowAndUpdateOutflow(); };
 			}
 			currentTimer.Enabled = true;
+			if (data.currentTimer_timeLeft > 0)
+				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_processedTimeExtent + (data.currentTimer_timeLeft * 1000), GetPendingIntent_LaunchMain());
+		}
+		void StopTimer()
+		{
+			// data
+			data.currentTimerExists = false;
+
+			// actors
+			ProcessTimeUpToNowAndUpdateOutflow();
+			currentTimer.Enabled = false;
+			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
+		}
+
+		public Timer currentTimer;
+		MediaPlayer alarmPlayer;
+		void ProcessTimeUpToNowAndUpdateOutflow()
+		{
+			CurrentTimer_ProcessTimeUpToNow();
+			UpdateAudio();
+			RunOnUiThread(UpdateDynamicUI);
+			RunOnUiThread(UpdateNotification);
+		}
+		void CurrentTimer_ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
+		{
+			//var timeToProcess = (int)((JavaSystem.CurrentTimeMillis() - data.currentTimer_processedTimeExtent) / 1000); // in seconds
+			var timeToProcess = (int)Math.Round((JavaSystem.CurrentTimeMillis() - data.currentTimer_processedTimeExtent) / 1000d); // in seconds
+
+			if (!data.currentTimer_paused && (!data.currentTimer_locked || data.currentTimer_timeLeft <= 0))
+			{
+				var timeToProcess_partBeforeTimeout = Math.Min(Math.Max(0, data.currentTimer_timeLeft), timeToProcess);
+				var timeToProcess_partAfterTimeout = timeToProcess - timeToProcess_partBeforeTimeout;
+
+				data.currentTimer_timeLeft -= timeToProcess;
+				if (!data.currentTimer_locked)
+					data.currentTimer_timeOver_withLocking += timeToProcess_partAfterTimeout;
+			}
+
+			//data.currentTimer_timeAtLastTick = currentTime;
+			data.currentTimer_processedTimeExtent += timeToProcess * 1000;
 		}
 		void UpdateAudio()
 		{
@@ -468,75 +515,6 @@ namespace Main
 					waker.Release();
 				}
 			}
-		}
-
-		//PendingIntent GetLaunchUpdateServicePendingIntent()
-		PendingIntent GetPendingIntent_LaunchMain()
-		{
-			/*var launchUpdateService = new Intent(this, typeof(UpdateService));
-			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
-			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);*/
-
-			var launchMain = new Intent(this, typeof(MainActivity));
-			launchMain.AddFlags(ActivityFlags.SingleTop);
-			return PendingIntent.GetService(this, 0, launchMain, PendingIntentFlags.UpdateCurrent);
-        }
-
-		void StartTimer(TimerType type, int minutes)
-		{
-			if (data.currentTimerExists)
-				StopTimer();
-			data.currentTimerExists = true;
-			data.currentTimer_type = type;
-			data.currentTimer_timeLeft = minutes * SecondsPerMinute;
-			data.currentTimer_timeOver_withLocking = 0;
-			//data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
-			//data.currentTimer_paused = false;
-			data.currentTimer_locked = false;
-
-			//RefreshDynamicUI();
-			//StartRefreshDynamicUITimer();
-			//((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_lastResumeTime + data.currentTimer_timeLeft, GetLaunchUpdateServicePendingIntent());
-
-			ResumeTimer();
-		}
-		void PauseTimer()
-		{
-            data.currentTimer_paused = true;
-
-			UpdateAudio();
-			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
-			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
-            UpdateDynamicUI();
-			UpdateNotification();
-
-			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
-		}
-		void ResumeTimer()
-		{
-			data.currentTimer_paused = false;
-			data.currentTimer_timeAtLastTick = JavaSystem.CurrentTimeMillis();
-
-			UpdateAudio();
-			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
-			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
-			UpdateDynamicUI();
-			UpdateNotification();
-			StartCurrentTimer();
-
-			if (data.currentTimer_timeLeft > 0)
-				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_timeAtLastTick + (data.currentTimer_timeLeft * 1000), GetPendingIntent_LaunchMain());
-		}
-		void StopTimer()
-		{
-			data.currentTimerExists = false;
-
-			currentTimer.Enabled = false;
-			UpdateAudio();
-			UpdateDynamicUI();
-			UpdateNotification();
-
-			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 
 		public override bool OnCreateOptionsMenu(IMenu menu)
