@@ -46,21 +46,38 @@ namespace Main
 	{
 		[VDFPreDeserialize] public Settings() {}
 
+		// general
+		// ==========
+
 		public bool keepScreenOnWhileOpen = true;
+		public bool fastMode;
+
+		// productivity graph
+		// ==========
+
+		public int daysVisibleAtOnce = 7;
+
+		// timer
+		// ==========
+
 		public int numberOfTimerSteps = 11;
 		public int timeIncrementForTimerSteps = 10;
 		//public bool addCustomButton;
 		//public bool addAlarmButton;
+
+		// alarm
+		// ==========
 
 		public string alarmSoundFilePath;
 		public int minVolume;
 		public int maxVolume = 50;
 		public int timeToMaxVolume = 10;
 		//public VolumeScaleType volumeFadeType = VolumeScaleType.Loudness;
+
+		// others
+		// ==========
 		
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
-
-		public bool fastMode;
 	}
 	public enum VKey
 	{
@@ -111,7 +128,7 @@ namespace Main
 
 		int SecondsPerMinute=>data.settings.fastMode ? 1 : 60;
 
-		Typeface baseTypeface;
+		public Typeface baseTypeface;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
 		//TextView countdownLabel;

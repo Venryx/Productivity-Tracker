@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using Android.App;
 using Android.Content;
+using Android.Graphics;
+using Android.Graphics.Drawables;
+using Android.Graphics.Drawables.Shapes;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -36,6 +39,9 @@ namespace Main
 			
 			var settings = MainActivity.main.data.settings;
 
+			AddSeparator(list, "General");
+			// ==========
+
 			{
 				var row = AddRow(list, vertical: false);
 				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
@@ -56,6 +62,29 @@ namespace Main
 					MainActivity.main.RefreshKeepScreenOn();
 				};
 			}
+
+			{
+				var row = AddRow(list, vertical: false, addSeparator: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Fast mode"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Have each 'minute' last only a second (for testing)"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				//var rightSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				//var checkbox = rightSide.AddChild(new CheckBox(this) {Gravity = GravityFlags.Right | GravityFlags.CenterVertical, Checked = settings.keepScreenOnWhileRunning});
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.fastMode }, layoutParams);
+
+				row.Click += delegate
+				{
+					settings.fastMode = !checkbox.Checked;
+					checkbox.Checked = settings.fastMode;
+				};
+			}
+
+			AddSeparator(list, "Timer");
+			// ==========
 
 			{
 				var row = AddRow(list);
@@ -87,7 +116,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(list);
+				var row = AddRow(list, addSeparator: false);
 				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Time increment for timer steps"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.timeIncrementForTimerSteps + " minutes";
@@ -114,6 +143,9 @@ namespace Main
 					alert.Show();
 				};
 			}
+
+			AddSeparator(list, "Alarm");
+			// ==========
 
 			{
 				//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
@@ -196,7 +228,7 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(list);
+				var row = AddRow(list, addSeparator: false);
 				row.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.timeToMaxVolume + " minutes";
@@ -246,9 +278,12 @@ namespace Main
 				};
 			}*/
 
+			AddSeparator(list, "Hotkeys");
+			// ==========
+
 			{
-				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent);
-				row.AddChild(new TextView(this) {Text = "Hotkeys", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));
+				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent, addSeparator: false);
+				//row.AddChild(new TextView(this) {Text = "Hotkeys", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));
 
 				var header = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal});
 				header.AddChild(new TextView(this) {Text = "Key"}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .45f));
@@ -258,8 +293,10 @@ namespace Main
 				Action refreshHotkeys = null;
 				refreshHotkeys = ()=>
 				{
-					while (row.ChildCount > 3) // while there are controls other than the title, header, and add-hotkey-button (i.e. when there are old hotkey entry controls)
-						row.RemoveViewAt(2);
+					//while (row.ChildCount > 3) // while there are controls other than the title, header, and add-hotkey-button (i.e. when there are old hotkey entry controls)
+					//	row.RemoveViewAt(2);
+					while (row.ChildCount > 2) // while there are controls other than the header and add-hotkey-button (i.e. when there are old hotkey entry controls)
+						row.RemoveViewAt(1);
 					foreach (Hotkey hotkey in settings.hotkeys)
 					{
 						var row2 = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, null, row.ChildCount - 1);
@@ -338,26 +375,6 @@ namespace Main
 
 				refreshHotkeys();
 			}
-
-			{
-				var row = AddRow(list, vertical: false);
-				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Fast mode"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Have each 'minute' last only a second (for testing)"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				//var rightSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				//var checkbox = rightSide.AddChild(new CheckBox(this) {Gravity = GravityFlags.Right | GravityFlags.CenterVertical, Checked = settings.keepScreenOnWhileRunning});
-				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-				layoutParams.AddRule(LayoutRules.AlignParentRight);
-				layoutParams.AddRule(LayoutRules.CenterVertical);
-				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.fastMode }, layoutParams);
-
-				row.Click += delegate
-				{
-					settings.fastMode = !checkbox.Checked;
-					checkbox.Checked = settings.fastMode;
-				};
-			}
 		}
 
 		protected override void OnPause()
@@ -367,12 +384,38 @@ namespace Main
 			MainActivity.main.SaveData();
 		}
 
-		LinearLayout AddRow(LinearLayout root, int height = 110, bool vertical = true)
+		LinearLayout AddSeparator(LinearLayout root, string text = null)
+		{
+			var result = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 60));
+			//result.SetHorizontalGravity(GravityFlags.Center);
+			result.SetPadding(15, 15, 15, 15);
+
+			if (text != null)
+			{
+				var label = result.AddChild(new TextView(this) {TextSize = largeTextSize, Text = text});
+				label.SetPadding(10, 10, 10, 10);
+				label.SetTypeface(MainActivity.main.baseTypeface, TypefaceStyle.Bold);
+			}
+
+			var rect = new RectShape();
+            var shape = new ShapeDrawable(rect);
+			shape.Paint.Color = new Color(255, 255, 255, 200);
+			shape.Paint.SetStyle(Paint.Style.Stroke);
+			shape.Paint.StrokeWidth = 3;
+			//shape.SetPadding(3, 3, 3, 3);
+			//result.Background = shape;
+			result.Background = new InsetDrawable(shape, -3, -3, -3, 3);
+			//result.SetPadding(3, 3, 3, 3);
+
+			return result;
+		}
+		LinearLayout AddRow(LinearLayout root, int height = 110, bool vertical = true, bool addSeparator = true)
 		{
 			var result = root.AddChild(new LinearLayout(this) {Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
 			result.SetPadding(15, 15, 15, 15);
 			//if (root.ChildCount > 1)
-			result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
+			if (addSeparator)
+				result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
 			return result;
 		}
 	}
