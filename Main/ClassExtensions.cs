@@ -59,11 +59,24 @@ public static class ClassExtensions
 	public static double RoundToMultipleOf(this long s, double val) { return Math.Round(s / val) * val; }
 	public static double CeilingToMultipleOf(this long s, double val) { return Math.Ceiling(s / val) * val; }*/
 
+	// string
+	public static string TrimStart(this string s, int length) { return s.Substring(length); }
+	public static string TrimEnd(this string s, int length) { return s.Substring(0, s.Length - length); }
+
+	// DateTime
+	public static long Ticks_Milliseconds(this DateTime s) { return s.Ticks / TimeSpan.TicksPerMillisecond; }
+	public static string ToString_U_Date(this DateTime s)
+	{
+		var result = s.ToString("u");
+		result = result.Substring(0, result.IndexOf(" "));
+		return result;
+	}
+
 	// File
 	public static File GetFile(this File s, string name) { return new File(s, name); }
 
 	// IEnumerable<T>
-	public static string JoinUsing(this IEnumerable list, string separator) { return String.Join(separator, list.Cast<string>().ToArray()); }
+	public static string JoinUsing(this IEnumerable list, string separator) { return string.Join(separator, list.OfType<object>().ToArray()); }
 
 	// MatchCollection
 	public static List<Match> ToList(this MatchCollection obj)

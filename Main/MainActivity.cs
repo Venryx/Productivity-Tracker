@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
 using Android.App;
+using Android.App.Admin;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.Hardware.Display;
 using Android.Media;
 using Android.Runtime;
 using Android.Views;
@@ -17,116 +20,105 @@ using Android.Text;
 using Java.IO;
 using Java.Lang;
 using Java.Util;
-using File = System.IO.File;
 using Math = System.Math;
+using File = System.IO.File;
+using Timer = System.Timers.Timer;
 using Orientation = Android.Widget.Orientation;
 using Stream = Android.Media.Stream;
-using Timer = System.Timers.Timer;
 
 namespace Main
 {
-	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class MainData
-	{
-		[VDFPreDeserialize] public MainData() {} // makes-so in-code defaults are used, for props that aren't set in the VDF
-
-		public Settings settings = new Settings();
-
-		public bool currentTimerExists;
-		public TimerType currentTimer_type;
-		/// <summary>Time till timer 'runs out' to zero, in seconds. (negative if past timeout, causing alarm volume to progressively increase)</summary>
-		public int currentTimer_timeLeft;
-		public int currentTimer_timeOver_withLocking; // 'time over' counter that will say lower than the actual, if locking was used; used for time-over progress-bar
-		/// <summary>Time since standard-base, in milliseconds.</summary>
-		public long currentTimer_processedTimeExtent;
-		public bool currentTimer_paused;
-		public bool currentTimer_locked;
-	}
-	// maybe todo: make-so defaults are in a packaged VDF file/text-block, rather than being set here in the class
-	[VDFType(propIncludeRegexL1: "", popOutL1: true)] public class Settings
-	{
-		[VDFPreDeserialize] public Settings() {}
-
-		// general
-		// ==========
-
-		public bool keepScreenOnWhileOpen = true;
-		public bool fastMode;
-
-		// productivity graph
-		// ==========
-
-		public int daysVisibleAtOnce = 7;
-
-		// timer
-		// ==========
-
-		public int numberOfTimerSteps = 11;
-		public int timeIncrementForTimerSteps = 10;
-		//public bool addCustomButton;
-		//public bool addAlarmButton;
-
-		// alarm
-		// ==========
-
-		public string alarmSoundFilePath;
-		public int minVolume;
-		public int maxVolume = 50;
-		public int timeToMaxVolume = 10;
-		//public VolumeScaleType volumeFadeType = VolumeScaleType.Loudness;
-
-		// others
-		// ==========
-		
-		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
-	}
-	public enum VKey
-	{
-		None,
-		VolumeUp,
-		VolumeDown
-	}
-	public enum HotkeyAction
-	{
-		None,
-		StartTimer_Rest,
-		StartTimer_Work
-	}
-	[VDFType(propIncludeRegexL1: "")] public class Hotkey
-	{
-		public VKey key;
-		public HotkeyAction action;
-		public int action_startTimer_length = 10;
-	}
-
-	public enum TimerType
-	{
-		Rest,
-		Work
-	}
-
 	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
 	public class MainActivity : Activity
 	{
 		public static MainActivity main;
+		static MainActivity() { VDFExtensions.Init(); }
 
-		public MainData data = new MainData();
-		public void LoadData()
+		DirectoryInfo RootFolder=>new DirectoryInfo("/storage/sdcard0/Productivity Tracker/");
+		public MainData mainData = new MainData();
+		public void LoadMainData()
 		{
-			var file = new FileInfo("/storage/sdcard0/Productivity Tracker/MainData.vdf");
+			var file = RootFolder.GetFile("MainData.vdf");
 			if (file.Exists)
 			{
 				var vdf = File.ReadAllText(file.FullName);
-				data = VDF.Deserialize<MainData>(vdf);
+				mainData = VDF.Deserialize<MainData>(vdf);
 			}
 		}
-		public void SaveData()
+		public void SaveMainData()
 		{
-			var file = new FileInfo("/storage/sdcard0/Productivity Tracker/MainData.vdf").CreateFolders();
-			var vdf = VDF.Serialize<MainData>(data);
+			var file = RootFolder.GetFile("MainData.vdf").CreateFolders();
+			var vdf = VDF.Serialize<MainData>(mainData);
 			File.WriteAllText(file.FullName, vdf);
 		}
+		List<Day> days = new List<Day>();
+		void LoadDays(int daysBack)
+		{
+			var today = DateTime.UtcNow.Date;
+			for (var i = 0; i < daysBack; i++)
+				LoadDay(today.AddDays(-i));
+		}
+		void LoadDay(DateTime date)
+		{
+			var file = RootFolder.GetFolder("Days").GetFile(date.ToString_U_Date() + ".vdf");
+			if (!file.Exists)
+				return;
+			var vdf = File.ReadAllText(file.FullName);
+			var day = VDF.Deserialize<Day>(vdf);
+			for (var i = 0; i <= days.Count; i++)
+			{
+				// if there's still a day left to check
+				if (i < days.Count)
+				{
+					// if we've reached a day that we're not later than, insert self before that day
+					if (day.date <= days[i].date)
+					{
+						days.Insert(i, day);
+						break;
+					}
+				}
+				else // we must be later than all the other days
+				{
+					days.Add(day);
+					break;
+				}
+			}
+		}
+		void SaveDaysNeg1And0() // save yesterday's and today's data
+		{
+			SaveDay(CurrentDay); // run first, so new day created if just passed midnight
+			if (days.Count >= 2)
+				SaveDay(days[days.Count - 2]);
+		}
+		void SaveDay(Day day)
+		{
+			var vdf = VDF.Serialize<Day>(day);
+			var file = RootFolder.GetFolder("Days").GetFile(day.date.ToString_U_Date() + ".vdf").CreateFolders();
+			File.WriteAllText(file.FullName, vdf);
+		}
+		Day CurrentDay
+		{
+			get
+			{
+				var today = DateTime.UtcNow.Date;
+                if (days.Count == 0 || today > days.Last().date)
+					days.Add(new Day(today));
+				return days.Last();
+			}
+		}
+		Session CurrentSession
+		{
+			get
+			{
+				var day0 = CurrentDay; // run first, so new day created if just passed midnight
+				var dayNeg1 = days.Count >= 2 ? days[days.Count - 2] : null;
+				if (day0.sessions.Count > 0)
+					return !day0.sessions.Last().timeStopped.HasValue ? day0.sessions.Last() : null;
+				return dayNeg1 != null && dayNeg1.sessions.Count >= 1 && !dayNeg1.sessions.Last().timeStopped.HasValue ? dayNeg1.sessions.Last() : null;
+			}
+		}
 
-		int SecondsPerMinute=>data.settings.fastMode ? 1 : 60;
+		int SecondsPerMinute=>mainData.settings.fastMode ? 1 : 60;
 
 		public Typeface baseTypeface;
 		ImageView timeLeftBar;
@@ -139,10 +131,10 @@ namespace Main
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
 			
-			LoadData();
+			LoadMainData();
+			LoadDays(mainData.settings.daysVisibleAtOnce + 1);
 
 			VolumeControlStream = Stream.Alarm;
-			waker = (GetSystemService(PowerService) as PowerManager).NewWakeLock(WakeLockFlags.AcquireCausesWakeup | WakeLockFlags.ScreenDim, "TimerWentOff");
 			baseTypeface = new Button(this).Typeface;
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
@@ -165,7 +157,7 @@ namespace Main
 			countdownLabel.Text = "10:10";
 			countdownLabel.Click += delegate
 			{
-				data.currentTimer_locked = !data.currentTimer_locked;
+				CurrentSession.locked = !CurrentSession.locked;
 				UpdateDynamicUI();
 				UpdateNotification();
 			};
@@ -183,57 +175,27 @@ namespace Main
 
 			FindViewById<Button>(Resource.Id.Pause).Click += delegate
 			{
-				if (data.currentTimer_paused)
-					ResumeTimer();
+				if (CurrentSession.paused)
+					ResumeSession();
 				else
-					PauseTimer();
+					PauseSession();
 			};
-			FindViewById<Button>(Resource.Id.Stop).Click += delegate { StopTimer(); };
+			FindViewById<Button>(Resource.Id.Stop).Click += delegate { StopSession(); };
 
 			FindViewById<LinearLayout>(Resource.Id.RestButtons).AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Rest"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
 			FindViewById<LinearLayout>(Resource.Id.WorkButtons).AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Work"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-
-			RefreshKeepScreenOn();
-			RefreshTimerStepButtons();
+			
+			UpdateKeepScreenOn();
+			UpdateTimerStepButtons();
+			UpdateProductivityGraph();
 			UpdateDynamicUI();
 			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
-			if (data.currentTimerExists && !data.currentTimer_paused)
+			if (CurrentSession != null && !CurrentSession.paused)
 			{
-				PauseTimer();
-				ResumeTimer();
-			}
-		}
-		public void RefreshKeepScreenOn()
-		{
-			if (data.settings.keepScreenOnWhileOpen)
-				Window.AddFlags(WindowManagerFlags.KeepScreenOn);
-			else
-				Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
-		}
-		public void RefreshTimerStepButtons()
-		{
-			var restButtonsPanel = FindViewById<LinearLayout>(Resource.Id.RestButtons);
-			while (restButtonsPanel.ChildCount > 1)
-				restButtonsPanel.RemoveViewAt(1);
-			for (var i = 0; i < data.settings.numberOfTimerSteps; i++)
-			{
-				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
-				var timerStepLength = data.settings.timeIncrementForTimerSteps * i; // in minutes
-				timerStepButton.Text = timerStepLength.ToString();
-				timerStepButton.Click += (sender, e)=>{ StartTimer(TimerType.Rest, timerStepLength); };
-			}
-
-			var workButtonsPanel = FindViewById<LinearLayout>(Resource.Id.WorkButtons);
-			while (workButtonsPanel.ChildCount > 1)
-				workButtonsPanel.RemoveViewAt(1);
-			for (var i = 0; i < data.settings.numberOfTimerSteps; i++)
-			{
-				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
-				var timerStepLength = data.settings.timeIncrementForTimerSteps * i; // in minutes
-				timerStepButton.Text = timerStepLength.ToString();
-				timerStepButton.Click += (sender, e)=> { StartTimer(TimerType.Work, timerStepLength); };
+				PauseSession();
+				ResumeSession();
 			}
 		}
 		protected override void OnPause()
@@ -241,7 +203,8 @@ namespace Main
 			base.OnPause();
 			//if (currentTimer != null)
 			//	currentTimer.Enabled = false;
-			SaveData();
+			SaveMainData();
+			SaveDaysNeg1And0();
 		}
 		/*protected override void OnResume()
 		{
@@ -255,6 +218,42 @@ namespace Main
 			base.OnStop();
 			SaveMainData();
 		}*/
+
+		public void UpdateKeepScreenOn()
+		{
+			if (mainData.settings.keepScreenOnWhileOpen)
+				Window.AddFlags(WindowManagerFlags.KeepScreenOn);
+			else
+				Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
+		}
+		public void UpdateTimerStepButtons()
+		{
+			var restButtonsPanel = FindViewById<LinearLayout>(Resource.Id.RestButtons);
+			while (restButtonsPanel.ChildCount > 1)
+				restButtonsPanel.RemoveViewAt(1);
+			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
+			{
+				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
+				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
+				timerStepButton.Text = timerStepLength.ToString();
+				timerStepButton.Click += (sender, e)=>{ StartSession("Rest", timerStepLength); };
+			}
+
+			var workButtonsPanel = FindViewById<LinearLayout>(Resource.Id.WorkButtons);
+			while (workButtonsPanel.ChildCount > 1)
+				workButtonsPanel.RemoveViewAt(1);
+			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
+			{
+				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
+				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
+				timerStepButton.Text = timerStepLength.ToString();
+				timerStepButton.Click += (sender, e)=> { StartSession("Work", timerStepLength); };
+			}
+		}
+		void UpdateProductivityGraph()
+		{
+			// make-so
+		}
 		
 		//PendingIntent GetLaunchUpdateServicePendingIntent()
 		PendingIntent GetPendingIntent_LaunchMain()
@@ -268,95 +267,103 @@ namespace Main
 			return PendingIntent.GetService(this, 0, launchMain, PendingIntentFlags.UpdateCurrent);
         }
 
-		void StartTimer(TimerType type, int minutes)
+		void StartSession(string type, int minutes)
 		{
 			// data
-			if (data.currentTimerExists)
-				StopTimer();
-			data.currentTimerExists = true;
-			data.currentTimer_type = type;
-			data.currentTimer_timeLeft = minutes * SecondsPerMinute;
-			data.currentTimer_timeOver_withLocking = 0;
-			//data.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
-			//data.currentTimer_paused = false;
-			data.currentTimer_locked = false;
+			if (CurrentSession != null)
+				StopSession();
+			var session = new Session();
+			session.type = type;
+			session.timeStarted = DateTime.UtcNow;
+			session.timeLeft = minutes * SecondsPerMinute;
+			//session.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
+			CurrentDay.sessions.Add(session);
 
 			// actors
-			ResumeTimer();
+			ResumeSession();
 		}
-		void PauseTimer()
+		// make-so: Pause and Resume methods add entries to the Session.timePauses list; break point
+		void PauseSession()
 		{
 			// data
-            data.currentTimer_paused = true;
-			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
-			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
+            CurrentSession.paused = true;
+			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
+			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
+			ProcessTimeUpToNow();
 
 			// actors
-			ProcessTimeUpToNowAndUpdateOutflow();
+			UpdateOutflow();
 			if (currentTimer != null) // (for if called from OnCreate method)
 				currentTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
-		void ResumeTimer()
+		void ResumeSession()
 		{
 			// data
-			data.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
-			data.currentTimer_paused = false;
-			timeLeftBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
-			timeOverBar.Background = data.currentTimer_type == TimerType.Rest ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
+			CurrentSession.processedTimeExtent = DateTime.UtcNow;
+			CurrentSession.paused = false;
+			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
+			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
+			ProcessTimeUpToNow();
 
 			// actors
-			ProcessTimeUpToNowAndUpdateOutflow();
+			UpdateOutflow();
 			if (currentTimer == null)
 			{
 				currentTimer = new Timer(1000);
-				currentTimer.Elapsed += delegate { ProcessTimeUpToNowAndUpdateOutflow(); };
+				currentTimer.Elapsed += delegate
+				{
+					ProcessTimeUpToNow();
+					UpdateOutflow();
+				};
 			}
 			currentTimer.Enabled = true;
-			if (data.currentTimer_timeLeft > 0)
-				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, data.currentTimer_processedTimeExtent + (data.currentTimer_timeLeft * 1000), GetPendingIntent_LaunchMain());
+			if (CurrentSession.timeLeft > 0)
+				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, CurrentSession.processedTimeExtent.Ticks_Milliseconds() + (CurrentSession.timeLeft * 1000), GetPendingIntent_LaunchMain());
 		}
-		void StopTimer()
+		void StopSession()
 		{
 			// data
-			data.currentTimerExists = false;
+			//ProcessTimeUpToNow();
+			CurrentSession.timeStopped = DateTime.UtcNow;
 
 			// actors
-			ProcessTimeUpToNowAndUpdateOutflow();
+			UpdateOutflow();
 			currentTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 
 		public Timer currentTimer;
 		MediaPlayer alarmPlayer;
-		void ProcessTimeUpToNowAndUpdateOutflow()
+		void ProcessTimeUpToNow() { CurrentTimer_ProcessTimeUpToNow(); }
+		
+		void CurrentTimer_ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
 		{
-			CurrentTimer_ProcessTimeUpToNow();
+			//var timeToProcess = (int)(DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds; // in seconds
+			var timeToProcess = (int)Math.Round((DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds); // in seconds
+
+			if (!CurrentSession.paused && (!CurrentSession.locked || CurrentSession.timeLeft <= 0))
+			{
+				var timeToProcess_partBeforeTimeout = Math.Min(Math.Max(0, CurrentSession.timeLeft), timeToProcess);
+				var timeToProcess_partAfterTimeout = timeToProcess - timeToProcess_partBeforeTimeout;
+
+				CurrentSession.timeLeft -= timeToProcess;
+				if (!CurrentSession.locked)
+					CurrentSession.timeOver_withLocking += timeToProcess_partAfterTimeout;
+			}
+
+			//data.currentTimer_timeAtLastTick = currentTime;
+			CurrentSession.processedTimeExtent = CurrentSession.processedTimeExtent.AddSeconds(timeToProcess);
+		}
+		void UpdateOutflow()
+		{
 			UpdateAudio();
 			RunOnUiThread(UpdateDynamicUI);
 			RunOnUiThread(UpdateNotification);
 		}
-		void CurrentTimer_ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
-		{
-			//var timeToProcess = (int)((JavaSystem.CurrentTimeMillis() - data.currentTimer_processedTimeExtent) / 1000); // in seconds
-			var timeToProcess = (int)Math.Round((JavaSystem.CurrentTimeMillis() - data.currentTimer_processedTimeExtent) / 1000d); // in seconds
-
-			if (!data.currentTimer_paused && (!data.currentTimer_locked || data.currentTimer_timeLeft <= 0))
-			{
-				var timeToProcess_partBeforeTimeout = Math.Min(Math.Max(0, data.currentTimer_timeLeft), timeToProcess);
-				var timeToProcess_partAfterTimeout = timeToProcess - timeToProcess_partBeforeTimeout;
-
-				data.currentTimer_timeLeft -= timeToProcess;
-				if (!data.currentTimer_locked)
-					data.currentTimer_timeOver_withLocking += timeToProcess_partAfterTimeout;
-			}
-
-			//data.currentTimer_timeAtLastTick = currentTime;
-			data.currentTimer_processedTimeExtent += timeToProcess * 1000;
-		}
 		void UpdateAudio()
 		{
-			if (!data.currentTimerExists || data.currentTimer_timeLeft > 0 || data.currentTimer_paused)
+			if (CurrentSession == null || CurrentSession.timeLeft > 0 || CurrentSession.paused)
 			{
 				if (alarmPlayer != null && alarmPlayer.IsPlaying)
 				{
@@ -366,8 +373,8 @@ namespace Main
 			}
 			else
 			{
-				var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
-				var timeOverForClipEmpty = data.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var timeOver_withLocking = CurrentSession.timeOver_withLocking; // in seconds
+				var timeOverForClipEmpty = mainData.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
 				var percentThroughTimeOverBar = V.Clamp(0, 1, (double)timeOver_withLocking / timeOverForClipEmpty);
 
 				if (alarmPlayer == null)
@@ -375,7 +382,7 @@ namespace Main
 					//alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer = new MediaPlayer();
 					alarmPlayer.SetAudioStreamType(Stream.Alarm);
-					alarmPlayer.SetDataSource(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					alarmPlayer.SetDataSource(this, new FileInfo(mainData.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer.Looping = true;
 					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
 					//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
@@ -383,35 +390,35 @@ namespace Main
 					alarmPlayer.Start();
 				}
 
-				var volume = V.Lerp(data.settings.minVolume / 100d, data.settings.maxVolume / 100d, percentThroughTimeOverBar);
+				var volume = V.Lerp(mainData.settings.minVolume / 100d, mainData.settings.maxVolume / 100d, percentThroughTimeOverBar);
                 alarmPlayer.SetVolume((float)volume, (float)volume);
 				//alarmPlayer.VSetVolume(V.Lerp(data.settings.minVolume / 100d, data.settings.maxVolume / 100d, percentThroughTimeOverBar), data.settings.volumeFadeType);
 			}
 		}
 		void UpdateDynamicUI()
 		{
-			FindViewById<Button>(Resource.Id.Stop).Enabled = data.currentTimerExists;
-			FindViewById<Button>(Resource.Id.Pause).Enabled = data.currentTimerExists;
-			FindViewById<Button>(Resource.Id.Pause).Text = data.currentTimerExists && data.currentTimer_paused ? "Resume" : "Pause";
-			countdownLabel.Enabled = !data.currentTimer_paused;
+			FindViewById<Button>(Resource.Id.Stop).Enabled = CurrentSession != null;
+			FindViewById<Button>(Resource.Id.Pause).Enabled = CurrentSession != null;
+			FindViewById<Button>(Resource.Id.Pause).Text = CurrentSession != null && CurrentSession.paused ? "Resume" : "Pause";
+			countdownLabel.Enabled = CurrentSession != null && !CurrentSession.paused;
 			
 			var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Background;
 			//var timeLeftBar_clipPercent = (double)timeLeftBar_clip.Level / 10000;
             var timeOverBar_clip = (ClipDrawable)timeOverBar.Background;
 			//var timeOverBar_clipPercent = (double)timeOverBar_clip.Level / 10000;
 
-			if (data.currentTimerExists)
+			if (CurrentSession != null)
 			{
 				//if (!data.currentTimer_paused)
-				var timeLeft = data.currentTimer_timeLeft; // in seconds
+				var timeLeft = CurrentSession.timeLeft; // in seconds
 				//var timeOver = -timeLeft; // in seconds
-				var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
+				var timeOver_withLocking = CurrentSession.timeOver_withLocking; // in seconds
 
-				var timeLeftForClipFull = data.settings.numberOfTimerSteps * data.settings.timeIncrementForTimerSteps * SecondsPerMinute; // in seconds
+				var timeLeftForClipFull = mainData.settings.numberOfTimerSteps * mainData.settings.timeIncrementForTimerSteps * SecondsPerMinute; // in seconds
 				var timeLeft_clipPercent = V.Clamp(0, 1, (double)timeLeft / timeLeftForClipFull);
 				timeLeftBar_clip.SetLevel((int)(10000 * timeLeft_clipPercent));
 
-				var timeOverForClipEmpty = data.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var timeOverForClipEmpty = mainData.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
 				var timeOver_clipPercent = V.Clamp(0, 1, 1 - ((double)timeOver_withLocking / timeOverForClipEmpty));
 				timeOverBar_clip.SetLevel((int)(10000 * timeOver_clipPercent));
 
@@ -446,7 +453,7 @@ namespace Main
 				else
 					countdownLabel.Text = countdownText;*/
 				
-                countdownLabel.SetTypeface(baseTypeface, data.currentTimer_locked ? TypefaceStyle.BoldItalic : TypefaceStyle.Normal);
+                countdownLabel.SetTypeface(baseTypeface, CurrentSession.locked ? TypefaceStyle.BoldItalic : TypefaceStyle.Normal);
 				countdownLabel.Visibility = ViewStates.Visible;
 			}
 			else // if stopped
@@ -457,13 +464,84 @@ namespace Main
 			}
 		}
 		Notification.Builder notificationBuilder;
+
+		bool IsScreenOn()
+		{
+			var dm = (DisplayManager)GetSystemService(DisplayService);
+			foreach (Display display in dm.GetDisplays())
+				if (display.State != DisplayState.Off)
+					return true;
+			return false;
+		}
+		//PowerManager.WakeLock sleeper;
+		/*void TurnScreenOff()
+		{
+			//var powerManager = GetSystemService(PowerService) as PowerManager;
+			//powerManager.GoToSleep(SystemClock.UptimeMillis());
+			/*if (sleeper == null)
+				sleeper = powerManager.NewWakeLock(WakeLockFlags.ProximityScreenOff, "turn screen off");
+			sleeper.Acquire(1000);*#/
+
+			Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
+			WindowManagerLayoutParams attributes = Window.Attributes;
+			attributes.ScreenBrightness = 0;
+			Window.Attributes = attributes;
+			//UpdateKeepScreenOn();
+
+			/*var policyManager = (DevicePolicyManager)GetSystemService(DevicePolicyService);
+			policyManager.LockNow();*#/
+		}*/
+		public class BroadcastReceiverScreenListener : BroadcastReceiver
+		{
+			public BroadcastReceiverScreenListener(Action onScreenOff) { this.onScreenOff = onScreenOff; }
+			Action onScreenOff;
+			public override void OnReceive(Context arg0, Intent intent)
+			{
+				//if (intent.Action == Intent.ActionScreenOff)
+				onScreenOff();
+			}
+		}
+		public void TurnScreenOff()
+		{
+			// store old settings
+			var oldStayOnWhilePluggedIn = Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, (int)BatteryManager.BatteryPluggedUsb);
+			var oldTimeout = Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, 3000);
+
+			// change settings temporarily
+			Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.StayOnWhilePluggedIn, 0);
+			Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, 0);
+			Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
+
+			BroadcastReceiver receiver = null;
+			receiver = new BroadcastReceiverScreenListener(()=>
+			{
+				// restore old settings
+				Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.StayOnWhilePluggedIn, oldStayOnWhilePluggedIn);
+				Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, oldTimeout);
+				UpdateKeepScreenOn();
+				UnregisterReceiver(receiver);
+			});
+			RegisterReceiver(receiver, new IntentFilter(Intent.ActionScreenOff));
+		}
 		PowerManager.WakeLock waker;
+		void TurnScreenOn()
+		{
+			//Window.AddFlags(WindowManagerFlags.DismissKeyguard | WindowManagerFlags.ShowWhenLocked | WindowManagerFlags.TurnScreenOn);
+
+			var powerManager = GetSystemService(PowerService) as PowerManager;
+			//powerManager.WakeUp(SystemClock.UptimeMillis());
+			if (waker == null)
+				//waker = powerManager.NewWakeLock(WakeLockFlags.AcquireCausesWakeup | WakeLockFlags.ScreenBright, "TimerWentOff");
+				waker = powerManager.NewWakeLock(WakeLockFlags.AcquireCausesWakeup | WakeLockFlags.ScreenDim, "turn screen on");
+			waker.Acquire(1000);
+		}
+
 		void UpdateNotification()
 		{
-			var timeLeft = data.currentTimer_timeLeft; // in seconds
+			var timeLeft = CurrentSession?.timeLeft ?? 0; // in seconds
 			//var timeOver = -timeLeft; // in seconds
 			//var timeOver_withLocking = data.currentTimer_timeOver_withLocking; // in seconds
-			if (data.currentTimerExists && timeLeft > 0)
+			if (CurrentSession != null && timeLeft > 0)
 			{
 				var minutesLeft = Math.Abs(timeLeft / SecondsPerMinute);
 				var secondsLeft = Math.Abs(timeLeft % SecondsPerMinute);
@@ -489,7 +567,7 @@ namespace Main
 					notificationBuilder.SetOngoing(true);
 				}
 
-				notificationBuilder.SetContentText($"{(data.currentTimer_type == TimerType.Rest ? "Rest" : "Work")} timer {(data.currentTimer_paused ? "paused" : "running")}. Time left: " + timeLeftText);
+				notificationBuilder.SetContentText($"{CurrentSession.type} timer {(CurrentSession.paused ? "paused" : "running")}. Time left: " + timeLeftText);
 				var notification = notificationBuilder.Build();
 				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
 				// we use a layout id because it is a unique number; we use it later to cancel
@@ -508,11 +586,7 @@ namespace Main
 					//launchMain.SetFlags(ActivityFlags.SingleTop);
 					launchMain.SetFlags(ActivityFlags.ReorderToFront);
 					StartActivity(launchMain);
-
-					// also turn on screen
-					//Window.AddFlags(WindowManagerFlags.DismissKeyguard | WindowManagerFlags.ShowWhenLocked | WindowManagerFlags.TurnScreenOn);
-					waker.Acquire();
-					waker.Release();
+					TurnScreenOn();
 				}
 			}
 		}
@@ -549,20 +623,62 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 			return base.OnOptionsItemSelected(item);
 		}
 
-		public override bool OnKeyDown(Keycode keyCode, KeyEvent e)
+		public List<string> recentKeys_strings = new List<string>();
+		public override bool OnKeyDown(Keycode key, KeyEvent e)
 		{
+			recentKeys_strings.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + key);
+			while (recentKeys_strings.Count > 30)
+				recentKeys_strings.RemoveAt(0);
+
 			var usedKey = false;
-			foreach (Hotkey hotkey in data.settings.hotkeys)
-				if ((keyCode == Keycode.VolumeDown && hotkey.key == VKey.VolumeDown) || (keyCode == Keycode.VolumeUp && hotkey.key == VKey.VolumeUp))
+			foreach (Hotkey hotkey in mainData.settings.hotkeys)
+				if (key == hotkey.key)
 				{
 					usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
-					if (hotkey.action == HotkeyAction.StartTimer_Rest || hotkey.action == HotkeyAction.StartTimer_Work)
-						StartTimer(hotkey.action == HotkeyAction.StartTimer_Rest ? TimerType.Rest : TimerType.Work, hotkey.action_startTimer_length);
+					if (hotkey.action == HotkeyAction.StartSession_Rest || hotkey.action == HotkeyAction.StartSession_Work)
+						StartSession(hotkey.action == HotkeyAction.StartSession_Rest ? "Rest" : "Work", hotkey.action_startTimer_length);
+					else if (hotkey.action == HotkeyAction.PauseSession)
+						PauseSession();
+					else if (hotkey.action == HotkeyAction.ToggleSessionPaused)
+					{
+						if (CurrentSession != null)
+							if (CurrentSession.paused)
+								ResumeSession();
+							else
+								PauseSession();
+					}
+					else if (hotkey.action == HotkeyAction.StopSession)
+						StopSession();
+					else if (hotkey.action == HotkeyAction.TurnScreenOff)
+						TurnScreenOff();
+					else if (hotkey.action == HotkeyAction.TurnScreenOn)
+						TurnScreenOn();
+					else if (hotkey.action == HotkeyAction.ToggleScreenOn)
+					{
+						if (IsScreenOn())
+							TurnScreenOff();
+						else
+							TurnScreenOn();
+					}
 				}
 
 			if (usedKey)
 				return true;
-			return base.OnKeyDown(keyCode, e);
+			return base.OnKeyDown(key, e);
+		}
+		public void ShowRecentKeys(Context context)
+		{
+			AlertDialog.Builder alert = new AlertDialog.Builder(context);
+			alert.SetTitle("Recent keys pressed");
+
+			LinearLayout linear = new LinearLayout(this) { Orientation = Orientation.Vertical };
+			var text = linear.AddChild(new TextView(this));
+			text.Text = recentKeys_strings.JoinUsing("\n");
+			text.SetPadding(30, 30, 30, 30);
+			alert.SetView(linear);
+
+			alert.SetPositiveButton("Ok", (sender, e) => { });
+			alert.Show();
 		}
 		/*public override bool OnKeyUp(Keycode keyCode, KeyEvent e)
 		{

@@ -4,5 +4,6 @@
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
 	<application android:label="Productivity Tracker" android:icon="@drawable/Icon"></application>
 </manifest>

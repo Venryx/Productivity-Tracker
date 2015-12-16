@@ -60,6 +60,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\Session.cs" />
+    <Compile Include="Data\Day.cs" />
+    <Compile Include="Data\MainData.cs" />
     <Compile Include="VectorStructs.cs" />
     <Compile Include="UpdateService.cs" />
     <Compile Include="Drawables.cs" />

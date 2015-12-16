@@ -37,7 +37,7 @@ namespace Main
 			SetContentView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 			var list = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
 			
-			var settings = MainActivity.main.data.settings;
+			var settings = MainActivity.main.mainData.settings;
 
 			AddSeparator(list, "General");
 			// ==========
@@ -59,7 +59,7 @@ namespace Main
 				{
 					settings.keepScreenOnWhileOpen = !checkbox.Checked;
 					checkbox.Checked = settings.keepScreenOnWhileOpen;
-					MainActivity.main.RefreshKeepScreenOn();
+					MainActivity.main.UpdateKeepScreenOn();
 				};
 			}
 
@@ -141,7 +141,7 @@ namespace Main
 					{
 						settings.numberOfTimerSteps = seek.Progress;
 						label.Text = settings.numberOfTimerSteps.ToString();
-						MainActivity.main.RefreshTimerStepButtons();
+						MainActivity.main.UpdateTimerStepButtons();
 					});
 					alert.SetNegativeButton("Cancel", (sender, e)=>{});
 					alert.Show();
@@ -170,7 +170,7 @@ namespace Main
 					{
 						settings.timeIncrementForTimerSteps = seek.Progress;
 						label.Text = settings.timeIncrementForTimerSteps + " minutes";
-						MainActivity.main.RefreshTimerStepButtons();
+						MainActivity.main.UpdateTimerStepButtons();
 					});
 					alert.SetNegativeButton("Cancel", (sender, e)=>{});
 					alert.Show();
@@ -339,19 +339,19 @@ namespace Main
 							AlertDialog dialog = null;
 							var builder = new AlertDialog.Builder(this);
                             builder.SetTitle("Key");
-							var keys = Enum.GetValues(typeof(VKey)).OfType<VKey>().ToList();
+							var keys = Enum.GetValues(typeof(Keycode)).OfType<Keycode>().ToList();
 							builder.SetSingleChoiceItems(keys.Select(a=>a.ToString()).ToArray(), keys.IndexOf(hotkey.key), (sender2, e2)=>{});
 							builder.SetPositiveButton("Ok", (sender2, e2)=>
 							{
 								ListView listView = dialog.ListView;
-								hotkey.key = (VKey)Enum.Parse(typeof(VKey), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
+								hotkey.key = (Keycode)Enum.Parse(typeof(Keycode), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
 								refreshHotkeys();
 							});
 							builder.SetNegativeButton("Cancel", (sender2, e2)=>{});
 							dialog = builder.Show();
 						};
 						var actionLabel = row2.AddChild(new Button(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .45f));
-						actionLabel.Text = hotkey.action + (hotkey.action == HotkeyAction.StartTimer_Rest || hotkey.action == HotkeyAction.StartTimer_Work ? $" (length: {hotkey.action_startTimer_length} minutes)" : "");
+						actionLabel.Text = hotkey.action + (hotkey.action == HotkeyAction.StartSession_Rest || hotkey.action == HotkeyAction.StartSession_Work ? $" (length: {hotkey.action_startTimer_length} minutes)" : "");
 						actionLabel.Click += (sender, e)=>
 						{
 							AlertDialog dialog = null;
@@ -363,7 +363,7 @@ namespace Main
 							{
 								ListView listView = dialog.ListView;
 								hotkey.action = (HotkeyAction)Enum.Parse(typeof(HotkeyAction), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
-								if (hotkey.action == HotkeyAction.StartTimer_Rest || hotkey.action == HotkeyAction.StartTimer_Work)
+								if (hotkey.action == HotkeyAction.StartSession_Rest || hotkey.action == HotkeyAction.StartSession_Work)
 								{
 									AlertDialog.Builder alert = new AlertDialog.Builder(this);
 									alert.SetCancelable(false);
@@ -398,23 +398,25 @@ namespace Main
 						};
 					}
 				};
-				
-				var addHotkeyButton = row.AddChild(new Button(this) {Text = "Add hotkey"});
+
+				var buttonsRow = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal});
+				var addHotkeyButton = buttonsRow.AddChild(new Button(this) {Text = "Add hotkey"}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, .7f));
 				addHotkeyButton.Click += (sender, e)=>
 				{
 					settings.hotkeys.Add(new Hotkey());
 					refreshHotkeys();
 				};
+				var showRecentKeysButton = buttonsRow.AddChild(new Button(this) {Text = "(show recent keys)"}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, .3f));
+				showRecentKeysButton.Click += (sender, e)=>MainActivity.main.ShowRecentKeys(this);
 
 				refreshHotkeys();
 			}
 		}
-
 		protected override void OnPause()
 		{
 			base.OnPause();
 
-			MainActivity.main.SaveData();
+			MainActivity.main.SaveMainData();
 		}
 
 		LinearLayout AddSeparator(LinearLayout root, string text = null)
@@ -450,6 +452,15 @@ namespace Main
 			if (addSeparator)
 				result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
 			return result;
+		}
+
+		public override bool OnKeyDown(Keycode key, KeyEvent e)
+		{
+			var recentKeys = MainActivity.main.recentKeys_strings;
+			recentKeys.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + key);
+			while (recentKeys.Count > 30)
+				recentKeys.RemoveAt(0);
+			return base.OnKeyDown(key, e);
 		}
 	}
 }
