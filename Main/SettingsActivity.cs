@@ -57,8 +57,8 @@ namespace Main
 
 				row.Click += delegate
 				{
-					settings.keepScreenOnWhileOpen = !checkbox.Checked;
-					checkbox.Checked = settings.keepScreenOnWhileOpen;
+					checkbox.Checked = !checkbox.Checked;
+					settings.keepScreenOnWhileOpen = checkbox.Checked;
 					MainActivity.main.UpdateKeepScreenOn();
 				};
 			}
@@ -74,12 +74,12 @@ namespace Main
 				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
 				layoutParams.AddRule(LayoutRules.AlignParentRight);
 				layoutParams.AddRule(LayoutRules.CenterVertical);
-				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.fastMode }, layoutParams);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.fastMode}, layoutParams);
 
 				row.Click += delegate
 				{
-					settings.fastMode = !checkbox.Checked;
-					checkbox.Checked = settings.fastMode;
+					checkbox.Checked = !checkbox.Checked;
+					settings.fastMode = checkbox.Checked;
 				};
 			}
 
@@ -313,6 +313,40 @@ namespace Main
 
 			AddSeparator(list, "Hotkeys");
 			// ==========
+			
+			{
+				var row = AddRow(list, vertical: false, addSeparator: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Block unused keys"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Block any key events not used by the hotkeys specified"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.blockUnusedKeys}, layoutParams);
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.blockUnusedKeys = checkbox.Checked;
+				};
+			}
+
+			/*{
+				var row = AddRow(list, vertical: false, addSeparator: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Block mouse events"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Block all (physical/usb/bluetooth) mouse events"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.blockMouseEvents}, layoutParams);
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.blockMouseEvents = checkbox.Checked;
+				};
+			}*/
 
 			{
 				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent, addSeparator: false);

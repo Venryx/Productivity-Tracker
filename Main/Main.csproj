@@ -115,11 +115,6 @@
     <AndroidResource Include="Resources\drawable\Volume.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\menu\Main_Menu.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\Border_1_Top_Black.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +153,12 @@
     <AndroidResource Include="Resources\drawable\Border_1_Bottom_LightGray.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\Lock.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\Unlock.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

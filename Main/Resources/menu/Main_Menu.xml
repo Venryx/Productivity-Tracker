@@ -1,5 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:_="http://schemas.android.com/apk/res/android">
-	<item _:id="@+id/Settings" _:title="Settings"/>
-	<item _:id="@+id/About" _:title="About"/>
-</menu>

@@ -125,6 +125,7 @@ namespace Main
 		ImageView timeOverBar;
 		//TextView countdownLabel;
 		Button countdownLabel;
+		FrameLayout mouseInputBlocker;
 		protected override void OnCreate(Bundle bundle)
 		{
 			main = this;
@@ -143,15 +144,12 @@ namespace Main
 			timeLeftBar.Background = Drawables.clip_yPlus_blue_dark;
 			timeOverBar.Background = Drawables.clip_xPlus_blue_dark;
 
-			//var rootGroup = (ViewGroup)Window.DecorView.RootView;
-			//var root = (LinearLayout)rootGroup.GetChildAt(0);
+			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
 			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
 			var root = (LinearLayout)rootHolder.GetChildAt(0);
 
 			var overlayHolder = rootHolder.AddChild(new FrameLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-			//countdownLabel = overlayHolder.AddChild(new TextView(this) {TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.Left | GravityFlags.Top});
-			//countdownLabel.SetSingleLine(true);
-			//countdownLabel = overlayHolder.AddChild(new Button(this) {TextSize = 30}, new FrameLayout.LayoutParams(200, 100) {Gravity = GravityFlags.NoGravity});
+			var focusTaker = overlayHolder.AddChild(new Button(this), new FrameLayout.LayoutParams(0, 0) {LeftMargin = -1000}); // as first button, takes focus, so gamepad A/shutter button can't click other things
 			countdownLabel = overlayHolder.AddChild(new Button(this) {TextSize = 30, Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(230, 110));
 			countdownLabel.SetPadding(0, 0, 0, 0);
 			countdownLabel.Text = "10:10";
@@ -161,17 +159,11 @@ namespace Main
 				UpdateDynamicUI();
 				UpdateNotification();
 			};
-
-			/*var timeLeftPanel = FindViewById<FrameLayout>(Resource.Id.TimeLeftPanel);
-			{
-				var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Background;
-				timeLeftBar_clip.SetLevel((int)(10000 * .5));
-			}
-			var timeOverPanel = FindViewById<FrameLayout>(Resource.Id.TimeOverPanel);
-			{
-				/*var soundIconButton = timeOverPanel.AddChild(new ImageButton(this), new FrameLayout.LayoutParams(30, 30) {Gravity = GravityFlags.CenterVertical});
-				soundIconButton.SetBackgroundResource(Resource.Drawable.Volume);*#/
-			}*/
+			//mouseInputBlocker = overlayHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			//mouseInputBlocker.SetZ(10);
+			mouseInputBlocker = rootHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			var mouseInputBlockerMessageLabel = mouseInputBlocker.AddChild(new TextView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent) {Gravity = GravityFlags.Center});
+			mouseInputBlockerMessageLabel.Text = "Mouse input is currently blocked. Press the screen with two fingers simultaneously to unblock.";
 
 			FindViewById<Button>(Resource.Id.Pause).Click += delegate
 			{
@@ -197,6 +189,14 @@ namespace Main
 				PauseSession();
 				ResumeSession();
 			}
+		}
+		protected override void OnDestroy()
+		{
+			//currentTimer?.Stop();
+			//currentTimer?.Elapsed -= CurrentTimer_Elapsed;
+			currentTimer?.Dispose();
+			currentTimer = null;
+			base.OnDestroy();
 		}
 		protected override void OnPause()
 		{
@@ -255,13 +255,14 @@ namespace Main
 			// make-so
 		}
 		
-		//PendingIntent GetLaunchUpdateServicePendingIntent()
+		/*PendingIntent GetLaunchUpdateServicePendingIntent()
+		{
+			var launchUpdateService = new Intent(this, typeof(UpdateService));
+			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
+			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);
+		}*/
 		PendingIntent GetPendingIntent_LaunchMain()
 		{
-			/*var launchUpdateService = new Intent(this, typeof(UpdateService));
-			launchUpdateService.AddFlags(ActivityFlags.SingleTop);
-			return PendingIntent.GetService(this, 0, launchUpdateService, PendingIntentFlags.UpdateCurrent);*/
-
 			var launchMain = new Intent(this, typeof(MainActivity));
 			launchMain.AddFlags(ActivityFlags.SingleTop);
 			return PendingIntent.GetService(this, 0, launchMain, PendingIntentFlags.UpdateCurrent);
@@ -335,9 +336,7 @@ namespace Main
 
 		public Timer currentTimer;
 		MediaPlayer alarmPlayer;
-		void ProcessTimeUpToNow() { CurrentTimer_ProcessTimeUpToNow(); }
-		
-		void CurrentTimer_ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
+		void ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
 		{
 			//var timeToProcess = (int)(DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds; // in seconds
 			var timeToProcess = (int)Math.Round((DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds); // in seconds
@@ -403,9 +402,7 @@ namespace Main
 			countdownLabel.Enabled = CurrentSession != null && !CurrentSession.paused;
 			
 			var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Background;
-			//var timeLeftBar_clipPercent = (double)timeLeftBar_clip.Level / 10000;
             var timeOverBar_clip = (ClipDrawable)timeOverBar.Background;
-			//var timeOverBar_clipPercent = (double)timeOverBar_clip.Level / 10000;
 
 			if (CurrentSession != null)
 			{
@@ -491,37 +488,40 @@ namespace Main
 			/*var policyManager = (DevicePolicyManager)GetSystemService(DevicePolicyService);
 			policyManager.LockNow();*#/
 		}*/
-		public class BroadcastReceiverScreenListener : BroadcastReceiver
+		public class QuickBroadcastReceiver : BroadcastReceiver
 		{
-			public BroadcastReceiverScreenListener(Action onScreenOff) { this.onScreenOff = onScreenOff; }
-			Action onScreenOff;
-			public override void OnReceive(Context arg0, Intent intent)
-			{
-				//if (intent.Action == Intent.ActionScreenOff)
-				onScreenOff();
-			}
+			public QuickBroadcastReceiver(Action onReceive) { this.onReceive = onReceive; }
+			Action onReceive;
+			public override void OnReceive(Context arg0, Intent intent) { onReceive(); }
 		}
+		bool turningScreenOff;
 		public void TurnScreenOff()
 		{
+			if (turningScreenOff) // if already turning screen off, ignore this call (so we don't lose the stored settings)
+				return;
+
 			// store old settings
-			var oldStayOnWhilePluggedIn = Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, (int)BatteryManager.BatteryPluggedUsb);
+			var oldStayOnWhilePluggedIn = Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.StayOnWhilePluggedIn, (int)BatteryPlugged.Usb);
 			var oldTimeout = Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, 3000);
 
 			// change settings temporarily
 			Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.StayOnWhilePluggedIn, 0);
 			Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, 0);
+			//Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, 15000);
 			Window.ClearFlags(WindowManagerFlags.KeepScreenOn);
 
 			BroadcastReceiver receiver = null;
-			receiver = new BroadcastReceiverScreenListener(()=>
+			receiver = new QuickBroadcastReceiver(()=>
 			{
 				// restore old settings
 				Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.StayOnWhilePluggedIn, oldStayOnWhilePluggedIn);
 				Android.Provider.Settings.System.PutInt(ContentResolver, Android.Provider.Settings.System.ScreenOffTimeout, oldTimeout);
 				UpdateKeepScreenOn();
 				UnregisterReceiver(receiver);
+				turningScreenOff = false;
 			});
 			RegisterReceiver(receiver, new IntentFilter(Intent.ActionScreenOff));
+			turningScreenOff = true;
 		}
 		PowerManager.WakeLock waker;
 		void TurnScreenOn()
@@ -593,20 +593,35 @@ namespace Main
 
 		public override bool OnCreateOptionsMenu(IMenu menu)
 		{
-			MenuInflater.Inflate(Resource.Menu.Main_Menu, menu);
+			mouseInputBlocker.Touch += (v, e)=>
+			{
+				if (e.Event.PointerCount >= 2)
+					mouseInputBlocker.Visibility = ViewStates.Gone;
+			};
+
+			menu.Add("Settings");
+			menu.Add("Block mouse input");
+			menu.Add("About");
 			return base.OnCreateOptionsMenu(menu);
 		}
 		public override bool OnOptionsItemSelected(IMenuItem item)
 		{
-			if (item.ItemId == Resource.Id.Settings)
+			if (mouseInputBlocker.Visibility == ViewStates.Visible)
+				return base.OnOptionsItemSelected(item);
+
+			//if (item.ItemId == Resource.Id.Settings)
+			if (item.TitleFormatted.ToString() == "Settings")
 				StartActivity(new Intent(this, typeof(SettingsActivity)));
-			else if (item.ItemId == Resource.Id.About)
+			else if (item.TitleFormatted.ToString() == "Block mouse input")
+				mouseInputBlocker.Visibility = ViewStates.Visible;
+			//else if (item.ItemId == Resource.Id.About)
+			else if (item.TitleFormatted.ToString() == "About")
 			{
 				AlertDialog.Builder alert = new AlertDialog.Builder(this);
 				alert.SetTitle("About Productivity Tracker");
 				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
 
-				LinearLayout linear = new LinearLayout(this) { Orientation = Orientation.Vertical };
+				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
 				var text = linear.AddChild(new TextView(this));
 				text.Text = @"
 Author: Stephen Wicklund (Venryx)
@@ -614,10 +629,10 @@ Author: Stephen Wicklund (Venryx)
 This is an open source project, under the GPLv2 license.
 The source code is available to view and modify.
 Link: http://github.com/Venryx/Productivity-Tracker".Trim();
-                text.SetPadding(30, 30, 30, 30);
+				text.SetPadding(30, 30, 30, 30);
 				alert.SetView(linear);
 
-				alert.SetPositiveButton("Ok", (sender, e)=>{});
+				alert.SetPositiveButton("Ok", (sender, e)=> { });
 				alert.Show();
 			}
 			return base.OnOptionsItemSelected(item);
@@ -662,10 +677,54 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 					}
 				}
 
-			if (usedKey)
+			if (usedKey || mainData.settings.blockUnusedKeys)
 				return true;
 			return base.OnKeyDown(key, e);
 		}
+		public override bool OnKeyUp(Keycode keyCode, KeyEvent e)
+		{
+			if (mainData.settings.blockUnusedKeys)
+				return true;
+			return base.OnKeyUp(keyCode, e);
+		}
+		public override bool OnKeyLongPress(Keycode keyCode, KeyEvent e)
+		{
+			if (mainData.settings.blockUnusedKeys)
+				return true;
+			return base.OnKeyLongPress(keyCode, e);
+		}
+		public override bool OnKeyMultiple(Keycode keyCode, int repeatCount, KeyEvent e)
+		{
+			if (mainData.settings.blockUnusedKeys)
+				return true;
+			return base.OnKeyMultiple(keyCode, repeatCount, e);
+		}
+		public override bool OnKeyShortcut(Keycode keyCode, KeyEvent e)
+		{
+			if (mainData.settings.blockUnusedKeys)
+				return true;
+			return base.OnKeyShortcut(keyCode, e);
+		}
+		/*public override bool OnGenericMotionEvent(MotionEvent e)
+		{
+			/*if ((e.Source & InputDevice.SourceClassJoystick) != 0)
+				return true;*#/
+			if (mainData.settings.blockMouseEvents)
+				return true;
+			return base.OnGenericMotionEvent(e);
+		}
+		public override bool OnTouchEvent(MotionEvent e)
+		{
+			if (mainData.settings.blockMouseEvents)
+				return true;
+			return base.OnTouchEvent(e);
+		}
+		public override bool OnTrackballEvent(MotionEvent e)
+		{
+			if (mainData.settings.blockMouseEvents)
+				return true;
+			return base.OnTrackballEvent(e);
+		}*/
 		public void ShowRecentKeys(Context context)
 		{
 			AlertDialog.Builder alert = new AlertDialog.Builder(context);
@@ -680,9 +739,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 			alert.SetPositiveButton("Ok", (sender, e) => { });
 			alert.Show();
 		}
-		/*public override bool OnKeyUp(Keycode keyCode, KeyEvent e)
-		{
-			return base.OnKeyUp(keyCode, e);
-		}*/
 	}
 }
+ 
+ 

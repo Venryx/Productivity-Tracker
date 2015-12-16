@@ -66,7 +66,9 @@ namespace Main
 
 		// others
 		// ==========
-		
+
+		public bool blockUnusedKeys;
+		//public bool blockMouseEvents;
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
 	}
 	public enum HotkeyAction

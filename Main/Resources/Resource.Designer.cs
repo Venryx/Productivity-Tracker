@@ -72,11 +72,11 @@ namespace Main
 			// aapt resource value: 0x7f020000
 			public const int add = 2130837504;
 			
-			// aapt resource value: 0x7f02000e
-			public const int blue = 2130837518;
+			// aapt resource value: 0x7f020010
+			public const int blue = 2130837520;
 			
-			// aapt resource value: 0x7f02000f
-			public const int blue_darkened = 2130837519;
+			// aapt resource value: 0x7f020011
+			public const int blue_darkened = 2130837521;
 			
 			// aapt resource value: 0x7f020001
 			public const int Border_1_Bottom_LightGray = 2130837505;
@@ -99,11 +99,11 @@ namespace Main
 			// aapt resource value: 0x7f020007
 			public const int folder = 2130837511;
 			
-			// aapt resource value: 0x7f020010
-			public const int green = 2130837520;
+			// aapt resource value: 0x7f020012
+			public const int green = 2130837522;
 			
-			// aapt resource value: 0x7f020011
-			public const int green_darkened = 2130837521;
+			// aapt resource value: 0x7f020013
+			public const int green_darkened = 2130837523;
 			
 			// aapt resource value: 0x7f020008
 			public const int ic_launcher = 2130837512;
@@ -112,16 +112,22 @@ namespace Main
 			public const int Icon = 2130837513;
 			
 			// aapt resource value: 0x7f02000a
-			public const int no = 2130837514;
-			
-			// aapt resource value: 0x7f02000d
-			public const int red = 2130837517;
+			public const int Lock = 2130837514;
 			
 			// aapt resource value: 0x7f02000b
-			public const int tick = 2130837515;
+			public const int no = 2130837515;
+			
+			// aapt resource value: 0x7f02000f
+			public const int red = 2130837519;
 			
 			// aapt resource value: 0x7f02000c
-			public const int Volume = 2130837516;
+			public const int tick = 2130837516;
+			
+			// aapt resource value: 0x7f02000d
+			public const int Unlock = 2130837517;
+			
+			// aapt resource value: 0x7f02000e
+			public const int Volume = 2130837518;
 			
 			static Drawable()
 			{
@@ -136,59 +142,53 @@ namespace Main
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f070011
-			public const int About = 2131165201;
+			// aapt resource value: 0x7f060009
+			public const int Pause = 2131099657;
 			
-			// aapt resource value: 0x7f070009
-			public const int Pause = 2131165193;
+			// aapt resource value: 0x7f06000e
+			public const int RestButtons = 2131099662;
 			
-			// aapt resource value: 0x7f07000e
-			public const int RestButtons = 2131165198;
+			// aapt resource value: 0x7f060008
+			public const int Stop = 2131099656;
 			
-			// aapt resource value: 0x7f070010
-			public const int Settings = 2131165200;
+			// aapt resource value: 0x7f06000d
+			public const int TimeLeftBar = 2131099661;
 			
-			// aapt resource value: 0x7f070008
-			public const int Stop = 2131165192;
+			// aapt resource value: 0x7f06000c
+			public const int TimeLeftPanel = 2131099660;
 			
-			// aapt resource value: 0x7f07000d
-			public const int TimeLeftBar = 2131165197;
+			// aapt resource value: 0x7f06000b
+			public const int TimeOverBar = 2131099659;
 			
-			// aapt resource value: 0x7f07000c
-			public const int TimeLeftPanel = 2131165196;
+			// aapt resource value: 0x7f06000a
+			public const int TimeOverPanel = 2131099658;
 			
-			// aapt resource value: 0x7f07000b
-			public const int TimeOverBar = 2131165195;
+			// aapt resource value: 0x7f06000f
+			public const int WorkButtons = 2131099663;
 			
-			// aapt resource value: 0x7f07000a
-			public const int TimeOverPanel = 2131165194;
+			// aapt resource value: 0x7f060004
+			public const int buttonAdd = 2131099652;
 			
-			// aapt resource value: 0x7f07000f
-			public const int WorkButtons = 2131165199;
+			// aapt resource value: 0x7f060005
+			public const int buttonOk = 2131099653;
 			
-			// aapt resource value: 0x7f070004
-			public const int buttonAdd = 2131165188;
+			// aapt resource value: 0x7f060006
+			public const int imageViewIcon = 2131099654;
 			
-			// aapt resource value: 0x7f070005
-			public const int buttonOk = 2131165189;
+			// aapt resource value: 0x7f060003
+			public const int linearLayoutButtons = 2131099651;
 			
-			// aapt resource value: 0x7f070006
-			public const int imageViewIcon = 2131165190;
+			// aapt resource value: 0x7f060002
+			public const int linearLayoutFiles = 2131099650;
 			
-			// aapt resource value: 0x7f070003
-			public const int linearLayoutButtons = 2131165187;
+			// aapt resource value: 0x7f060000
+			public const int rootLayout = 2131099648;
 			
-			// aapt resource value: 0x7f070002
-			public const int linearLayoutFiles = 2131165186;
+			// aapt resource value: 0x7f060001
+			public const int scrollView1 = 2131099649;
 			
-			// aapt resource value: 0x7f070000
-			public const int rootLayout = 2131165184;
-			
-			// aapt resource value: 0x7f070001
-			public const int scrollView1 = 2131165185;
-			
-			// aapt resource value: 0x7f070007
-			public const int textViewLabel = 2131165191;
+			// aapt resource value: 0x7f060007
+			public const int textViewLabel = 2131099655;
 			
 			static Id()
 			{
@@ -218,22 +218,6 @@ namespace Main
 			}
 			
 			private Layout()
-			{
-			}
-		}
-		
-		public partial class Menu
-		{
-			
-			// aapt resource value: 0x7f060000
-			public const int Main_Menu = 2131099648;
-			
-			static Menu()
-			{
-				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
-			}
-			
-			private Menu()
 			{
 			}
 		}
