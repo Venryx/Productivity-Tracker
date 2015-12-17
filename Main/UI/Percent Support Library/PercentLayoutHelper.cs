@@ -67,33 +67,23 @@ namespace android.support.percent
 	/// </summary>
 	public class PercentLayoutHelper
 	{
-		private const string TAG = "PercentLayout";
-		private readonly ViewGroup mHost;
-		public PercentLayoutHelper(ViewGroup host)
-		{
-			mHost = host;
-		}
-		/// <summary>
-		/// Helper method to be called from <seealso cref="ViewGroup.LayoutParams#setBaseAttributes"/> override
-		/// that reads layout_width and layout_height attribute values without throwing an exception if
-		/// they aren't present.
-		/// </summary>
+		const string TAG = "PercentLayout";
+		readonly ViewGroup mHost;
+		public PercentLayoutHelper(ViewGroup host) { mHost = host; }
+		/// <summary>Helper method to be called from <seealso cref = "ViewGroup.LayoutParams#setBaseAttributes" /> override that
+		///     reads layout_width and layout_height attribute values without throwing an exception if they aren't present.</summary>
 		public static void fetchWidthAndHeight(ViewGroup.LayoutParams @params, TypedArray array, int widthAttr, int heightAttr)
 		{
 			@params.Width = array.GetLayoutDimension(widthAttr, 0);
 			@params.Height = array.GetLayoutDimension(heightAttr, 0);
 		}
-		/// <summary>
-		/// Iterates over children and changes their width and height to one calculated from percentage
-		/// values. </summary>
-		/// <param name="widthMeasureSpec"> Width MeasureSpec of the parent ViewGroup. </param>
-		/// <param name="heightMeasureSpec"> Height MeasureSpec of the parent ViewGroup. </param>
+		/// <summary>Iterates over children and changes their width and height to one calculated from percentage values. </summary>
+		/// <param name = "widthMeasureSpec"> Width MeasureSpec of the parent ViewGroup. </param>
+		/// <param name = "heightMeasureSpec"> Height MeasureSpec of the parent ViewGroup. </param>
 		public virtual void adjustChildren(int widthMeasureSpec, int heightMeasureSpec)
 		{
 			if (Log.IsLoggable(TAG, LogPriority.Debug))
-			{
 				Log.Debug(TAG, "adjustChildren: " + mHost + " widthMeasureSpec: " + View.MeasureSpec.ToString(widthMeasureSpec) + " heightMeasureSpec: " + View.MeasureSpec.ToString(heightMeasureSpec));
-			}
 			int widthHint = View.MeasureSpec.GetSize(widthMeasureSpec);
 			int heightHint = View.MeasureSpec.GetSize(heightMeasureSpec);
 			for (int i = 0, N = mHost.ChildCount; i < N; i++)
@@ -101,34 +91,22 @@ namespace android.support.percent
 				View view = mHost.GetChildAt(i);
 				ViewGroup.LayoutParams @params = view.LayoutParameters;
 				if (Log.IsLoggable(TAG, LogPriority.Debug))
-				{
 					Log.Debug(TAG, "should adjust " + view + " " + @params);
-				}
 				if (@params is PercentLayoutParams)
 				{
-					PercentLayoutInfo info = ((PercentLayoutParams) @params).PercentLayoutInfo;
+					PercentLayoutInfo info = ((PercentLayoutParams)@params).PercentLayoutInfo;
 					if (Log.IsLoggable(TAG, LogPriority.Debug))
-					{
 						Log.Debug(TAG, "using " + info);
-					}
 					if (info != null)
-					{
 						if (@params is ViewGroup.MarginLayoutParams)
-						{
-							info.fillMarginLayoutParams((ViewGroup.MarginLayoutParams) @params, widthHint, heightHint);
-						}
+							info.fillMarginLayoutParams((ViewGroup.MarginLayoutParams)@params, widthHint, heightHint);
 						else
-						{
 							info.fillLayoutParams(@params, widthHint, heightHint);
-						}
-					}
 				}
 			}
 		}
-		/// <summary>
-		/// Constructs a PercentLayoutInfo from attributes associated with a View. Call this method from
-		/// {@code LayoutParams(Context c, AttributeSet attrs)} constructor.
-		/// </summary>
+		/// <summary>Constructs a PercentLayoutInfo from attributes associated with a View. Call this method from {@code
+		///     LayoutParams(Context c, AttributeSet attrs)} constructor.</summary>
 		public static PercentLayoutInfo getPercentLayoutInfo(Context context, IAttributeSet attrs)
 		{
 			PercentLayoutInfo info = null;
@@ -137,9 +115,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent width: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.widthPercent = value;
 			}
@@ -147,9 +123,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent height: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.heightPercent = value;
 			}
@@ -157,9 +131,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.leftMarginPercent = value;
 				info.topMarginPercent = value;
@@ -170,9 +142,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent left margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.leftMarginPercent = value;
 			}
@@ -180,9 +150,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent top margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.topMarginPercent = value;
 			}
@@ -190,9 +158,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent right margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.rightMarginPercent = value;
 			}
@@ -200,9 +166,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent bottom margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.bottomMarginPercent = value;
 			}
@@ -210,9 +174,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent start margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.startMarginPercent = value;
 			}
@@ -220,9 +182,7 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "percent end margin: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.endMarginPercent = value;
 			}
@@ -230,24 +190,18 @@ namespace android.support.percent
 			if (value != -1f)
 			{
 				if (Log.IsLoggable(TAG, LogPriority.Verbose))
-				{
 					Log.Verbose(TAG, "aspect ratio: " + value);
-				}
 				info = info != null ? info : new PercentLayoutInfo();
 				info.aspectRatio = value;
 			}
 			array.Recycle();
 			if (Log.IsLoggable(TAG, LogPriority.Debug))
-			{
 				Log.Debug(TAG, "constructed: " + info);
-			}
 			return info;
 		}
-		/// <summary>
-		/// Iterates over children and restores their original dimensions that were changed for
-		/// percentage values. Calling this method only makes sense if you previously called
-		/// <seealso cref="PercentLayoutHelper#adjustChildren(int, int)"/>.
-		/// </summary>
+		/// <summary>Iterates over children and restores their original dimensions that were changed for percentage values. Calling
+		///     this method only makes sense if you previously called
+		///     <seealso cref = "PercentLayoutHelper#adjustChildren(int, int)" />.</summary>
 		public virtual void restoreOriginalParams()
 		{
 			for (int i = 0, N = mHost.ChildCount; i < N; i++)
@@ -255,43 +209,27 @@ namespace android.support.percent
 				View view = mHost.GetChildAt(i);
 				ViewGroup.LayoutParams @params = view.LayoutParameters;
 				if (Log.IsLoggable(TAG, LogPriority.Debug))
-				{
 					Log.Debug(TAG, "should restore " + view + " " + @params);
-				}
 				if (@params is PercentLayoutParams)
 				{
-					PercentLayoutInfo info = ((PercentLayoutParams) @params).PercentLayoutInfo;
+					PercentLayoutInfo info = ((PercentLayoutParams)@params).PercentLayoutInfo;
 					if (Log.IsLoggable(TAG, LogPriority.Debug))
-					{
 						Log.Debug(TAG, "using " + info);
-					}
 					if (info != null)
-					{
 						if (@params is ViewGroup.MarginLayoutParams)
-						{
-							info.restoreMarginLayoutParams((ViewGroup.MarginLayoutParams) @params);
-						}
+							info.restoreMarginLayoutParams((ViewGroup.MarginLayoutParams)@params);
 						else
-						{
 							info.restoreLayoutParams(@params);
-						}
-					}
 				}
 			}
 		}
-		/// <summary>
-		/// Iterates over children and checks if any of them would like to get more space than it
-		/// received through the percentage dimension.
-		/// 
-		/// If you are building a layout that supports percentage dimensions you are encouraged to take
-		/// advantage of this method. The developer should be able to specify that a child should be
-		/// remeasured by adding normal dimension attribute with {@code wrap_content} value. For example
-		/// he might specify child's attributes as {@code app:layout_widthPercent="60%p"} and
-		/// {@code android:layout_width="wrap_content"}. In this case if the child receives too little
-		/// space, it will be remeasured with width set to {@code WRAP_CONTENT}.
-		/// </summary>
-		/// <returns> True if the measure phase needs to be rerun because one of the children would like
-		/// to receive more space. </returns>
+		/// <summary>Iterates over children and checks if any of them would like to get more space than it received through the
+		///     percentage dimension. If you are building a layout that supports percentage dimensions you are encouraged to take
+		///     advantage of this method. The developer should be able to specify that a child should be remeasured by adding
+		///     normal dimension attribute with {@code wrap_content} value. For example he might specify child's attributes as
+		///     {@code app:layout_widthPercent="60%p"} and {@code android:layout_width="wrap_content"}. In this case if the child
+		///     receives too little space, it will be remeasured with width set to {@code WRAP_CONTENT}.</summary>
+		/// <returns> True if the measure phase needs to be rerun because one of the children would like to receive more space. </returns>
 		public virtual bool handleMeasuredStateTooSmall()
 		{
 			bool needsSecondMeasure = false;
@@ -300,12 +238,10 @@ namespace android.support.percent
 				View view = mHost.GetChildAt(i);
 				ViewGroup.LayoutParams @params = view.LayoutParameters;
 				if (Log.IsLoggable(TAG, LogPriority.Debug))
-				{
 					Log.Debug(TAG, "should handle measured state too small " + view + " " + @params);
-				}
 				if (@params is PercentLayoutParams)
 				{
-					PercentLayoutInfo info = ((PercentLayoutParams) @params).PercentLayoutInfo;
+					PercentLayoutInfo info = ((PercentLayoutParams)@params).PercentLayoutInfo;
 					if (info != null)
 					{
 						if (shouldHandleMeasuredWidthTooSmall(view, info))
@@ -322,29 +258,25 @@ namespace android.support.percent
 				}
 			}
 			if (Log.IsLoggable(TAG, LogPriority.Debug))
-			{
 				Log.Debug(TAG, "should trigger second measure pass: " + needsSecondMeasure);
-			}
 			return needsSecondMeasure;
 		}
-		private static bool shouldHandleMeasuredWidthTooSmall(View view, PercentLayoutInfo info)
+		static bool shouldHandleMeasuredWidthTooSmall(View view, PercentLayoutInfo info)
 		{
 			// custom changed
 			/*int state = ViewCompat.getMeasuredWidthAndState(view) & ViewCompat.MEASURED_STATE_MASK;
 			return state == ViewCompat.MEASURED_STATE_TOO_SMALL && info.widthPercent >= 0 && info.mPreservedParams.Width == ViewGroup.LayoutParams.WrapContent;*/
 			return false;
 		}
-		private static bool shouldHandleMeasuredHeightTooSmall(View view, PercentLayoutInfo info)
+		static bool shouldHandleMeasuredHeightTooSmall(View view, PercentLayoutInfo info)
 		{
 			// custom changed
 			/*int state = ViewCompat.getMeasuredHeightAndState(view) & ViewCompat.MEASURED_STATE_MASK;
 			return state == ViewCompat.MEASURED_STATE_TOO_SMALL && info.heightPercent >= 0 && info.mPreservedParams.Height == ViewGroup.LayoutParams.WrapContent;*/
 			return false;
 		}
-		/// <summary>
-		/// Container for information about percentage dimensions and margins. It acts as an extension
-		/// for {@code LayoutParams}.
-		/// </summary>
+		/// <summary>Container for information about percentage dimensions and margins. It acts as an extension for {@code
+		///     LayoutParams}.</summary>
 		public class PercentLayoutInfo
 		{
 			public float widthPercent;
@@ -356,7 +288,8 @@ namespace android.support.percent
 			public float startMarginPercent;
 			public float endMarginPercent;
 			public float aspectRatio;
-			/* package */	 internal readonly ViewGroup.MarginLayoutParams mPreservedParams;
+			/* package */
+			internal readonly ViewGroup.MarginLayoutParams mPreservedParams;
 			public PercentLayoutInfo()
 			{
 				widthPercent = -1f;
@@ -369,9 +302,7 @@ namespace android.support.percent
 				endMarginPercent = -1f;
 				mPreservedParams = new ViewGroup.MarginLayoutParams(0, 0);
 			}
-			/// <summary>
-			/// Fills {@code ViewGroup.LayoutParams} dimensions based on percentage values.
-			/// </summary>
+			/// <summary>Fills {@code ViewGroup.LayoutParams} dimensions based on percentage values.</summary>
 			public virtual void fillLayoutParams(ViewGroup.LayoutParams @params, int widthHint, int heightHint)
 			{
 				// Preserve the original layout params, so we can restore them after the measure step.
@@ -381,40 +312,27 @@ namespace android.support.percent
 				// necessarily be true, as the user might explicitly set it to 0. However, we use this
 				// information only for the aspect ratio. If the user set the aspect ratio attribute,
 				// it means they accept or soon discover that it will be disregarded.
-//JAVA TO C# CONVERTER WARNING: The original Java variable was marked 'final':
-//ORIGINAL LINE: final boolean widthNotSet = params.Width == 0 && widthPercent < 0;
+				//JAVA TO C# CONVERTER WARNING: The original Java variable was marked 'final':
+				//ORIGINAL LINE: final boolean widthNotSet = params.Width == 0 && widthPercent < 0;
 				bool widthNotSet = @params.Width == 0 && widthPercent < 0;
-//JAVA TO C# CONVERTER WARNING: The original Java variable was marked 'final':
-//ORIGINAL LINE: final boolean heightNotSet = params.Height == 0 && heightPercent < 0;
+				//JAVA TO C# CONVERTER WARNING: The original Java variable was marked 'final':
+				//ORIGINAL LINE: final boolean heightNotSet = params.Height == 0 && heightPercent < 0;
 				bool heightNotSet = @params.Height == 0 && heightPercent < 0;
 				if (widthPercent >= 0)
-				{
 					@params.Width = (int)(widthHint * widthPercent);
-				}
 				if (heightPercent >= 0)
-				{
 					@params.Height = (int)(heightHint * heightPercent);
-				}
 				if (aspectRatio >= 0)
 				{
 					if (widthNotSet)
-					{
 						@params.Width = (int)(@params.Height * aspectRatio);
-					}
 					if (heightNotSet)
-					{
 						@params.Height = (int)(@params.Width / aspectRatio);
-					}
 				}
 				if (Log.IsLoggable(TAG, LogPriority.Debug))
-				{
 					Log.Debug(TAG, "after fillLayoutParams: (" + @params.Width + ", " + @params.Height + ")");
-				}
 			}
-			/// <summary>
-			/// Fills {@code ViewGroup.MarginLayoutParams} dimensions and margins based on percentage
-			/// values.
-			/// </summary>
+			/// <summary>Fills {@code ViewGroup.MarginLayoutParams} dimensions and margins based on percentage values.</summary>
 			public virtual void fillMarginLayoutParams(ViewGroup.MarginLayoutParams @params, int widthHint, int heightHint)
 			{
 				fillLayoutParams(@params, widthHint, heightHint);
@@ -429,21 +347,13 @@ namespace android.support.percent
 				MarginLayoutParamsCompat.setMarginEnd(mPreservedParams, MarginLayoutParamsCompat.getMarginEnd(@params));*/
 
 				if (leftMarginPercent >= 0)
-				{
 					@params.LeftMargin = (int)(widthHint * leftMarginPercent);
-				}
 				if (topMarginPercent >= 0)
-				{
 					@params.TopMargin = (int)(heightHint * topMarginPercent);
-				}
 				if (rightMarginPercent >= 0)
-				{
 					@params.RightMargin = (int)(widthHint * rightMarginPercent);
-				}
 				if (bottomMarginPercent >= 0)
-				{
 					@params.BottomMargin = (int)(heightHint * bottomMarginPercent);
-				}
 
 				// custom removed
 				/*if (startMarginPercent >= 0)
@@ -452,19 +362,12 @@ namespace android.support.percent
 					MarginLayoutParamsCompat.setMarginEnd(@params, (int)(widthHint * endMarginPercent));*/
 
 				if (Log.IsLoggable(TAG, LogPriority.Debug))
-				{
 					Log.Debug(TAG, "after fillMarginLayoutParams: (" + @params.Width + ", " + @params.Height + ")");
-				}
 			}
-			public override string ToString()
-			{
-				return string.Format("PercentLayoutInformation width: {0:F} height {1:F}, margins ({2:F}, {3:F}, " + " {4:F}, {5:F}, {6:F}, {7:F})", widthPercent, heightPercent, leftMarginPercent, topMarginPercent, rightMarginPercent, bottomMarginPercent, startMarginPercent, endMarginPercent);
-			}
-			/// <summary>
-			/// Restores original dimensions and margins after they were changed for percentage based
-			/// values. Calling this method only makes sense if you previously called
-			/// <seealso cref="PercentLayoutHelper.PercentLayoutInfo#fillMarginLayoutParams"/>.
-			/// </summary>
+			public override string ToString() { return string.Format("PercentLayoutInformation width: {0:F} height {1:F}, margins ({2:F}, {3:F}, " + " {4:F}, {5:F}, {6:F}, {7:F})", widthPercent, heightPercent, leftMarginPercent, topMarginPercent, rightMarginPercent, bottomMarginPercent, startMarginPercent, endMarginPercent); }
+			/// <summary>Restores original dimensions and margins after they were changed for percentage based values. Calling this
+			///     method only makes sense if you previously called
+			///     <seealso cref = "PercentLayoutHelper.PercentLayoutInfo#fillMarginLayoutParams" />.</summary>
 			public virtual void restoreMarginLayoutParams(ViewGroup.MarginLayoutParams @params)
 			{
 				restoreLayoutParams(@params);
@@ -476,27 +379,21 @@ namespace android.support.percent
 				/*MarginLayoutParamsCompat.setMarginStart(@params, MarginLayoutParamsCompat.getMarginStart(mPreservedParams));
 				MarginLayoutParamsCompat.setMarginEnd(@params, MarginLayoutParamsCompat.getMarginEnd(mPreservedParams));*/
 			}
-			/// <summary>
-			/// Restores original dimensions after they were changed for percentage based values. Calling
-			/// this method only makes sense if you previously called
-			/// <seealso cref="PercentLayoutHelper.PercentLayoutInfo#fillLayoutParams"/>.
-			/// </summary>
+			/// <summary>Restores original dimensions after they were changed for percentage based values. Calling this method only
+			///     makes sense if you previously called
+			///     <seealso cref = "PercentLayoutHelper.PercentLayoutInfo#fillLayoutParams" />.</summary>
 			public virtual void restoreLayoutParams(ViewGroup.LayoutParams @params)
 			{
 				@params.Width = mPreservedParams.Width;
 				@params.Height = mPreservedParams.Height;
 			}
 		}
-		/// <summary>
-		/// If a layout wants to support percentage based dimensions and use this helper class, its
-		/// {@code LayoutParams} subclass must implement this interface.
-		/// 
-		/// Your {@code LayoutParams} subclass should contain an instance of {@code PercentLayoutInfo}
-		/// and the implementation of this interface should be a simple accessor.
-		/// </summary>
+		/// <summary>If a layout wants to support percentage based dimensions and use this helper class, its {@code LayoutParams}
+		///     subclass must implement this interface. Your {@code LayoutParams} subclass should contain an instance of {@code
+		///     PercentLayoutInfo} and the implementation of this interface should be a simple accessor.</summary>
 		public interface PercentLayoutParams
 		{
-			PercentLayoutInfo PercentLayoutInfo {get;}
+			PercentLayoutInfo PercentLayoutInfo { get; }
 		}
 	}
 }

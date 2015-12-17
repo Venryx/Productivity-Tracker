@@ -5,11 +5,13 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
+using android.support.percent;
 using Android.App;
 using Android.App.Admin;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.Graphics.Drawables.Shapes;
 using Android.Hardware.Display;
 using Android.Media;
 using Android.Runtime;
@@ -20,6 +22,11 @@ using Android.Text;
 using Java.IO;
 using Java.Lang;
 using Java.Util;
+/*
+using Math = System.Math;
+using File = System.IO.File;
+using Timer = System.Timers.Timer;
+*/
 using Math = System.Math;
 using File = System.IO.File;
 using Timer = System.Timers.Timer;
@@ -55,7 +62,7 @@ namespace Main
 		void LoadDays(int daysBack)
 		{
 			var today = DateTime.UtcNow.Date;
-			for (var i = 0; i < daysBack; i++)
+			for (var i = 0; i <= daysBack; i++)
 				LoadDay(today.AddDays(-i));
 		}
 		void LoadDay(DateTime date)
@@ -121,6 +128,7 @@ namespace Main
 		int SecondsPerMinute=>mainData.settings.fastMode ? 1 : 60;
 
 		public Typeface baseTypeface;
+		PercentRelativeLayout daysPanel;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
 		//TextView countdownLabel;
@@ -133,10 +141,11 @@ namespace Main
 			SetContentView(Resource.Layout.Main);
 			
 			LoadMainData();
-			LoadDays(mainData.settings.daysVisibleAtOnce + 1);
+			LoadDays(mainData.settings.daysVisibleAtOnce);
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
+			daysPanel = FindViewById<PercentRelativeLayout>(Resource.Id.DaysPanel);
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
 
@@ -179,7 +188,7 @@ namespace Main
 			
 			UpdateKeepScreenOn();
 			UpdateTimerStepButtons();
-			UpdateProductivityGraph();
+			AddDaysToProductivityGraph(mainData.settings.daysVisibleAtOnce);
 			UpdateDynamicUI();
 			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
@@ -213,13 +222,13 @@ namespace Main
 			//if (currentTimer != null)
 			//	currentTimer.Enabled = true;
 		}*/
-		/*protected override void OnStop()
-		{
-			base.OnStop();
-			SaveMainData();
-		}*/
+/*protected override void OnStop()
+{
+	base.OnStop();
+	SaveMainData();
+}*/
 
-		public void UpdateKeepScreenOn()
+public void UpdateKeepScreenOn()
 		{
 			if (mainData.settings.keepScreenOnWhileOpen)
 				Window.AddFlags(WindowManagerFlags.KeepScreenOn);
@@ -250,14 +259,71 @@ namespace Main
 				timerStepButton.Click += (sender, e)=> { StartSession("Work", timerStepLength); };
 			}
 		}
-		void UpdateProductivityGraph()
+		void AddDaysToProductivityGraph(int daysBack)
 		{
-			// todo
+			var today = DateTime.UtcNow.Date;
+			for (var i = 0; i <= daysBack; i++)
+			{
+				var date = today.AddDays(-i);
+				// go back into 'days' list enough that we know we'll find the day's Day object, if it exists
+				Day dayObj = null;
+				for (var i2 = days.Count - 1; i2 >= days.Count - 1 - daysBack && i2 >= 0; i2--)
+					if (days[i2].date == date)
+						dayObj = days[i2];
+				AddDayToProductivityGraph(dayObj);
+			}
 		}
-		View CreateDayBox(Day day)
+		void AddDayToProductivityGraph(Day day)
 		{
-			// todo
-			return null;
+			var lastOldDayBox = daysPanel.ChildCount >= 1 ? daysPanel.GetChildAt(daysPanel.ChildCount - 1) : null;
+
+			var dayBox = CreateDayBox(day);
+			if (lastOldDayBox != null)
+			{
+				var layoutParams = dayBox.LayoutParameters as RelativeLayout.LayoutParams;
+				layoutParams.AddRule(LayoutRules.Below, lastOldDayBox.Id);
+				dayBox.LayoutParameters = layoutParams;
+			}
+			daysPanel.AddChild(dayBox);
+			if (day != null)
+				day.box = dayBox;
+		}
+		int lastDayBoxID = -1;
+		PercentRelativeLayout CreateDayBox(Day day)
+		{
+			var result = new PercentRelativeLayout(this);
+			result.Id = lastDayBoxID + 1;
+			lastDayBoxID = result.Id;
+            var layoutParams = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+			layoutParams.PercentLayoutInfo.heightPercent = (float)(1d / mainData.settings.daysVisibleAtOnce);
+			result.LayoutParameters = layoutParams;
+
+			var rect = new RectShape();
+			var shape = new ShapeDrawable(rect);
+			shape.Paint.Color = new Color(255, 255, 255, 128);
+			shape.Paint.SetStyle(Paint.Style.Stroke);
+			shape.Paint.StrokeWidth = 1;
+			//result.Background = new InsetDrawable(shape, -1, -1, -1, 0);
+			result.Background = shape;
+			// make-so: rest of general styling exists
+
+			if (day != null) // if there's data stored for this day
+			{
+				// make-so
+			}
+
+			return result;
+		}
+		void UpdateDayBox(Day day)
+		{
+			if (day.box == null)
+			{
+				daysPanel.RemoveViewAt(0); // for now, remove the oldest day-row, when we add a new one (otherwise it'd exceed the numbers of rows at the start)
+				AddDayToProductivityGraph(day);
+				return;
+			}
+
+			// make-so
 		}
 		
 		/*PendingIntent GetLaunchUpdateServicePendingIntent()
@@ -331,9 +397,10 @@ namespace Main
 		{
 			// data
 			//ProcessTimeUpToNow();
-			CurrentSession.timeStopped = DateTime.UtcNow;
-			if (!CurrentSession.subsessions.Last().timeStopped.HasValue)
-				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
+			var session = CurrentSession;
+			session.timeStopped = DateTime.UtcNow;
+			if (!session.subsessions.Last().timeStopped.HasValue)
+				session.subsessions.Last().timeStopped = DateTime.UtcNow;
 
 			// actors
 			UpdateOutflow();
@@ -366,6 +433,7 @@ namespace Main
 			UpdateAudio();
 			RunOnUiThread(UpdateDynamicUI);
 			RunOnUiThread(UpdateNotification);
+			UpdateDayBox(CurrentDay); // maybe make-so: this doesn't run quite so often
 		}
 		void UpdateAudio()
 		{

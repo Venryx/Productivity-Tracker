@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using android.support.percent;
+using Android.Widget;
 
 namespace Main
 {
@@ -10,5 +12,7 @@ namespace Main
 
 		public DateTime date; // utc; convenience property (you could, instead, just get it from the filename)
 		[VDFProp(popOutL2: true)] public List<Session> sessions = new List<Session>();
+
+		[VDFProp(false)] public PercentRelativeLayout box; // convenience property
 	}
 }

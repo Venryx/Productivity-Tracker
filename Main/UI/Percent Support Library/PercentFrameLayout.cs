@@ -106,8 +106,9 @@ namespace android.support.percent
 				InstanceFieldsInitialized = true;
 			}
 		}
-		protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams() { return new LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent); }
-		public override ViewGroup.LayoutParams GenerateLayoutParams(IAttributeSet attrs) { return new LayoutParams(Context, attrs); }
+		// custom removed (had to, for it to compile)
+		/*protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams() { return new LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent); }
+		public override ViewGroup.LayoutParams GenerateLayoutParams(IAttributeSet attrs) { return new LayoutParams(Context, attrs); }*/
 		protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
 		{
 			mHelper.adjustChildren(widthMeasureSpec, heightMeasureSpec);

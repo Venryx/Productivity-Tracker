@@ -163,29 +163,32 @@ namespace Main
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f060009
-			public const int Pause = 2131099657;
-			
-			// aapt resource value: 0x7f06000e
-			public const int RestButtons = 2131099662;
-			
 			// aapt resource value: 0x7f060008
-			public const int Stop = 2131099656;
-			
-			// aapt resource value: 0x7f06000d
-			public const int TimeLeftBar = 2131099661;
-			
-			// aapt resource value: 0x7f06000c
-			public const int TimeLeftPanel = 2131099660;
-			
-			// aapt resource value: 0x7f06000b
-			public const int TimeOverBar = 2131099659;
+			public const int DaysPanel = 2131099656;
 			
 			// aapt resource value: 0x7f06000a
-			public const int TimeOverPanel = 2131099658;
+			public const int Pause = 2131099658;
 			
 			// aapt resource value: 0x7f06000f
-			public const int WorkButtons = 2131099663;
+			public const int RestButtons = 2131099663;
+			
+			// aapt resource value: 0x7f060009
+			public const int Stop = 2131099657;
+			
+			// aapt resource value: 0x7f06000e
+			public const int TimeLeftBar = 2131099662;
+			
+			// aapt resource value: 0x7f06000d
+			public const int TimeLeftPanel = 2131099661;
+			
+			// aapt resource value: 0x7f06000c
+			public const int TimeOverBar = 2131099660;
+			
+			// aapt resource value: 0x7f06000b
+			public const int TimeOverPanel = 2131099659;
+			
+			// aapt resource value: 0x7f060010
+			public const int WorkButtons = 2131099664;
 			
 			// aapt resource value: 0x7f060004
 			public const int buttonAdd = 2131099652;
