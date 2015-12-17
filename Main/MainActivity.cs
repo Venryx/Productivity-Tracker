@@ -111,9 +111,9 @@ namespace Main
 			get
 			{
 				var day0 = CurrentDay; // run first, so new day created if just passed midnight
-				var dayNeg1 = days.Count >= 2 ? days[days.Count - 2] : null;
 				if (day0.sessions.Count > 0)
 					return !day0.sessions.Last().timeStopped.HasValue ? day0.sessions.Last() : null;
+				var dayNeg1 = days.Count >= 2 ? days[days.Count - 2] : null;
 				return dayNeg1 != null && dayNeg1.sessions.Count >= 1 && !dayNeg1.sessions.Last().timeStopped.HasValue ? dayNeg1.sessions.Last() : null;
 			}
 		}
@@ -186,8 +186,8 @@ namespace Main
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
 			if (CurrentSession != null && !CurrentSession.paused)
 			{
-				PauseSession();
-				ResumeSession();
+				PauseSession(false);
+				ResumeSession(false);
 			}
 		}
 		protected override void OnDestroy()
@@ -252,7 +252,12 @@ namespace Main
 		}
 		void UpdateProductivityGraph()
 		{
-			// make-so
+			// todo
+		}
+		View CreateDayBox(Day day)
+		{
+			// todo
+			return null;
 		}
 		
 		/*PendingIntent GetLaunchUpdateServicePendingIntent()
@@ -273,24 +278,22 @@ namespace Main
 			// data
 			if (CurrentSession != null)
 				StopSession();
-			var session = new Session();
-			session.type = type;
-			session.timeStarted = DateTime.UtcNow;
-			session.timeLeft = minutes * SecondsPerMinute;
+			var session = new Session(type, DateTime.UtcNow, minutes * SecondsPerMinute);
 			//session.currentTimer_processedTimeExtent = JavaSystem.CurrentTimeMillis();
 			CurrentDay.sessions.Add(session);
 
 			// actors
 			ResumeSession();
 		}
-		// make-so: Pause and Resume methods add entries to the Session.timePauses list; break point
-		void PauseSession()
+		void PauseSession(bool endSubsession = true)
 		{
 			// data
             CurrentSession.paused = true;
 			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
 			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
 			ProcessTimeUpToNow();
+			if (endSubsession)
+				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
 
 			// actors
 			UpdateOutflow();
@@ -298,14 +301,16 @@ namespace Main
 				currentTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
-		void ResumeSession()
+		void ResumeSession(bool startSubsession = true)
 		{
 			// data
 			CurrentSession.processedTimeExtent = DateTime.UtcNow;
 			CurrentSession.paused = false;
 			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
 			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
-			ProcessTimeUpToNow();
+			//ProcessTimeUpToNow();
+			if (startSubsession)
+				CurrentSession.subsessions.Add(new Subsession(DateTime.UtcNow));
 
 			// actors
 			UpdateOutflow();
@@ -327,6 +332,8 @@ namespace Main
 			// data
 			//ProcessTimeUpToNow();
 			CurrentSession.timeStopped = DateTime.UtcNow;
+			if (!CurrentSession.subsessions.Last().timeStopped.HasValue)
+				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
 
 			// actors
 			UpdateOutflow();

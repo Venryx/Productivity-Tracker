@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="fill_parent">
+<LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" xmlns:c="http://schemas.android.com/apk/res-auto" _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="fill_parent">
 	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".82" _:layout_height="fill_parent">
 		<LinearLayout _:orientation="vertical" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".93" _:background="@drawable/Border_5_RightBottom">
 		</LinearLayout>

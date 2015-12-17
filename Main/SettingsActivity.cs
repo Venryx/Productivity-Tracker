@@ -457,7 +457,6 @@ namespace Main
 		{
 			var result = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 60));
 			//result.SetHorizontalGravity(GravityFlags.Center);
-			result.SetPadding(15, 15, 15, 15);
 
 			if (text != null)
 			{
@@ -474,17 +473,25 @@ namespace Main
 			//shape.SetPadding(3, 3, 3, 3);
 			//result.Background = shape;
 			result.Background = new InsetDrawable(shape, -3, -3, -3, 3);
-			//result.SetPadding(3, 3, 3, 3);
+			//result.SetPadding(3, 3, 3, 3); // must come after
 
 			return result;
 		}
 		LinearLayout AddRow(LinearLayout root, int height = 110, bool vertical = true, bool addSeparator = true)
 		{
 			var result = root.AddChild(new LinearLayout(this) {Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
-			result.SetPadding(15, 15, 15, 15);
 			//if (root.ChildCount > 1)
 			if (addSeparator)
-				result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
+			{
+				//result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
+				var rect = new RectShape();
+				var shape = new ShapeDrawable(rect);
+				shape.Paint.Color = new Color(255, 255, 255, 128);
+				shape.Paint.SetStyle(Paint.Style.Stroke);
+				shape.Paint.StrokeWidth = 1;
+				result.Background = new InsetDrawable(shape, -1, -1, -1, 0);
+			}
+			result.SetPadding(15, 15, 15, 15); // must come after
 			return result;
 		}
 

@@ -58,11 +58,18 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Xml" />
+    <Reference Include="Xamarin.Android.Support.Percent, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Xamarin.Android.Support.Percent.22.2.0.0\lib\MonoAndroid23\Xamarin.Android.Support.Percent.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Session.cs" />
     <Compile Include="Data\Day.cs" />
     <Compile Include="Data\MainData.cs" />
+    <Compile Include="UI\Percent Support Library\PercentFrameLayout.cs" />
+    <Compile Include="UI\Percent Support Library\PercentLayoutHelper.cs" />
+    <Compile Include="UI\Percent Support Library\PercentRelativeLayout.cs" />
     <Compile Include="VectorStructs.cs" />
     <Compile Include="UpdateService.cs" />
     <Compile Include="Drawables.cs" />
@@ -98,6 +105,7 @@
     <AndroidResource Include="Resources\drawable\Icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Properties\AndroidManifest.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -113,14 +121,6 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Volume.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_1_Top_Black.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_1_Top_LightGray.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\daidalos_file_chooser.xml" />
@@ -150,15 +150,13 @@
     <AndroidResource Include="Resources\drawable\tick.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\drawable\Border_1_Bottom_LightGray.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\Lock.png" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Unlock.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\Attrs.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
