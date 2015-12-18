@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Android.App;
 using Android.Content;
+using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Media;
 using Android.OS;
@@ -15,6 +15,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using File = Java.IO.File;
+using Path = System.IO.Path;
 using Uri = Android.Net.Uri;
 
 public static class ClassExtensions
@@ -144,9 +145,19 @@ public static class ClassExtensions
 		}
 		return new Vector2i(x, y);
 	}
-	
+
+	// Color
+	public static Color NewA(this Color s, byte alpha) { return new Color(s.R, s.G, s.B, alpha); }
+
 	// ColorDrawable
 	public static ColorDrawable Clone(this ColorDrawable s) { return new ColorDrawable(s.Color); }
+
+	// Canvas
+	public static RectF GetRect(this Canvas s) { return new RectF(0, 0, s.Width, s.Height); }
+
+	// RectF
+	public static RectF Times(this RectF s, float width, float height) { return new RectF(s.Left * width, s.Top * height, s.Right * width, s.Bottom * height); }
+	public static RectF Extend(this RectF s, float left, float top, float right, float bottom) { return new RectF(s.Left + left, s.Top + top, s.Right + right, s.Bottom + bottom); }
 
 	// MediaPlayer
 	// minor: maybe make-so: it's known for sure what the MediaPlayer treats passed values as!

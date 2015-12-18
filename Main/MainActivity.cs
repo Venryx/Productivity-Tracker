@@ -332,7 +332,7 @@ namespace Main
 			for (var i = 0; i < 24; i++)
 			{
 				var hourMarker = graph_overlayRoot.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(1, V.MatchParent));
-				hourMarker.Background = Drawables.CreateColor(new Color(255, 255, 255, 50));
+				hourMarker.Background = Drawables.CreateColor(new Color(128, 128, 128, 70));
 				var layoutParams = hourMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
 				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(i / 24d);
 				hourMarker.LayoutParameters = layoutParams;
@@ -410,8 +410,9 @@ namespace Main
 				//var minutesInDay = 60 * 24;
 				Session lastSubsessionSession = null;
 				//Subsession lastSubsession = null;
-				ImageView lastSubsessionView = null;
+				//ImageView lastSubsessionView = null;
 				DateTime lastSubsessionEndTime = day.date.Date;
+				//ImageView lastSegmentView = null;
 
 				var sessions = day.sessions.ToList();
 				if (previousDayOverflowSession != null) // if session from previous day overflowed into current, add fake session for it, so part in this day shows up
@@ -438,45 +439,143 @@ namespace Main
 						if (subsession.timeStarted.Date > day.date) // if we've reached a subsession started after the current day (as part of overflow-session)
 							break;
 
-						var gap = new ImageView(this);
-						gap.Id = ++lastViewAutoID;
-						if (lastSubsessionSession == session)
-							gap.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 128) : new Color(0, 128, 0)));
-						var gap_layout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-						var gapTime = subsession.timeStarted - lastSubsessionEndTime;
-						gap_layout.PercentLayoutInfo.widthPercent = (float)(gapTime.TotalMinutes / minutesInDay);
-						gap_layout.PercentLayoutInfo.heightPercent = .1f;
-						if (lastSubsessionView != null)
-						{
-							gap_layout.AddRule(LayoutRules.RightOf, lastSubsessionView.Id);
-							gap_layout.AddRule(LayoutRules.AlignParentBottom);
-						}
-						if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
-							gap_layout.PercentLayoutInfo.widthPercent *= 60;
-						gap.LayoutParameters = gap_layout;
-						result.AddChild(gap, gap_layout);
+						// gap
+						// ==========
 
-						var segment = new ImageView(this);
-						segment.Id = ++lastViewAutoID;
-						segment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 255) : new Color(0, 255, 0)));
-						var segment_layout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+						var lowSegmentTime = subsession.timeStarted - lastSubsessionEndTime;
+						ImageView lowSegment = null;
+						if (lowSegmentTime.TotalMinutes >= 1)
+						{
+							lowSegment = new ImageView(this);
+							lowSegment.Id = ++lastViewAutoID;
+							if (lastSubsessionSession == session)
+								lowSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 128) : new Color(0, 128, 0)));
+							var lowSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							//if (lastSegmentView != null)
+							//	gap_layout.AddRule(LayoutRules.RightOf, lastSegmentView.Id);
+							//lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(subsession.timeStarted.TimeOfDay.TotalMinutes / (24 * 60));
+							lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(lastSubsessionEndTime.TimeOfDay.TotalMinutes / (24 * 60));
+							lowSegmentLayout.AddRule(LayoutRules.AlignParentBottom);
+							lowSegmentLayout.PercentLayoutInfo.widthPercent = (float)(lowSegmentTime.TotalMinutes / minutesInDay);
+							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+								lowSegmentLayout.PercentLayoutInfo.widthPercent *= 60;
+							lowSegmentLayout.PercentLayoutInfo.heightPercent = .15f;
+							lowSegment.LayoutParameters = lowSegmentLayout;
+							result.AddChild(lowSegment, lowSegmentLayout);
+							//lastSegmentView = lowSegment;
+
+							/*var lowSegmentArc = new ImageView(this);
+							lowSegmentArc.Id = ++lastViewAutoID;
+							lowSegmentArc.SetBackgroundResource(Resource.Drawable.Arc);
+							var lowSegmentArcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							lowSegmentArcLayout.AddRule(LayoutRules.AlignRight, lowSegment.Id);
+							lowSegmentArcLayout.AddRule(LayoutRules.AlignParentBottom);
+							lowSegmentArcLayout.PercentLayoutInfo.widthPercent = (float)(lowSegmentTime.TotalMinutes / minutesInDay);
+							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+								lowSegmentArcLayout.PercentLayoutInfo.widthPercent *= 60;
+							lowSegmentArcLayout.PercentLayoutInfo.heightPercent = .1f;
+							lowSegmentArc.LayoutParameters = lowSegmentArcLayout;
+							result.AddChild(lowSegmentArc, lowSegmentArcLayout);*/
+
+							var arc = new ShapeDrawer(this);
+							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
+							//arc.AddShape(new VRectangle(0, .5, 1, 1) {Op = VShapeOp.Clear});
+							arc.AddShape(new VRectangle(0, .5, 1, 1) {Color = Color.Black.NewA(128)});
+							var arcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							arcLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
+							arcLayout.AddRule(LayoutRules.AlignParentBottom);
+							arcLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
+							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+								arcLayout.PercentLayoutInfo.widthPercent *= 60;
+							arcLayout.PercentLayoutInfo.heightPercent = .15f;
+							arc.LayoutParameters = arcLayout;
+							result.AddChild(arc, arcLayout);
+
+							var label = new TextView(this);
+							var labelLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							labelLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
+							labelLayout.AddRule(LayoutRules.AlignParentBottom);
+							labelLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
+							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+								labelLayout.PercentLayoutInfo.widthPercent *= 60;
+							labelLayout.PercentLayoutInfo.heightPercent = .15f;
+							labelLayout.BottomMargin = 2;
+							label.LayoutParameters = labelLayout;
+							label.Gravity = GravityFlags.Center;
+							//label.SetPadding(0, 0, 0, 3);
+							label.TextSize = 10;
+							label.Text = ((int)lowSegmentTime.TotalMinutes).ToString();
+							result.AddChild(label, labelLayout);
+						}
+
+						// segment
+						// ==========
+
 						var timeStopped_keptInDay =
 							subsession.timeStopped.HasValue
-								? (subsession.timeStopped.Value.Date == day.date ? subsession.timeStopped.Value : day.date.AddDays(1).Date)
-								: DateTime.UtcNow.Date == day.date ? DateTime.UtcNow : DateTime.UtcNow.AddDays(1).Date;
-						var segmentTime = timeStopped_keptInDay - subsession.timeStarted;
-						segment_layout.PercentLayoutInfo.widthPercent = (float)(segmentTime.TotalMinutes / minutesInDay);
-						if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
-							segment_layout.PercentLayoutInfo.widthPercent *= 60;
-						//if (lastSubsessionView != null)
-						//	segment_layout.AddRule(LayoutRules.RightOf, lastSubsessionView.Id);
-						segment_layout.AddRule(LayoutRules.RightOf, gap.Id);
-						segment.LayoutParameters = segment_layout;
-						result.AddChild(segment, segment_layout);
-						lastSubsessionSession = session;
-						//lastSubsession = subsession;
-						lastSubsessionView = segment;
-						lastSubsessionEndTime = timeStopped_keptInDay;
+							? (subsession.timeStopped.Value.Date == day.date ? subsession.timeStopped.Value : day.date.AddDays(1).Date)
+							: DateTime.UtcNow.Date == day.date ? DateTime.UtcNow : DateTime.UtcNow.AddDays(1).Date;
+						var highSegmentTime = timeStopped_keptInDay - subsession.timeStarted;
+						if (highSegmentTime.TotalMinutes >= 1)
+						{
+							var highSegment = new ImageView(this);
+							highSegment.Id = ++lastViewAutoID;
+							highSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 255) : new Color(0, 255, 0)));
+							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							//if (lastSegmentView != null)
+							//	highSegmentLayout.AddRule(LayoutRules.RightOf, lastSegmentView.Id);
+							highSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(subsession.timeStarted.TimeOfDay.TotalMinutes / (24 * 60));
+							highSegmentLayout.PercentLayoutInfo.widthPercent = (float)(highSegmentTime.TotalMinutes / minutesInDay);
+							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
+								highSegmentLayout.PercentLayoutInfo.widthPercent *= 60;
+							highSegment.LayoutParameters = highSegmentLayout;
+							result.AddChild(highSegment, highSegmentLayout);
+							lastSubsessionSession = session;
+							//lastSubsession = subsession;
+							lastSubsessionEndTime = timeStopped_keptInDay;
+							//lastSegmentView = highSegment;
+
+							/*var highSegmentArc = new ImageView(this);
+							highSegmentArc.Id = ++lastViewAutoID;
+							highSegmentArc.SetBackgroundResource(Resource.Drawable.Arc);
+							var highSegmentArcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							highSegmentArcLayout.AddRule(LayoutRules.AlignRight, highSegment.Id);
+							highSegmentArcLayout.AddRule(LayoutRules.AlignParentBottom);
+							highSegmentArcLayout.PercentLayoutInfo.widthPercent = (float)(highSegmentTime.TotalMinutes / minutesInDay);
+							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
+								highSegmentArcLayout.PercentLayoutInfo.widthPercent *= 60;
+							highSegmentArcLayout.PercentLayoutInfo.heightPercent = .1f;
+							highSegmentArc.LayoutParameters = highSegmentArcLayout;
+							result.AddChild(highSegmentArc, highSegmentArcLayout);*/
+
+							var arc = new ShapeDrawer(this);
+							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
+							arc.AddShape(new VRectangle(0, .5, 1, 1) {Color = Color.Black.NewA(128)});
+							var arcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							arcLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
+							arcLayout.AddRule(LayoutRules.AlignParentBottom);
+							arcLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
+							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
+								arcLayout.PercentLayoutInfo.widthPercent *= 60;
+							arcLayout.PercentLayoutInfo.heightPercent = .15f;
+							arc.LayoutParameters = arcLayout;
+							result.AddChild(arc, arcLayout);
+
+							var label = new TextView(this);
+							var labelLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							labelLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
+							labelLayout.AddRule(LayoutRules.AlignParentBottom);
+							labelLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
+							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+								labelLayout.PercentLayoutInfo.widthPercent *= 60;
+							labelLayout.PercentLayoutInfo.heightPercent = .15f;
+							labelLayout.BottomMargin = 2;
+							label.LayoutParameters = labelLayout;
+							label.Gravity = GravityFlags.Center;
+							label.TextSize = 10;
+							label.Text = ((int)highSegmentTime.TotalMinutes).ToString();
+							result.AddChild(label, labelLayout);
+						}
 					}
 				}
 			}
