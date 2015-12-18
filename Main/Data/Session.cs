@@ -17,7 +17,7 @@ namespace Main
 		public string type;
 		public DateTime timeStarted; // utc
 		public DateTime? timeStopped; // utc
-		public List<Subsession> subsessions = new List<Subsession>();
+		[VDFProp(popOutL2: true)] public List<Subsession> subsessions = new List<Subsession>();
 
 		/// <summary>Time till timer 'runs out' to zero, in seconds. (negative if past timeout, causing alarm volume to progressively increase)</summary>
 		public int timeLeft;
@@ -27,8 +27,10 @@ namespace Main
 		public DateTime processedTimeExtent;
 		public bool paused;
 		public bool locked;
+
+		public Session Clone() { return VDF.Deserialize<Session>(VDF.Serialize<Session>(this)); }
 	}
-	public class Subsession // period of time in which a session was 'running' (i.e. not paused)
+	[VDFType(propIncludeRegexL1: "")] public class Subsession // period of time in which a session was 'running' (i.e. not paused)
 	{
 		[VDFPreDeserialize] protected Subsession() {}
 		public Subsession(DateTime timeStarted) { this.timeStarted = timeStarted; }

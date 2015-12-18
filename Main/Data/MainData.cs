@@ -40,6 +40,8 @@ namespace Main
 		// ==========
 
 		public bool keepScreenOnWhileOpen = true;
+		public bool showLocalTime;
+		public bool show12HourTime;
 		public bool fastMode;
 
 		// productivity graph

@@ -19,6 +19,7 @@ using Android.Views;
 using Android.Widget;
 using Android.OS;
 using Android.Text;
+using Android.Util;
 using Java.IO;
 using Java.Lang;
 using Java.Util;
@@ -27,6 +28,7 @@ using Math = System.Math;
 using File = System.IO.File;
 using Timer = System.Timers.Timer;
 */
+using Exception = System.Exception;
 using Math = System.Math;
 using File = System.IO.File;
 using Timer = System.Timers.Timer;
@@ -62,8 +64,8 @@ namespace Main
 		void LoadDays(int daysBack)
 		{
 			var today = DateTime.UtcNow.Date;
-			for (var i = 0; i <= daysBack; i++)
-				LoadDay(today.AddDays(-i));
+			for (var i = -daysBack; i <= 0; i++)
+				LoadDay(today.AddDays(i));
 		}
 		void LoadDay(DateTime date)
 		{
@@ -128,12 +130,18 @@ namespace Main
 		int SecondsPerMinute=>mainData.settings.fastMode ? 1 : 60;
 
 		public Typeface baseTypeface;
+		FrameLayout graphRoot;
+		LinearLayout graph_nonOverlayRoot;
 		PercentRelativeLayout daysPanel;
+		PercentRelativeLayout graphBottomBar;
+		ImageView currentTimeMarker;
+		PercentRelativeLayout graph_overlayRoot;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
 		//TextView countdownLabel;
 		Button countdownLabel;
 		FrameLayout mouseInputBlocker;
+		public Timer dayUpdateTimer;
 		protected override void OnCreate(Bundle bundle)
 		{
 			main = this;
@@ -145,13 +153,44 @@ namespace Main
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
-			daysPanel = FindViewById<PercentRelativeLayout>(Resource.Id.DaysPanel);
+			graphRoot = FindViewById<FrameLayout>(Resource.Id.GraphRoot);
 			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
 			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
 
 			// has to start with something
 			timeLeftBar.Background = Drawables.clip_yPlus_blue_dark;
 			timeOverBar.Background = Drawables.clip_xPlus_blue_dark;
+
+			// productivity graph
+			// ==========
+
+			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			{
+				daysPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, 1));
+				{
+					AddDaysToProductivityGraph(mainData.settings.daysVisibleAtOnce - 1);
+				}
+				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 30));
+				{
+					//currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(V.WrapContent, V.WrapContent));
+					currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(80, 48));
+					//currentTimeMarker.SetPadding(-40, 0, 0, 0);
+					currentTimeMarker.SetImageResource(Resource.Drawable.UpArrow);
+					UpdateCurrentTimerMarkerPosition();
+					//V.WaitXSecondsThenRun(.1, ()=>RunOnUiThread(UpdateCurrentTimerMarkerPosition));
+
+					UpdateHourMarkers();
+				}
+			}
+			graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			{
+				GenerateProductivityGraphOverlay();
+			}
+
+			// general
+			// ==========
+
+			UpdateKeepScreenOn();
 
 			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
 			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
@@ -174,6 +213,18 @@ namespace Main
 			var mouseInputBlockerMessageLabel = mouseInputBlocker.AddChild(new TextView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent) {Gravity = GravityFlags.Center});
 			mouseInputBlockerMessageLabel.Text = "Mouse input is currently blocked. Press the screen with two fingers simultaneously to unblock.";
 
+			// time-left bar
+			// ==========
+
+			FindViewById<LinearLayout>(Resource.Id.RestButtons).AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Rest" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+			FindViewById<LinearLayout>(Resource.Id.WorkButtons).AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Work" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+
+			UpdateTimerStepButtons();
+			UpdateDynamicUI();
+
+			// time-over bar
+			// ==========
+
 			FindViewById<Button>(Resource.Id.Pause).Click += delegate
 			{
 				if (CurrentSession.paused)
@@ -183,13 +234,10 @@ namespace Main
 			};
 			FindViewById<Button>(Resource.Id.Stop).Click += delegate { StopSession(); };
 
-			FindViewById<LinearLayout>(Resource.Id.RestButtons).AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Rest"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-			FindViewById<LinearLayout>(Resource.Id.WorkButtons).AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Work"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+			// others
+			// ==========
+
 			
-			UpdateKeepScreenOn();
-			UpdateTimerStepButtons();
-			AddDaysToProductivityGraph(mainData.settings.daysVisibleAtOnce);
-			UpdateDynamicUI();
 			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
@@ -198,13 +246,24 @@ namespace Main
 				PauseSession(false);
 				ResumeSession(false);
 			}
+
+			dayUpdateTimer = new Timer(mainData.settings.fastMode ? 1000 : 60000);
+			dayUpdateTimer.Elapsed += delegate
+			{
+				RunOnUiThread(()=>
+				{
+					UpdateDayBox(CurrentDay);
+					UpdateCurrentTimerMarkerPosition();
+				});
+			};
+			dayUpdateTimer.Enabled = true;
 		}
 		protected override void OnDestroy()
 		{
 			//currentTimer?.Stop();
 			//currentTimer?.Elapsed -= CurrentTimer_Elapsed;
-			currentTimer?.Dispose();
-			currentTimer = null;
+			sessionUpdateTimer?.Dispose();
+			sessionUpdateTimer = null;
 			base.OnDestroy();
 		}
 		protected override void OnPause()
@@ -222,13 +281,18 @@ namespace Main
 			//if (currentTimer != null)
 			//	currentTimer.Enabled = true;
 		}*/
-/*protected override void OnStop()
-{
-	base.OnStop();
-	SaveMainData();
-}*/
+		/*protected override void OnStop()
+		{
+			base.OnStop();
+			SaveMainData();
+		}*/
+		public override void OnWindowFocusChanged(bool hasFocus)
+		{
+			if (hasFocus) // ui should be laid-out at this point
+				UpdateCurrentTimerMarkerPosition();
+		}
 
-public void UpdateKeepScreenOn()
+		public void UpdateKeepScreenOn()
 		{
 			if (mainData.settings.keepScreenOnWhileOpen)
 				Window.AddFlags(WindowManagerFlags.KeepScreenOn);
@@ -259,12 +323,28 @@ public void UpdateKeepScreenOn()
 				timerStepButton.Click += (sender, e)=> { StartSession("Work", timerStepLength); };
 			}
 		}
+
+		// productivity graph
+		// ==========
+
+		void GenerateProductivityGraphOverlay()
+		{
+			for (var i = 0; i < 24; i++)
+			{
+				var hourMarker = graph_overlayRoot.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(1, V.MatchParent));
+				hourMarker.Background = Drawables.CreateColor(new Color(255, 255, 255, 50));
+				var layoutParams = hourMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
+				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(i / 24d);
+				hourMarker.LayoutParameters = layoutParams;
+			}
+		}
 		void AddDaysToProductivityGraph(int daysBack)
 		{
 			var today = DateTime.UtcNow.Date;
-			for (var i = 0; i <= daysBack; i++)
+			//for (var i = 0; i <= daysBack; i++)
+			for (var i = -daysBack; i <= 0; i++)
 			{
-				var date = today.AddDays(-i);
+				var date = today.AddDays(i);
 				// go back into 'days' list enough that we know we'll find the day's Day object, if it exists
 				Day dayObj = null;
 				for (var i2 = days.Count - 1; i2 >= days.Count - 1 - daysBack && i2 >= 0; i2--)
@@ -280,7 +360,7 @@ public void UpdateKeepScreenOn()
 			var dayBox = CreateDayBox(day);
 			if (lastOldDayBox != null)
 			{
-				var layoutParams = dayBox.LayoutParameters as RelativeLayout.LayoutParams;
+				var layoutParams = dayBox.LayoutParameters as PercentRelativeLayout.LayoutParams;
 				layoutParams.AddRule(LayoutRules.Below, lastOldDayBox.Id);
 				dayBox.LayoutParameters = layoutParams;
 			}
@@ -288,12 +368,12 @@ public void UpdateKeepScreenOn()
 			if (day != null)
 				day.box = dayBox;
 		}
-		int lastDayBoxID = -1;
+		//int lastViewAutoID = -1;
+		int lastViewAutoID = 1000;
 		PercentRelativeLayout CreateDayBox(Day day)
 		{
 			var result = new PercentRelativeLayout(this);
-			result.Id = lastDayBoxID + 1;
-			lastDayBoxID = result.Id;
+			result.Id = ++lastViewAutoID;
             var layoutParams = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
 			layoutParams.PercentLayoutInfo.heightPercent = (float)(1d / mainData.settings.daysVisibleAtOnce);
 			result.LayoutParameters = layoutParams;
@@ -305,16 +385,106 @@ public void UpdateKeepScreenOn()
 			shape.Paint.StrokeWidth = 1;
 			//result.Background = new InsetDrawable(shape, -1, -1, -1, 0);
 			result.Background = shape;
-			// make-so: rest of general styling exists
+			result.SetPadding(1, 1, 1, 1);
 
 			if (day != null) // if there's data stored for this day
 			{
-				// make-so
+				const int minutesInDay = 60 * 24;
+				Session previousDayOverflowSession = null;
+				if (days.Count >= 2 && days[days.Count - 2].date == day.date.AddDays(-1).Date && days[days.Count - 2].sessions.Count >= 1)
+				{
+					var previousDayLastSession = days[days.Count - 2].sessions.Last();
+					if (!previousDayLastSession.timeStopped.HasValue || previousDayLastSession.timeStopped.Value >= day.date)
+						previousDayOverflowSession = previousDayLastSession;
+				}
+
+				// maybe make-so: there's a better-matching setting for adding fake data like this
+				if (mainData.settings.fastMode)
+				{
+					var session = new Session("Work", day.date.AddMinutes(-10), 19) {timeStopped = day.date.AddMinutes(1)};
+					var subsession = new Subsession(session.timeStarted) {timeStopped = session.timeStopped};
+					session.subsessions.Add(subsession);
+					previousDayOverflowSession = session;
+				}
+
+				//var minutesInDay = 60 * 24;
+				Session lastSubsessionSession = null;
+				//Subsession lastSubsession = null;
+				ImageView lastSubsessionView = null;
+				DateTime lastSubsessionEndTime = day.date.Date;
+
+				var sessions = day.sessions.ToList();
+				if (previousDayOverflowSession != null) // if session from previous day overflowed into current, add fake session for it, so part in this day shows up
+				{
+					var session = previousDayOverflowSession.Clone();
+					session.timeStarted = day.date;
+					foreach (Subsession subsession in session.subsessions)
+					{
+						if (subsession.timeStarted < session.timeStarted)
+							subsession.timeStarted = session.timeStarted;
+						if (subsession.timeStopped < session.timeStarted)
+							subsession.timeStopped = session.timeStarted;
+					}
+					sessions.Insert(0, session);
+				}
+				foreach (Session session in sessions)
+				{
+					var subsessions = session.subsessions.ToList();
+					//if (lastSubsession != null && (!lastSubsession.timeStopped.HasValue || lastSubsession.timeStopped >= day.Date)
+					if (session.paused) // if session paused, add fake subsession after, so pause gap-segment shows up
+						subsessions.Add(session.timeStopped.HasValue ? new Subsession(session.timeStopped.Value) {timeStopped = session.timeStopped} : new Subsession(DateTime.UtcNow));
+					foreach (Subsession subsession in subsessions)
+					{
+						if (subsession.timeStarted.Date > day.date) // if we've reached a subsession started after the current day (as part of overflow-session)
+							break;
+
+						var gap = new ImageView(this);
+						gap.Id = ++lastViewAutoID;
+						if (lastSubsessionSession == session)
+							gap.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 128) : new Color(0, 128, 0)));
+						var gap_layout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+						var gapTime = subsession.timeStarted - lastSubsessionEndTime;
+						gap_layout.PercentLayoutInfo.widthPercent = (float)(gapTime.TotalMinutes / minutesInDay);
+						gap_layout.PercentLayoutInfo.heightPercent = .1f;
+						if (lastSubsessionView != null)
+						{
+							gap_layout.AddRule(LayoutRules.RightOf, lastSubsessionView.Id);
+							gap_layout.AddRule(LayoutRules.AlignParentBottom);
+						}
+						if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
+							gap_layout.PercentLayoutInfo.widthPercent *= 60;
+						gap.LayoutParameters = gap_layout;
+						result.AddChild(gap, gap_layout);
+
+						var segment = new ImageView(this);
+						segment.Id = ++lastViewAutoID;
+						segment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 255) : new Color(0, 255, 0)));
+						var segment_layout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+						var timeStopped_keptInDay =
+							subsession.timeStopped.HasValue
+								? (subsession.timeStopped.Value.Date == day.date ? subsession.timeStopped.Value : day.date.AddDays(1).Date)
+								: DateTime.UtcNow.Date == day.date ? DateTime.UtcNow : DateTime.UtcNow.AddDays(1).Date;
+						var segmentTime = timeStopped_keptInDay - subsession.timeStarted;
+						segment_layout.PercentLayoutInfo.widthPercent = (float)(segmentTime.TotalMinutes / minutesInDay);
+						if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
+							segment_layout.PercentLayoutInfo.widthPercent *= 60;
+						//if (lastSubsessionView != null)
+						//	segment_layout.AddRule(LayoutRules.RightOf, lastSubsessionView.Id);
+						segment_layout.AddRule(LayoutRules.RightOf, gap.Id);
+						segment.LayoutParameters = segment_layout;
+						result.AddChild(segment, segment_layout);
+						lastSubsessionSession = session;
+						//lastSubsession = subsession;
+						lastSubsessionView = segment;
+						lastSubsessionEndTime = timeStopped_keptInDay;
+					}
+				}
 			}
 
 			return result;
 		}
-		void UpdateDayBox(Day day)
+		//DateTime lastUpdateDayBoxTime;
+        void UpdateDayBox(Day day)
 		{
 			if (day.box == null)
 			{
@@ -323,9 +493,41 @@ public void UpdateKeepScreenOn()
 				return;
 			}
 
-			// make-so
+			// maybe make-so: we just update the row, rather than recreate it like this
+			daysPanel.RemoveViewAt(daysPanel.ChildCount - 1);
+			AddDayToProductivityGraph(day);
+
+			//lastUpdateDayBoxTime = DateTime.UtcNow;
 		}
-		
+
+		public void UpdateHourMarkers()
+		{
+			while (graphBottomBar.ChildCount > 1) // remove the last set (if it exists)
+				graphBottomBar.RemoveViewAt(1);
+			for (var i = 0; i < 24; i++)
+			{
+				var hourTime_local = DateTime.UtcNow.Date.AddHours(i).ToLocalTime();
+				var hourMarker = graphBottomBar.AddChild(new TextView(this) {TextSize = 10}, new PercentRelativeLayout.LayoutParams(V.WrapContent, V.WrapContent));
+				hourMarker.Text = mainData.settings.showLocalTime ? (mainData.settings.show12HourTime ? hourTime_local.ToString("htt").ToLower() : hourTime_local.Hour.ToString()) : i.ToString();
+				var layoutParams = hourMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
+				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(i / 24d);
+				hourMarker.LayoutParameters = layoutParams;
+			}
+		}
+		void UpdateCurrentTimerMarkerPosition()
+		{
+			//var hoursInDay = (DateTime.UtcNow.Date.AddDays(1).ClosestDate() - DateTime.UtcNow.Date).TotalHours;
+			//var percentThroughDay = (DateTime.UtcNow - DateTime.UtcNow.Date).TotalHours / hoursInDay;
+			var percentThroughDay = (DateTime.UtcNow - DateTime.UtcNow.Date).TotalHours / 24;
+			var layoutParams = currentTimeMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
+			var markerHalfWidthPercentOfBarWidth = graphBottomBar.Width != 0 ? (currentTimeMarker.Width / 2d) / graphBottomBar.Width : 0; // (can't access width while ui is still being laid out, apparently)
+            layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(percentThroughDay - markerHalfWidthPercentOfBarWidth);
+			currentTimeMarker.LayoutParameters = layoutParams;
+		}
+
+		// time-left bar
+		// ==========
+
 		/*PendingIntent GetLaunchUpdateServicePendingIntent()
 		{
 			var launchUpdateService = new Intent(this, typeof(UpdateService));
@@ -357,14 +559,14 @@ public void UpdateKeepScreenOn()
             CurrentSession.paused = true;
 			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
 			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
-			ProcessTimeUpToNow();
+			Session_ProcessTimeUpToNow();
 			if (endSubsession)
 				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
 
 			// actors
-			UpdateOutflow();
-			if (currentTimer != null) // (for if called from OnCreate method)
-				currentTimer.Enabled = false;
+			Session_UpdateOutflow();
+			if (sessionUpdateTimer != null) // (for if called from OnCreate method)
+				sessionUpdateTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 		void ResumeSession(bool startSubsession = true)
@@ -379,17 +581,27 @@ public void UpdateKeepScreenOn()
 				CurrentSession.subsessions.Add(new Subsession(DateTime.UtcNow));
 
 			// actors
-			UpdateOutflow();
-			if (currentTimer == null)
+			Session_UpdateOutflow();
+			if (sessionUpdateTimer == null)
 			{
-				currentTimer = new Timer(1000);
-				currentTimer.Elapsed += delegate
+				sessionUpdateTimer = new Timer(1000);
+				sessionUpdateTimer.Elapsed += delegate
 				{
-					ProcessTimeUpToNow();
-					UpdateOutflow();
+					/*try
+					{
+						Session_ProcessTimeUpToNow();
+						//Session_UpdateOutflow(false);
+						Session_UpdateOutflow();
+					}
+					catch (Exception ex) { VDebug.Log(ex.StackTrace); }*/
+					RunOnUiThread(()=>
+					{
+						Session_ProcessTimeUpToNow();
+						Session_UpdateOutflow();
+					});
 				};
 			}
-			currentTimer.Enabled = true;
+			sessionUpdateTimer.Enabled = true;
 			if (CurrentSession.timeLeft > 0)
 				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, CurrentSession.processedTimeExtent.Ticks_Milliseconds() + (CurrentSession.timeLeft * 1000), GetPendingIntent_LaunchMain());
 		}
@@ -403,14 +615,15 @@ public void UpdateKeepScreenOn()
 				session.subsessions.Last().timeStopped = DateTime.UtcNow;
 
 			// actors
-			UpdateOutflow();
-			currentTimer.Enabled = false;
+			Session_UpdateOutflow();
+			UpdateDayBox(CurrentDay);
+            sessionUpdateTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 
-		public Timer currentTimer;
+		public Timer sessionUpdateTimer;
 		MediaPlayer alarmPlayer;
-		void ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
+		void Session_ProcessTimeUpToNow() // actually, processes time up to [now, rounded to nearest second]
 		{
 			//var timeToProcess = (int)(DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds; // in seconds
 			var timeToProcess = (int)Math.Round((DateTime.UtcNow - CurrentSession.processedTimeExtent).TotalSeconds); // in seconds
@@ -428,12 +641,16 @@ public void UpdateKeepScreenOn()
 			//data.currentTimer_timeAtLastTick = currentTime;
 			CurrentSession.processedTimeExtent = CurrentSession.processedTimeExtent.AddSeconds(timeToProcess);
 		}
-		void UpdateOutflow()
+		//void UpdateOutflow(bool forceUpdateDayBox = true)
+		void Session_UpdateOutflow()
 		{
 			UpdateAudio();
-			RunOnUiThread(UpdateDynamicUI);
-			RunOnUiThread(UpdateNotification);
-			UpdateDayBox(CurrentDay); // maybe make-so: this doesn't run quite so often
+			//RunOnUiThread(UpdateDynamicUI);
+			UpdateDynamicUI();
+			//RunOnUiThread(UpdateNotification);
+			UpdateNotification();
+			/*if (forceUpdateDayBox || mainData.settings.fastMode || (DateTime.UtcNow - lastUpdateDayBoxTime).TotalMinutes >= 1) // if day-box-update forced, in fast-mode, or a minute since last
+				RunOnUiThread(()=>UpdateDayBox(CurrentDay));*/
 		}
 		void UpdateAudio()
 		{
@@ -816,5 +1033,3 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 		}
 	}
 }
- 
- 

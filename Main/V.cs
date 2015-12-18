@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 public static class V
 {
@@ -6,6 +7,22 @@ public static class V
 
 	public static double Clamp(double min, double max, double val) { return Math.Min(max, Math.Max(min, val)); }
 	public static double Lerp(double a, double b, double percentFromAToB) { return a + ((b - a) * percentFromAToB); }
+
+	// android ui constants
+	public const int WrapContent = -2;
+	public const int MatchParent = -1;
+
+	public static void WaitXSecondsThenRun(double x, Action action)
+	{
+		Thread thread = null;
+		thread = new Thread(()=>
+		{
+			Thread.Sleep((int)(x * 1000));
+			action();
+			thread.Abort();
+		});
+		thread.Start();
+	}
 }
 
 public enum DebugType

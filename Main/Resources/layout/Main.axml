@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:_="http://schemas.android.com/apk/res/android" xmlns:c="http://schemas.android.com/apk/res-auto" _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="fill_parent">
 	<LinearLayout _:orientation="vertical" _:layout_width="0dp" _:layout_weight=".82" _:layout_height="fill_parent">
-		<android.support.percent.PercentRelativeLayout _:id="@+id/DaysPanel" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".93" _:background="@drawable/Border_5_RightBottom" _:paddingRight="5dp" _:paddingBottom="5dp">
-		</android.support.percent.PercentRelativeLayout>
+		<FrameLayout _:id="@+id/GraphRoot" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".93" _:background="@drawable/Border_5_RightBottom" _:paddingRight="5dp" _:paddingBottom="5dp">
+		</FrameLayout>
 		<LinearLayout _:orientation="horizontal" _:layout_width="fill_parent" _:layout_height="0dp" _:layout_weight=".07">
 			<Button _:id="@+id/Stop" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Stop"/>
 			<Button _:id="@+id/Pause" _:layout_width="0dp" _:layout_weight=".075" _:layout_height="fill_parent" _:text="Pause"/>
@@ -10,8 +10,7 @@
 				<ImageView _:id="@+id/TimeOverBar" _:layout_width="fill_parent" _:layout_height="fill_parent"/>
 			</FrameLayout>
 		</LinearLayout>
-	
-</LinearLayout>
+	</LinearLayout>
 	<LinearLayout _:orientation="horizontal" _:layout_width="0dp" _:layout_weight=".18" _:layout_height="fill_parent">
 		<FrameLayout _:id="@+id/TimeLeftPanel" _:layout_width="0dp" _:layout_weight=".5" _:layout_height="fill_parent">
 			<ImageView _:id="@+id/TimeLeftBar" _:layout_width="fill_parent" _:layout_height="fill_parent"/>

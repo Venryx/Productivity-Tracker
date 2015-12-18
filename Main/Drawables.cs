@@ -2,6 +2,7 @@
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.Graphics.Drawables.Shapes;
 using Android.Views;
 using Android.Widget;
 
@@ -41,5 +42,24 @@ public static class Drawables
 		clip_yPlus_green_dark = new ClipDrawable(green_dark.Clone(), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
 		clip_yPlus_blue = new ClipDrawable(blue.Clone(), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
 		clip_yPlus_blue_dark = new ClipDrawable(blue_dark.Clone(), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
+	}
+
+	public static ColorDrawable CreateColor(Color color) { return new ColorDrawable(color); }
+	public static ShapeDrawable CreateFill(Color color)
+	{
+		var rect = new RectShape();
+		var result = new ShapeDrawable(rect);
+		result.Paint.Color = color;
+		result.Paint.SetStyle(Paint.Style.Fill);
+		return result;
+	}
+	public static ShapeDrawable CreateStroke(Color color, int strokeWidth)
+	{
+		var rect = new RectShape();
+		var result = new ShapeDrawable(rect);
+		result.Paint.Color = color;
+		result.Paint.SetStyle(Paint.Style.Stroke);
+		result.Paint.StrokeWidth = strokeWidth;
+		return result;
 	}
 }

@@ -64,6 +64,44 @@ namespace Main
 			}
 
 			{
+				var row = AddRow(list, vertical: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {Text = "Show local time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show local time, rather than UTC time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.showLocalTime}, layoutParams);
+
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.showLocalTime = checkbox.Checked;
+					MainActivity.main.UpdateHourMarkers();
+				};
+			}
+
+			{
+				var row = AddRow(list, vertical: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {Text = "Show 12-hour time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show 12-hour/am-pm time, rather than 24-hour time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.show12HourTime}, layoutParams);
+
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.show12HourTime = checkbox.Checked;
+					MainActivity.main.UpdateHourMarkers();
+				};
+			}
+
+			{
 				var row = AddRow(list, vertical: false, addSeparator: false);
 				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
 				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Fast mode"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));

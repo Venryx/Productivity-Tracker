@@ -21,10 +21,16 @@ public static class ClassExtensions
 {
 	public static T AddChild<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null, int index = -1) where T : View
 	{
+		//if (index != -1)
 		if (layout != null)
 			s.AddView(view, index, layout);
 		else
 			s.AddView(view, index);
+		/*else
+			if (layout != null)
+				s.AddView(view, layout);
+			else
+				s.AddView(view);*/
 		return view;
 	}
 
@@ -70,6 +76,12 @@ public static class ClassExtensions
 		var result = s.ToString("u");
 		result = result.Substring(0, result.IndexOf(" "));
 		return result;
+	}
+	public static DateTime ClosestDate(this DateTime s) // rounds to the nearest date
+	{
+		if (s.Hour < 12)
+			return s.Date;
+		return s.AddDays(1).AddHours(3).Date;
 	}
 
 	// File
