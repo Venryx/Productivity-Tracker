@@ -252,6 +252,8 @@ namespace Main
 			{
 				RunOnUiThread(()=>
 				{
+					if (!dayUpdateTimer.Enabled) // (even after being disabled, timer may tick a couple extra times)
+						return;
 					UpdateDayBox(CurrentDay);
 					UpdateCurrentTimerMarkerPosition();
 				});
@@ -260,10 +262,13 @@ namespace Main
 		}
 		protected override void OnDestroy()
 		{
-			//currentTimer?.Stop();
+			dayUpdateTimer.Dispose();
+
+			//currentTimer?.Enabled = false; //currentTimer?.Stop();
 			//currentTimer?.Elapsed -= CurrentTimer_Elapsed;
 			sessionUpdateTimer?.Dispose();
-			sessionUpdateTimer = null;
+			//sessionUpdateTimer = null;
+
 			base.OnDestroy();
 		}
 		protected override void OnPause()
@@ -695,6 +700,8 @@ namespace Main
 					catch (Exception ex) { VDebug.Log(ex.StackTrace); }*/
 					RunOnUiThread(()=>
 					{
+						if (!sessionUpdateTimer.Enabled) // (even after being disabled, timer may tick a couple extra times)
+							return;
 						Session_ProcessTimeUpToNow();
 						Session_UpdateOutflow();
 					});
@@ -769,6 +776,13 @@ namespace Main
 
 				if (alarmPlayer == null)
 				{
+					if (mainData.settings.setMasterAlarmVolume != -1)
+					{
+						var audioManager = (AudioManager)GetSystemService(AudioService);
+						int maxVolume = audioManager.GetStreamMaxVolume(Stream.Alarm);
+						audioManager.SetStreamVolume(Stream.Alarm, (int)(((double)mainData.settings.setMasterAlarmVolume / 100) * maxVolume), 0);
+					}
+
 					//alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer = new MediaPlayer();
 					alarmPlayer.SetAudioStreamType(Stream.Alarm);

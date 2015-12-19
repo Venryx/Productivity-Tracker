@@ -219,6 +219,36 @@ namespace Main
 			// ==========
 
 			{
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Set master alarm volume to X, before sounding alarm"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				Func<string> getText = ()=>settings.setMasterAlarmVolume == -1 ? "[don't set]" : settings.setMasterAlarmVolume + "%";
+				label.Text = getText();
+                row.Click += delegate
+				{
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Set master alarm volume to X, before sounding alarm");
+
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = getText(), Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					var minValue = -1;
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 100 - minValue});
+					seek.SetValue(minValue, settings.setMasterAlarmVolume);
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.GetValue(minValue) == -1 ? "[don't set]" : seek.GetValue(minValue) + "%"; };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.setMasterAlarmVolume = seek.GetValue(minValue);
+						label.Text = getText();
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=>{});
+					alert.Show();
+				};
+			}
+
+			{
 				//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
 				var row = AddRow(list);
 				row.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));

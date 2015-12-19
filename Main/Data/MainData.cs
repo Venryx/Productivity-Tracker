@@ -60,6 +60,7 @@ namespace Main
 		// alarm
 		// ==========
 
+		public int setMasterAlarmVolume = -1;
 		public string alarmSoundFilePath;
 		public int minVolume;
 		public int maxVolume = 50;

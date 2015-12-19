@@ -126,6 +126,8 @@ public static class ClassExtensions
 	// File
 	public static Uri ToURI_Android(this File s) { return Uri.FromFile(s); }
 
+	public static Action InvokeThenReturn(this Action s) { s.Invoke(); return s; }
+
 	// View
 	public static FrameLayout GetRootFrameLayout(this View s) { return (FrameLayout)((ViewGroup)((ViewGroup)s.RootView).GetChildAt(0)).GetChildAt(0); }
 	public static Vector2i GetPositionFrom(this View s, View fromControl = null)
@@ -145,6 +147,10 @@ public static class ClassExtensions
 		}
 		return new Vector2i(x, y);
 	}
+
+	// SeekBar
+	public static int GetValue(this SeekBar s, int minValue) { return minValue + s.Progress; }
+	public static void SetValue(this SeekBar s, int minValue, int value) { s.Progress = value - minValue; }
 
 	// Color
 	public static Color NewA(this Color s, byte alpha) { return new Color(s.R, s.G, s.B, alpha); }
