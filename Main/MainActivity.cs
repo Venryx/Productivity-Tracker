@@ -43,7 +43,7 @@ namespace Main
 		public static MainActivity main;
 		static MainActivity() { VDFExtensions.Init(); }
 
-		DirectoryInfo RootFolder=>new DirectoryInfo("/storage/sdcard0/Productivity Tracker/");
+		static DirectoryInfo RootFolder=>new DirectoryInfo("/storage/sdcard0/Productivity Tracker/");
 		public MainData mainData = new MainData();
 		public void LoadMainData()
 		{
@@ -144,12 +144,31 @@ namespace Main
 		Button countdownLabel;
 		FrameLayout mouseInputBlocker;
 		public Timer dayUpdateTimer;
+		static void LogErrorMessageToFile(string message)
+		{
+			var file = RootFolder.GetFolder("Errors").GetFile(DateTime.UtcNow.ToString_U() + ".txt").CreateFolders();
+			while (file.Exists)
+				file = file.Directory.GetFile(file.NameWithoutExtension() + "_2.txt");
+			File.WriteAllText(file.FullName, message);
+		}
+		class JavaExceptionCatcher : Java.Lang.Object, Thread.IUncaughtExceptionHandler
+		{
+			public void UncaughtException(Thread thread, Throwable ex)
+				{ LogErrorMessageToFile($"Exception caught by Thread.DefaultUncaughtExceptionHandler\n==========\nHandle) {ex.Handle}\nClass) {ex.Class}\nCause) {ex.Cause}\nMessage) {ex.Message}\nStackTrace) {ex.StackTrace}"); }
+		}
 		protected override void OnCreate(Bundle bundle)
 		{
 			main = this;
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
-			
+			// called when C# code crashes?
+			AppDomain.CurrentDomain.UnhandledException += (sender, e)=>LogErrorMessageToFile($"Exception caught by AppDomain.CurrentDomain.UnhandledException\n==========\nTerminating: {e.IsTerminating}\nExceptionObject: {e.ExceptionObject}");
+			// called when Java code, on the UI thread, crashes?
+			AndroidEnvironment.UnhandledExceptionRaiser += (sender, e)=>LogErrorMessageToFile($"Exception caught by AndroidEnvironment.UnhandledExceptionRaiser\n==========\n{e}");
+			// called when Java code, (not handled by the above), crashes?
+			Thread.DefaultUncaughtExceptionHandler = new JavaExceptionCatcher();
+			//Thread.CurrentThread().UncaughtExceptionHandler = new JavaErrorCatcher();
+
 			LoadMainData();
 			LoadDaysTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
 
@@ -239,7 +258,6 @@ namespace Main
 			// others
 			// ==========
 
-			
 			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
@@ -264,12 +282,17 @@ namespace Main
 		}
 		protected override void OnDestroy()
 		{
+			// make sure we stop alarm-player, as it can at least sometimes live through the OnDestroy event (e.g. when bluetooth controller is connected/disconnected)
+			StopAndDestroyAlarmPlayer();
+
+			//dayUpdateTimer.Enabled = false;
 			dayUpdateTimer.Dispose();
 
-			//currentTimer?.Enabled = false; //currentTimer?.Stop();
-			//currentTimer?.Elapsed -= CurrentTimer_Elapsed;
-			sessionUpdateTimer?.Dispose();
-			//sessionUpdateTimer = null;
+			if (sessionUpdateTimer != null)
+				//sessionUpdateTimer.Elapsed -= SessionTimer_Elapsed;
+				//sessionUpdateTimer.Enabled = false;
+				sessionUpdateTimer.Dispose();
+				//sessionUpdateTimer = null;
 
 			base.OnDestroy();
 		}
@@ -288,11 +311,11 @@ namespace Main
 			//if (currentTimer != null)
 			//	currentTimer.Enabled = true;
 		}*/
-			/*protected override void OnStop()
-			{
-				base.OnStop();
-				SaveMainData();
-			}*/
+		/*protected override void OnStop()
+		{
+			base.OnStop();
+			SaveMainData();
+		}*/
 		public override void OnWindowFocusChanged(bool hasFocus)
 		{
 			if (hasFocus) // ui should be laid-out at this point
@@ -721,16 +744,22 @@ namespace Main
 			/*if (forceUpdateDayBox || mainData.settings.fastMode || (DateTime.UtcNow - lastUpdateDayBoxTime).TotalMinutes >= 1) // if day-box-update forced, in fast-mode, or a minute since last
 				RunOnUiThread(()=>UpdateDayBox(CurrentDay));*/
 		}
+		void StopAndDestroyAlarmPlayer()
+		{
+			if (alarmPlayer != null) //&& alarmPlayer.IsPlaying)
+			{
+				alarmPlayer.SetVolume(0, 0);
+				//alarmPlayer.Pause();
+				//alarmPlayer.Stop();
+				//alarmPlayer.Reset();
+				alarmPlayer.Release();
+				alarmPlayer = null; // if alarm-player was stopped, it's as good as null ™ (you'd have to call reset(), which makes it lose all its data anyway), so nullify it
+			}
+		}
 		void UpdateAudio()
 		{
-			if (CurrentSession == null || CurrentSession.timeLeft > 0 || CurrentSession.paused)
-			{
-				if (alarmPlayer != null && alarmPlayer.IsPlaying)
-				{
-					alarmPlayer.Stop();
-					alarmPlayer = null;  // if alarm-player was stopped, it's as good as null ™ (you'd have to call reset(), which makes it lose all its data anyway), so nullify it
-				}
-			}
+			if (CurrentSession == null || CurrentSession.timeLeft > 0 || CurrentSession.paused) // if alarm-playing should not be playing, destroy it
+				StopAndDestroyAlarmPlayer();
 			else
 			{
 				var timeOver_withLocking = CurrentSession.timeOver_withLocking; // in seconds
@@ -750,10 +779,10 @@ namespace Main
 					alarmPlayer = new MediaPlayer();
 					alarmPlayer.SetAudioStreamType(Stream.Alarm);
 					alarmPlayer.SetDataSource(this, new FileInfo(mainData.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					alarmPlayer.Prepare();
 					alarmPlayer.Looping = true;
 					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
 					//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
-					alarmPlayer.Prepare();
 					alarmPlayer.Start();
 				}
 

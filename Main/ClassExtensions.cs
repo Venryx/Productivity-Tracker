@@ -49,7 +49,7 @@ public static class ClassExtensions
 	}
 
 	// double
-	public static double FloorToMultipleOf(this double s, double val) { return Math.Floor(s / val) * val; }
+	/*public static double FloorToMultipleOf(this double s, double val) { return Math.Floor(s / val) * val; }
 	public static double RoundToMultipleOf(this double s, double val) { return Math.Round(s / val) * val; }
 	public static double CeilingToMultipleOf(this double s, double val) { return Math.Ceiling(s / val) * val; }
 	public static double Modulus(this double s, double modulus, bool keepSignOfFirst = false, bool keepSignOfSecond = true)
@@ -72,7 +72,7 @@ public static class ClassExtensions
 	}
 	public static double ToPower(this double s, double power) { return Math.Pow(s, power); }
 	//public static bool EqualsAbout(this double s, double val) { return Math.Abs(s - val) / Math.Max(Math.Abs(s), Math.Abs(val)) <= double.Epsilon; }
-	public static bool EqualsAbout(this double s, double val, double maxDifForEquals = .000000000000001) { return Math.Abs(s - val) <= maxDifForEquals; }
+	public static bool EqualsAbout(this double s, double val, double maxDifForEquals = .000000000000001) { return Math.Abs(s - val) <= maxDifForEquals; }*/
 
 	// long
 	/*public static double FloorToMultipleOf(this long s, double val) { return Math.Floor(s / val) * val; }
@@ -82,6 +82,19 @@ public static class ClassExtensions
 	// string
 	public static string TrimStart(this string s, int length) { return s.Substring(length); }
 	public static string TrimEnd(this string s, int length) { return s.Substring(0, s.Length - length); }
+	public static string SubstringSE(this string self, int startIndex, int stopIndex) { return self.Substring(startIndex, stopIndex - startIndex); }
+	public static int XthIndexOf(this string s, string str, int x)
+	{
+		var currentPos = -1;
+		for (var i = 0; i <= x; i++)
+		{
+			var subIndex = s.IndexOf(str, currentPos + 1);
+			if (subIndex == -1)
+				return -1; // no such xth index
+			currentPos = subIndex;
+		}
+		return currentPos;
+	}
 
 	// DateTime
 	//public static long TotalTicks(this DateTime s) { return s.Ticks; }
@@ -91,6 +104,18 @@ public static class ClassExtensions
 	{
 		var result = s.ToString("u");
 		result = result.Substring(0, result.IndexOf(" "));
+		return result;
+	}
+	public static string ToString_U_Time(this DateTime s)
+	{
+		var result = s.ToString("u");
+		result = result.SubstringSE(result.IndexOf(" ") + 1, result.IndexOf("Z"));
+		return result;
+	}
+	public static string ToString_U(this DateTime s)
+	{
+		var result = s.ToString("u");
+		result = result.Substring(0, result.IndexOf("Z"));
 		return result;
 	}
 	/*public static DateTime ClosestDate(this DateTime s) // rounds to the nearest date
@@ -177,6 +202,7 @@ public static class ClassExtensions
 	// FileInfo
 	public static FileInfo CreateFolders(this FileInfo s) { s.Directory.Create(); return s; }
 	public static File ToFile(this FileInfo s) { return new File(s.FullName); }
+	public static string NameWithoutExtension(this FileInfo s) { return Path.GetFileNameWithoutExtension(s.Name); }
 
 	// File
 	public static Uri ToURI_Android(this File s) { return Uri.FromFile(s); }

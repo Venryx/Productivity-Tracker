@@ -12,7 +12,7 @@ public static class V
 	public const int WrapContent = -2;
 	public const int MatchParent = -1;
 
-	public static void WaitXSecondsThenRun(double x, Action action)
+	/*public static void WaitXSecondsThenRun(double x, Action action)
 	{
 		Thread thread = null;
 		thread = new Thread(()=>
@@ -22,7 +22,7 @@ public static class V
 			thread.Abort();
 		});
 		thread.Start();
-	}
+	}*/
 }
 
 public enum DebugType
