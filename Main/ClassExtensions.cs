@@ -35,6 +35,19 @@ public static class ClassExtensions
 		return view;
 	}
 
+	// int
+	//public static int Minus(this int s, int amount, int modulus) { return (s - amount) % 7; }
+	public static int Sign(this int s) { return s >= 0 ? 1 : -1; }
+	public static int Modulus(this int s, int modulus, bool keepSignOfFirst = false, bool keepSignOfSecond = true)
+	{
+		int result = s % modulus;
+		if (keepSignOfFirst && result.Sign() != s.Sign())
+			result = -result;
+		else if (keepSignOfSecond && result.Sign() != modulus.Sign())
+			result = -result;
+		return result;
+	}
+
 	// double
 	public static double FloorToMultipleOf(this double s, double val) { return Math.Floor(s / val) * val; }
 	public static double RoundToMultipleOf(this double s, double val) { return Math.Round(s / val) * val; }
@@ -71,25 +84,67 @@ public static class ClassExtensions
 	public static string TrimEnd(this string s, int length) { return s.Substring(0, s.Length - length); }
 
 	// DateTime
-	public static long Ticks_Milliseconds(this DateTime s) { return s.Ticks / TimeSpan.TicksPerMillisecond; }
+	//public static long TotalTicks(this DateTime s) { return s.Ticks; }
+	public static long TotalMilliseconds(this DateTime s) { return s.Ticks / TimeSpan.TicksPerMillisecond; }
+	public static long TotalDays(this DateTime s) { return s.Ticks / TimeSpan.TicksPerDay; }
 	public static string ToString_U_Date(this DateTime s)
 	{
 		var result = s.ToString("u");
 		result = result.Substring(0, result.IndexOf(" "));
 		return result;
 	}
-	public static DateTime ClosestDate(this DateTime s) // rounds to the nearest date
+	/*public static DateTime ClosestDate(this DateTime s) // rounds to the nearest date
 	{
 		if (s.Hour < 12)
 			return s.Date;
 		return s.AddDays(1).AddHours(3).Date;
+	}*/
+	public static DateTime AddDaysTillDayContainsX(this DateTime s, DateTime x)
+	{
+		var result = s;
+		while (result < x) // add days till at-or-after x
+			result = result.AddDays(1);
+		while (result >= x) // remove days till before x (thus being 1-or-less days before x, i.e. our day contains x)
+			result = result.AddDays(-1);
+		return result;
 	}
+	public static DateTime AddDaysTillWithinDayX(this DateTime s, DateTime day)
+	{
+		var result = s;
+		while (result.TotalDays() < day.TotalDays()) // add days till at-or-after day-x-start
+			result = result.AddDays(1);
+		while (result.TotalDays() >= day.AddDays(1).TotalDays()) // remove days till before day-x-stop (thus our being within day-x)
+			result = result.AddDays(-1);
+		return result;
+	}
+	/*public static DateTime AddDays_PreserveHour(this DateTime s, int days)
+	{
+		var result = s.AddDays(days);
+
+		var s_dayOfWeek = (int)s.DayOfWeek;
+		var result_expectedDayOfWeek = (s_dayOfWeek - days).Modulus(7);
+		if ((int)result.DayOfWeek == result_expectedDayOfWeek)
+			result = result.Date.AddHours(s.Hour);
+		else // if day-of-week was not what we expected, the AddDays(days) must have hopped over a 23 hour day
+			result = result.Date.AddHours(24 + 3).Date.AddHours(s.Hour);
+		return result;
+	}*/
 
 	// File
 	public static File GetFile(this File s, string name) { return new File(s, name); }
 
 	// IEnumerable<T>
 	public static string JoinUsing(this IEnumerable list, string separator) { return string.Join(separator, list.OfType<object>().ToArray()); }
+
+	// Array
+	public static bool HasIndex(this Array array, int index) { return index >= 0 && index < array.Length; }
+	public static bool HasIndex(this Array array, int index0, int index1) { return index0 >= 0 && index0 < array.GetLength(0) && index1 >= 0 && index1 < array.GetLength(1); }
+
+	// List<T>
+	public static bool HasIndex<T>(this List<T> list, int index) { return index >= 0 && index < list.Count; }
+	//public static T GetValueOrNull<T>(this List<T> list, int index) where T : class { return index >= 0 && index < list.Count ? list[index] : null; }
+	//public static T GetValueOrDefault<T>(this List<T> list, int index, T defaultValue = default(T)) { return index >= 0 && index < list.Count ? list[index] : defaultValue; }
+	public static T GetValue<T>(this List<T> list, int index, T defaultValue = default(T)) { return index >= 0 && index < list.Count ? list[index] : defaultValue; }
 
 	// MatchCollection
 	public static List<Match> ToList(this MatchCollection obj)
@@ -147,6 +202,10 @@ public static class ClassExtensions
 		}
 		return new Vector2i(x, y);
 	}
+	// uses the built-in View.Tag system prop (as opposed to generic VMeta system)
+	public static void VTag(this View s, object value) { s.Tag = new ObjectWrapper(value); }
+	public static object VTag(this View s) { return (s.Tag as ObjectWrapper)?.value; }
+	public static T VTag<T>(this View s) { return (T)s.VTag(); }
 
 	// SeekBar
 	public static int GetValue(this SeekBar s, int minValue) { return minValue + s.Progress; }

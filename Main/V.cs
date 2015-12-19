@@ -57,9 +57,15 @@ public static class VDFExtensions
 		//VDFTypeInfo.AddSerializeMethod<Guid>(a=>a.ToString());
 		//VDFTypeInfo.AddDeserializeMethod_FromParent<Guid>(node=>new Guid(node));
 
-		VDFTypeInfo.AddSerializeMethod<DateTime>(a=>a.Ticks_Milliseconds());
+		VDFTypeInfo.AddSerializeMethod<DateTime>(a=>a.TotalMilliseconds());
 		VDFTypeInfo.AddDeserializeMethod_FromParent<DateTime>(node=>new DateTime(node * TimeSpan.TicksPerMillisecond));
-		VDFTypeInfo.AddSerializeMethod<DateTime?>(a=>a?.Ticks_Milliseconds() ?? -1);
+		VDFTypeInfo.AddSerializeMethod<DateTime?>(a=>a?.TotalMilliseconds() ?? -1);
 		VDFTypeInfo.AddDeserializeMethod_FromParent<DateTime?>(node=>node.primitiveValue != null ? new DateTime(node * TimeSpan.TicksPerMillisecond) : (DateTime?)null);
 	}
+}
+
+public class ObjectWrapper : Java.Lang.Object
+{
+	public ObjectWrapper(object value) { this.value = value; }
+	public object value;
 }

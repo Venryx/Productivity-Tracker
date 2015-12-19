@@ -64,44 +64,6 @@ namespace Main
 			}
 
 			{
-				var row = AddRow(list, vertical: false);
-				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				leftSide.AddChild(new TextView(this) {Text = "Show local time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show local time, rather than UTC time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-				layoutParams.AddRule(LayoutRules.AlignParentRight);
-				layoutParams.AddRule(LayoutRules.CenterVertical);
-				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.showLocalTime}, layoutParams);
-
-				row.Click += delegate
-				{
-					checkbox.Checked = !checkbox.Checked;
-					settings.showLocalTime = checkbox.Checked;
-					MainActivity.main.UpdateHourMarkers();
-				};
-			}
-
-			{
-				var row = AddRow(list, vertical: false);
-				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				leftSide.AddChild(new TextView(this) {Text = "Show 12-hour time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show 12-hour/am-pm time, rather than 24-hour time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
-				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-				layoutParams.AddRule(LayoutRules.AlignParentRight);
-				layoutParams.AddRule(LayoutRules.CenterVertical);
-				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.show12HourTime}, layoutParams);
-
-				row.Click += delegate
-				{
-					checkbox.Checked = !checkbox.Checked;
-					settings.show12HourTime = checkbox.Checked;
-					MainActivity.main.UpdateHourMarkers();
-				};
-			}
-
-			{
 				var row = AddRow(list, vertical: false, addSeparator: false);
 				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
 				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Fast mode"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
@@ -125,7 +87,7 @@ namespace Main
 			// ==========
 
 			{
-				var row = AddRow(list, addSeparator: false);
+				var row = AddRow(list);
 				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Days visible at once"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 				label.Text = settings.daysVisibleAtOnce.ToString();
@@ -146,11 +108,81 @@ namespace Main
 					{
 						settings.daysVisibleAtOnce = seek.Progress;
 						label.Text = settings.daysVisibleAtOnce.ToString();
-						//MainActivity.main.RefreshProductivityGraph();
-						//MainActivity.main.RefreshProductivityGraphRowSizes();
+						MainActivity.main.UpdateGraphVisibleRows();
 					});
 					alert.SetNegativeButton("Cancel", (sender, e)=>{});
 					alert.Show();
+				};
+			}
+
+			{
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Start graph at local hour X"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				Func<string> getText = ()=>settings.startGraphAtLocalHourX == -1 ? "[utc 0]" : settings.startGraphAtLocalHourX.ToString();
+				label.Text = getText();
+                row.Click += delegate
+				{
+					AlertDialog.Builder alert = new AlertDialog.Builder(this);
+					alert.SetTitle("Start graph at local hour X");
+
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = getText(), Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					var minValue = -1;
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 23 - minValue});
+					seek.SetValue(minValue, settings.startGraphAtLocalHourX);
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.GetValue(minValue) == -1 ? "[utc 0]" : seek.GetValue(minValue).ToString(); };
+					alert.SetView(linear);
+
+					alert.SetPositiveButton("Ok", (sender, e)=>
+					{
+						settings.startGraphAtLocalHourX = seek.GetValue(minValue);
+						label.Text = getText();
+						MainActivity.main.UpdateHourMarkers();
+						MainActivity.main.UpdateCurrentTimerMarkerPosition();
+						MainActivity.main.UpdateGraphVisibleRows();
+					});
+					alert.SetNegativeButton("Cancel", (sender, e)=>{});
+					alert.Show();
+				};
+			}
+
+			{
+				var row = AddRow(list, vertical: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {Text = "Show local time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show local time, rather than UTC time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.showLocalTime}, layoutParams);
+
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.showLocalTime = checkbox.Checked;
+					MainActivity.main.UpdateHourMarkers();
+				};
+			}
+
+			{
+				var row = AddRow(list, vertical: false, addSeparator: false);
+				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				leftSide.AddChild(new TextView(this) {Text = "Show 12-hour time", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = leftSide.AddChild(new TextView(this) {TextSize = smallTextSize, Text = "Show 12-hour/am-pm time, rather than 24-hour time"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var rightSide = row.AddChild(new RelativeLayout(this), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
+				var layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+				layoutParams.AddRule(LayoutRules.AlignParentRight);
+				layoutParams.AddRule(LayoutRules.CenterVertical);
+				var checkbox = rightSide.AddChild(new CheckBox(this) {Checked = settings.show12HourTime}, layoutParams);
+
+				row.Click += delegate
+				{
+					checkbox.Checked = !checkbox.Checked;
+					settings.show12HourTime = checkbox.Checked;
+					MainActivity.main.UpdateHourMarkers();
 				};
 			}
 

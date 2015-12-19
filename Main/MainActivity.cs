@@ -61,10 +61,12 @@ namespace Main
 			File.WriteAllText(file.FullName, vdf);
 		}
 		List<Day> days = new List<Day>();
-		void LoadDays(int daysBack)
+		void LoadDaysTillReachesXCount(int xDays)
 		{
 			var today = DateTime.UtcNow.Date;
-			for (var i = -daysBack; i <= 0; i++)
+			/*for (var i = -xDays + 1; i <= 0; i++)
+				LoadDay(today.AddDays(i));*/
+			for (var i = 0; i > -xDays; i--)
 				LoadDay(today.AddDays(i));
 		}
 		void LoadDay(DateTime date)
@@ -132,7 +134,7 @@ namespace Main
 		public Typeface baseTypeface;
 		FrameLayout graphRoot;
 		LinearLayout graph_nonOverlayRoot;
-		PercentRelativeLayout daysPanel;
+		PercentRelativeLayout rowsPanel;
 		PercentRelativeLayout graphBottomBar;
 		ImageView currentTimeMarker;
 		PercentRelativeLayout graph_overlayRoot;
@@ -149,7 +151,7 @@ namespace Main
 			SetContentView(Resource.Layout.Main);
 			
 			LoadMainData();
-			LoadDays(mainData.settings.daysVisibleAtOnce);
+			LoadDaysTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
@@ -166,9 +168,9 @@ namespace Main
 
 			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 			{
-				daysPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, 1));
+				rowsPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, 1));
 				{
-					AddDaysToProductivityGraph(mainData.settings.daysVisibleAtOnce - 1);
+					AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce);
 				}
 				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 30));
 				{
@@ -184,7 +186,7 @@ namespace Main
 			}
 			graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 			{
-				GenerateProductivityGraphOverlay();
+				GenerateGraphOverlay();
 			}
 
 			// general
@@ -254,7 +256,7 @@ namespace Main
 				{
 					if (!dayUpdateTimer.Enabled) // (even after being disabled, timer may tick a couple extra times)
 						return;
-					UpdateDayBox(CurrentDay);
+					UpdateRowBox(0);
 					UpdateCurrentTimerMarkerPosition();
 				});
 			};
@@ -286,11 +288,11 @@ namespace Main
 			//if (currentTimer != null)
 			//	currentTimer.Enabled = true;
 		}*/
-		/*protected override void OnStop()
-		{
-			base.OnStop();
-			SaveMainData();
-		}*/
+			/*protected override void OnStop()
+			{
+				base.OnStop();
+				SaveMainData();
+			}*/
 		public override void OnWindowFocusChanged(bool hasFocus)
 		{
 			if (hasFocus) // ui should be laid-out at this point
@@ -332,7 +334,7 @@ namespace Main
 		// productivity graph
 		// ==========
 
-		void GenerateProductivityGraphOverlay()
+		void GenerateGraphOverlay()
 		{
 			for (var i = 0; i < 24; i++)
 			{
@@ -343,43 +345,61 @@ namespace Main
 				hourMarker.LayoutParameters = layoutParams;
 			}
 		}
-		void AddDaysToProductivityGraph(int daysBack)
+		public void UpdateGraphVisibleRows()
 		{
-			var today = DateTime.UtcNow.Date;
-			//for (var i = 0; i <= daysBack; i++)
-			for (var i = -daysBack; i <= 0; i++)
-			{
-				var date = today.AddDays(i);
-				// go back into 'days' list enough that we know we'll find the day's Day object, if it exists
-				Day dayObj = null;
-				for (var i2 = days.Count - 1; i2 >= days.Count - 1 - daysBack && i2 >= 0; i2--)
-					if (days[i2].date == date)
-						dayObj = days[i2];
-				AddDayToProductivityGraph(dayObj);
-			}
+			var rowsVisible = rowsPanel.ChildCount;
+			while (rowsPanel.ChildCount >= 1)
+				rowsPanel.RemoveViewAt(0);
+			AddRowsToGraphTillReachesXCount(rowsVisible);
 		}
-		void AddDayToProductivityGraph(Day day)
+		void AddRowsToGraphTillReachesXCount(int xRows)
 		{
-			var lastOldDayBox = daysPanel.ChildCount >= 1 ? daysPanel.GetChildAt(daysPanel.ChildCount - 1) : null;
-
-			var dayBox = CreateDayBox(day);
-			if (lastOldDayBox != null)
-			{
-				var layoutParams = dayBox.LayoutParameters as PercentRelativeLayout.LayoutParams;
-				layoutParams.AddRule(LayoutRules.Below, lastOldDayBox.Id);
-				dayBox.LayoutParameters = layoutParams;
-			}
-			daysPanel.AddChild(dayBox);
-			if (day != null)
-				day.box = dayBox;
+			/*for (var rowOffset = -xRows + 1; daysPanel.ChildCount < xRows; rowOffset++)
+				AddRowToGraph(i);*/
+			for (var rowOffset = -rowsPanel.ChildCount; rowOffset > -xRows; rowOffset--)
+				AddRowToGraph(rowOffset);
 		}
-		//int lastViewAutoID = -1;
+		void AddRowToGraph(int rowOffset)
+		{
+			// assumes all more-to-bottom rows have been added (e.g. row(-1) expects row(0) to have been added)
+			rowsPanel.AddChild(CreateRowBox(rowOffset), index: rowsPanel.ChildCount + rowOffset);
+		}
+		DateTime Row_GetFirstColumnDateTime(int rowOffset)
+		{
+			var row0Day = DateTime.UtcNow.Date; // may be off by one day (solved by AddDaysTillDayContainsX call below)
+			var rowDay = row0Day.AddDays(rowOffset); // may be off by one day (solved by AddDaysTillDayContainsX call below)
+			int firstColumnUtcHour = mainData.settings.startGraphAtLocalHourX == -1 ? 0 : DateTime.Now.Date.AddHours(mainData.settings.startGraphAtLocalHourX).ToUniversalTime().Hour;
+			var firstColumnUtcDateTime = rowDay.AddHours(firstColumnUtcHour).AddDaysTillDayContainsX(DateTime.UtcNow.AddDays(rowOffset));
+			return firstColumnUtcDateTime;
+		}
+		DateTime Row_GetJustAfterLastColumnDateTime(int rowOffset) { return Row_GetFirstColumnDateTime(rowOffset).AddHours(24); }
 		int lastViewAutoID = 1000;
-		PercentRelativeLayout CreateDayBox(Day day)
+		PercentRelativeLayout CreateRowBox(int rowOffset)
 		{
 			var result = new PercentRelativeLayout(this);
 			result.Id = ++lastViewAutoID;
             var layoutParams = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+			/*layoutParams.AddRule(LayoutRules.AlignParentBottom);
+			var boxHeight = 1d / mainData.settings.daysVisibleAtOnce;
+			//var boxHeight = daysPanel.Height / mainData.settings.daysVisibleAtOnce;
+			layoutParams.PercentLayoutInfo.bottomMarginPercent = (float)(boxHeight * -rowOffset);
+			//layoutParams.BottomMargin = boxHeight * -rowOffset;
+			layoutParams.PercentLayoutInfo.heightPercent = (float)boxHeight;
+			//layoutParams.Height = boxHeight;*/
+			if (rowOffset == 0) //rowsPanel.ChildCount == 0)
+			{
+				layoutParams.AddRule(LayoutRules.AlignParentBottom);
+				if (rowsPanel.ChildCount >= 1) // if there are already children, update old-row-0 to anchor to this new row-0
+				{
+					var oldRow0 = rowsPanel.GetChildAt(rowsPanel.ChildCount - 1);
+                    var oldRow0Layout = oldRow0.LayoutParameters as PercentRelativeLayout.LayoutParams;
+					oldRow0Layout.RemoveRule(LayoutRules.AlignParentBottom);
+					oldRow0Layout.AddRule(LayoutRules.Above, result.Id);
+					oldRow0.LayoutParameters = oldRow0Layout;
+				}
+			}
+			else
+				layoutParams.AddRule(LayoutRules.Above, rowsPanel.GetChildAt(0).Id);
 			layoutParams.PercentLayoutInfo.heightPercent = (float)(1d / mainData.settings.daysVisibleAtOnce);
 			result.LayoutParameters = layoutParams;
 
@@ -392,74 +412,54 @@ namespace Main
 			result.Background = shape;
 			result.SetPadding(1, 1, 1, 1);
 
-			if (day != null) // if there's data stored for this day
-			{
-				const int minutesInDay = 60 * 24;
-				Session previousDayOverflowSession = null;
-				if (days.Count >= 2 && days[days.Count - 2].date == day.date.AddDays(-1).Date && days[days.Count - 2].sessions.Count >= 1)
-				{
-					var previousDayLastSession = days[days.Count - 2].sessions.Last();
-					if (!previousDayLastSession.timeStopped.HasValue || previousDayLastSession.timeStopped.Value >= day.date)
-						previousDayOverflowSession = previousDayLastSession;
-				}
+			const int minutesInDay = 60 * 24;
+			var firstColumnUtcHourTime = Row_GetFirstColumnDateTime(rowOffset);
+			result.VTag(firstColumnUtcHourTime);
+            var justAfterLastColumnUtcHourTime = Row_GetJustAfterLastColumnDateTime(rowOffset);
 
+			var rowDays = new List<Day>(); // days with data that intersects this row's time-span
+			foreach (Day day in days)
+				if (day.sessions.Any(a=>a.subsessions.Any(b=>b.timeStopped >= firstColumnUtcHourTime && b.timeStarted < justAfterLastColumnUtcHourTime)))
+					rowDays.Add(day);
+
+			if (rowDays.Count > 0) // if there's data stored for this row
+			{
 				// maybe make-so: there's a better-matching setting for adding fake data like this
-				if (mainData.settings.fastMode)
+				/*if (mainData.settings.fastMode && previousDay != null)
 				{
 					var session = new Session("Work", day.date.AddMinutes(-10), 19) {timeStopped = day.date.AddMinutes(1)};
 					var subsession = new Subsession(session.timeStarted) {timeStopped = session.timeStopped};
 					session.subsessions.Add(subsession);
-					previousDayOverflowSession = session;
-				}
-
-				//var minutesInDay = 60 * 24;
+					previousDay.sessions.Add(session);
+				}*/
+				
 				Session lastSubsessionSession = null;
-				//Subsession lastSubsession = null;
-				//ImageView lastSubsessionView = null;
-				DateTime lastSubsessionEndTime = day.date.Date;
-				//ImageView lastSegmentView = null;
+				DateTime lastSubsessionEndTime = firstColumnUtcHourTime;
 
-				var sessions = day.sessions.ToList();
-				if (previousDayOverflowSession != null) // if session from previous day overflowed into current, add fake session for it, so part in this day shows up
-				{
-					var session = previousDayOverflowSession.Clone();
-					session.timeStarted = day.date;
-					foreach (Subsession subsession in session.subsessions)
-					{
-						if (subsession.timeStarted < session.timeStarted)
-							subsession.timeStarted = session.timeStarted;
-						if (subsession.timeStopped < session.timeStarted)
-							subsession.timeStopped = session.timeStarted;
-					}
-					sessions.Insert(0, session);
-				}
-				foreach (Session session in sessions)
+				foreach (Session session in rowDays.SelectMany(a=>a.sessions))
 				{
 					var subsessions = session.subsessions.ToList();
-					//if (lastSubsession != null && (!lastSubsession.timeStopped.HasValue || lastSubsession.timeStopped >= day.Date)
 					if (session.paused) // if session paused, add fake subsession after, so pause gap-segment shows up
 						subsessions.Add(session.timeStopped.HasValue ? new Subsession(session.timeStopped.Value) {timeStopped = session.timeStopped} : new Subsession(DateTime.UtcNow));
 					foreach (Subsession subsession in subsessions)
 					{
-						if (subsession.timeStarted.Date > day.date) // if we've reached a subsession started after the current day (as part of overflow-session)
+						if (subsession.timeStopped < firstColumnUtcHourTime) // if subsession stopped before the current graph
+							continue;
+						if (subsession.timeStarted >= justAfterLastColumnUtcHourTime) // if subsession started after the current graph
 							break;
 
 						// gap
 						// ==========
 
 						var lowSegmentTime = subsession.timeStarted - lastSubsessionEndTime;
-						ImageView lowSegment = null;
-						if (lowSegmentTime.TotalMinutes >= 1)
+						//if (lowSegmentTime.TotalMinutes >= 1)
 						{
-							lowSegment = new ImageView(this);
+							var lowSegment = new ImageView(this);
 							lowSegment.Id = ++lastViewAutoID;
 							if (lastSubsessionSession == session)
 								lowSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 128) : new Color(0, 128, 0)));
 							var lowSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							//if (lastSegmentView != null)
-							//	gap_layout.AddRule(LayoutRules.RightOf, lastSegmentView.Id);
-							//lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(subsession.timeStarted.TimeOfDay.TotalMinutes / (24 * 60));
-							lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(lastSubsessionEndTime.TimeOfDay.TotalMinutes / (24 * 60));
+							lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)((lastSubsessionEndTime - firstColumnUtcHourTime).TotalMinutes / (24 * 60));
 							lowSegmentLayout.AddRule(LayoutRules.AlignParentBottom);
 							lowSegmentLayout.PercentLayoutInfo.widthPercent = (float)(lowSegmentTime.TotalMinutes / minutesInDay);
 							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
@@ -467,20 +467,6 @@ namespace Main
 							lowSegmentLayout.PercentLayoutInfo.heightPercent = .15f;
 							lowSegment.LayoutParameters = lowSegmentLayout;
 							result.AddChild(lowSegment, lowSegmentLayout);
-							//lastSegmentView = lowSegment;
-
-							/*var lowSegmentArc = new ImageView(this);
-							lowSegmentArc.Id = ++lastViewAutoID;
-							lowSegmentArc.SetBackgroundResource(Resource.Drawable.Arc);
-							var lowSegmentArcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							lowSegmentArcLayout.AddRule(LayoutRules.AlignRight, lowSegment.Id);
-							lowSegmentArcLayout.AddRule(LayoutRules.AlignParentBottom);
-							lowSegmentArcLayout.PercentLayoutInfo.widthPercent = (float)(lowSegmentTime.TotalMinutes / minutesInDay);
-							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
-								lowSegmentArcLayout.PercentLayoutInfo.widthPercent *= 60;
-							lowSegmentArcLayout.PercentLayoutInfo.heightPercent = .1f;
-							lowSegmentArc.LayoutParameters = lowSegmentArcLayout;
-							result.AddChild(lowSegmentArc, lowSegmentArcLayout);*/
 
 							var arc = new ShapeDrawer(this);
 							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
@@ -490,8 +476,6 @@ namespace Main
 							arcLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
 							arcLayout.AddRule(LayoutRules.AlignParentBottom);
 							arcLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
-							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
-								arcLayout.PercentLayoutInfo.widthPercent *= 60;
 							arcLayout.PercentLayoutInfo.heightPercent = .15f;
 							arc.LayoutParameters = arcLayout;
 							result.AddChild(arc, arcLayout);
@@ -501,8 +485,6 @@ namespace Main
 							labelLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
 							labelLayout.AddRule(LayoutRules.AlignParentBottom);
 							labelLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
-							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
-								labelLayout.PercentLayoutInfo.widthPercent *= 60;
 							labelLayout.PercentLayoutInfo.heightPercent = .15f;
 							labelLayout.BottomMargin = 2;
 							label.LayoutParameters = labelLayout;
@@ -516,42 +498,24 @@ namespace Main
 						// segment
 						// ==========
 
-						var timeStopped_keptInDay =
-							subsession.timeStopped.HasValue
-							? (subsession.timeStopped.Value.Date == day.date ? subsession.timeStopped.Value : day.date.AddDays(1).Date)
-							: DateTime.UtcNow.Date == day.date ? DateTime.UtcNow : DateTime.UtcNow.AddDays(1).Date;
-						var highSegmentTime = timeStopped_keptInDay - subsession.timeStarted;
-						if (highSegmentTime.TotalMinutes >= 1)
+						var timeStarted_keptOnGraph = subsession.timeStarted >= firstColumnUtcHourTime ? subsession.timeStarted : firstColumnUtcHourTime;
+						var timeStopped_orNow = subsession.timeStopped ?? DateTime.UtcNow;
+						var timeStopped_orNow_keptOnGraph = timeStopped_orNow < justAfterLastColumnUtcHourTime ? timeStopped_orNow : justAfterLastColumnUtcHourTime;
+						var highSegmentTime = timeStopped_orNow_keptOnGraph - timeStarted_keptOnGraph;
+						//if (highSegmentTime.TotalMinutes >= 1)
 						{
 							var highSegment = new ImageView(this);
 							highSegment.Id = ++lastViewAutoID;
 							highSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 255) : new Color(0, 255, 0)));
 							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							//if (lastSegmentView != null)
-							//	highSegmentLayout.AddRule(LayoutRules.RightOf, lastSegmentView.Id);
-							highSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)(subsession.timeStarted.TimeOfDay.TotalMinutes / (24 * 60));
+							highSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)((subsession.timeStarted - firstColumnUtcHourTime).TotalMinutes / (24 * 60));
 							highSegmentLayout.PercentLayoutInfo.widthPercent = (float)(highSegmentTime.TotalMinutes / minutesInDay);
 							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
 								highSegmentLayout.PercentLayoutInfo.widthPercent *= 60;
 							highSegment.LayoutParameters = highSegmentLayout;
 							result.AddChild(highSegment, highSegmentLayout);
 							lastSubsessionSession = session;
-							//lastSubsession = subsession;
-							lastSubsessionEndTime = timeStopped_keptInDay;
-							//lastSegmentView = highSegment;
-
-							/*var highSegmentArc = new ImageView(this);
-							highSegmentArc.Id = ++lastViewAutoID;
-							highSegmentArc.SetBackgroundResource(Resource.Drawable.Arc);
-							var highSegmentArcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							highSegmentArcLayout.AddRule(LayoutRules.AlignRight, highSegment.Id);
-							highSegmentArcLayout.AddRule(LayoutRules.AlignParentBottom);
-							highSegmentArcLayout.PercentLayoutInfo.widthPercent = (float)(highSegmentTime.TotalMinutes / minutesInDay);
-							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
-								highSegmentArcLayout.PercentLayoutInfo.widthPercent *= 60;
-							highSegmentArcLayout.PercentLayoutInfo.heightPercent = .1f;
-							highSegmentArc.LayoutParameters = highSegmentArcLayout;
-							result.AddChild(highSegmentArc, highSegmentArcLayout);*/
+							lastSubsessionEndTime = timeStopped_orNow_keptOnGraph;
 
 							var arc = new ShapeDrawer(this);
 							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
@@ -560,8 +524,6 @@ namespace Main
 							arcLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
 							arcLayout.AddRule(LayoutRules.AlignParentBottom);
 							arcLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
-							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
-								arcLayout.PercentLayoutInfo.widthPercent *= 60;
 							arcLayout.PercentLayoutInfo.heightPercent = .15f;
 							arc.LayoutParameters = arcLayout;
 							result.AddChild(arc, arcLayout);
@@ -571,8 +533,6 @@ namespace Main
 							labelLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
 							labelLayout.AddRule(LayoutRules.AlignParentBottom);
 							labelLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
-							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
-								labelLayout.PercentLayoutInfo.widthPercent *= 60;
 							labelLayout.PercentLayoutInfo.heightPercent = .15f;
 							labelLayout.BottomMargin = 2;
 							label.LayoutParameters = labelLayout;
@@ -584,45 +544,48 @@ namespace Main
 					}
 				}
 			}
-
+			
 			return result;
 		}
-		//DateTime lastUpdateDayBoxTime;
-        void UpdateDayBox(Day day)
-		{
-			if (day.box == null)
+        void UpdateRowBox(int rowOffset)
+        {
+	        var rowBoxIndex = (rowsPanel.ChildCount - 1) + rowOffset;
+            var rowBoxAtIndex = rowsPanel.GetChildAt(rowBoxIndex);
+			if (rowBoxAtIndex.VTag<DateTime>() != Row_GetFirstColumnDateTime(0)) // if time to add new row-box (since row-offset-0 is now supposed to show data for the next 24-hour time-span)
 			{
-				daysPanel.RemoveViewAt(0); // for now, remove the oldest day-row, when we add a new one (otherwise it'd exceed the numbers of rows at the start)
-				AddDayToProductivityGraph(day);
+				rowsPanel.RemoveViewAt(0); // for now, remove the oldest day-row, when we add a new one (otherwise it'd exceed the numbers of rows at the start)
+				AddRowToGraph(0);
 				return;
 			}
 
 			// maybe make-so: we just update the row, rather than recreate it like this
-			daysPanel.RemoveViewAt(daysPanel.ChildCount - 1);
-			AddDayToProductivityGraph(day);
-
-			//lastUpdateDayBoxTime = DateTime.UtcNow;
+			rowsPanel.RemoveViewAt(rowBoxIndex);
+			AddRowToGraph(rowOffset);
 		}
 
 		public void UpdateHourMarkers()
 		{
 			while (graphBottomBar.ChildCount > 1) // remove the last set (if it exists)
 				graphBottomBar.RemoveViewAt(1);
-			for (var i = 0; i < 24; i++)
+
+			var firstColumnUtcHourTime = Row_GetFirstColumnDateTime(0);
+			for (var columnIndex = 0; columnIndex < 24; columnIndex++)
 			{
-				var hourTime_local = DateTime.UtcNow.Date.AddHours(i).ToLocalTime();
+				var columnUtcHourTime = firstColumnUtcHourTime.AddHours(columnIndex);
 				var hourMarker = graphBottomBar.AddChild(new TextView(this) {TextSize = 10}, new PercentRelativeLayout.LayoutParams(V.WrapContent, V.WrapContent));
-				hourMarker.Text = mainData.settings.showLocalTime ? (mainData.settings.show12HourTime ? hourTime_local.ToString("htt").ToLower() : hourTime_local.Hour.ToString()) : i.ToString();
+				if (mainData.settings.showLocalTime)
+					hourMarker.Text = mainData.settings.show12HourTime ? columnUtcHourTime.ToLocalTime().ToString("htt").ToLower() : columnUtcHourTime.ToLocalTime().Hour.ToString();
+				else
+					hourMarker.Text = mainData.settings.show12HourTime ? columnUtcHourTime.ToString("htt").ToLower() : columnUtcHourTime.Hour.ToString();
 				var layoutParams = hourMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
-				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(i / 24d);
+				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(columnIndex / 24d);
 				hourMarker.LayoutParameters = layoutParams;
 			}
 		}
-		void UpdateCurrentTimerMarkerPosition()
+		public void UpdateCurrentTimerMarkerPosition()
 		{
-			//var hoursInDay = (DateTime.UtcNow.Date.AddDays(1).ClosestDate() - DateTime.UtcNow.Date).TotalHours;
-			//var percentThroughDay = (DateTime.UtcNow - DateTime.UtcNow.Date).TotalHours / hoursInDay;
-			var percentThroughDay = (DateTime.UtcNow - DateTime.UtcNow.Date).TotalHours / 24;
+			var firstColumnUtcHourTime = Row_GetFirstColumnDateTime(0);
+			var percentThroughDay = (DateTime.UtcNow - firstColumnUtcHourTime).TotalHours / 24;
 			var layoutParams = currentTimeMarker.LayoutParameters as PercentRelativeLayout.LayoutParams;
 			var markerHalfWidthPercentOfBarWidth = graphBottomBar.Width != 0 ? (currentTimeMarker.Width / 2d) / graphBottomBar.Width : 0; // (can't access width while ui is still being laid out, apparently)
             layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(percentThroughDay - markerHalfWidthPercentOfBarWidth);
@@ -709,7 +672,7 @@ namespace Main
 			}
 			sessionUpdateTimer.Enabled = true;
 			if (CurrentSession.timeLeft > 0)
-				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, CurrentSession.processedTimeExtent.Ticks_Milliseconds() + (CurrentSession.timeLeft * 1000), GetPendingIntent_LaunchMain());
+				((AlarmManager)GetSystemService(AlarmService)).Set(AlarmType.RtcWakeup, CurrentSession.processedTimeExtent.TotalMilliseconds() + (CurrentSession.timeLeft * 1000), GetPendingIntent_LaunchMain());
 		}
 		void StopSession()
 		{
@@ -722,7 +685,7 @@ namespace Main
 
 			// actors
 			Session_UpdateOutflow();
-			UpdateDayBox(CurrentDay);
+			UpdateRowBox(0);
             sessionUpdateTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
