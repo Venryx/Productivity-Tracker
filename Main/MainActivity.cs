@@ -442,7 +442,7 @@ namespace Main
 
 			var rowDays = new List<Day>(); // days with data that intersects this row's time-span
 			foreach (Day day in days)
-				if (day.sessions.Any(a=>a.subsessions.Any(b=>b.timeStopped >= firstColumnUtcHourTime && b.timeStarted < justAfterLastColumnUtcHourTime)))
+				if (day.sessions.Any(a=>a.subsessions.Any(b=>(!b.timeStopped.HasValue || b.timeStopped >= firstColumnUtcHourTime) && b.timeStarted < justAfterLastColumnUtcHourTime)))
 					rowDays.Add(day);
 
 			if (rowDays.Count > 0) // if there's data stored for this row
