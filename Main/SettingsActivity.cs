@@ -247,169 +247,224 @@ namespace Main
 				};
 			}
 
-			AddSeparator(list, "Alarm");
+			AddSeparator(list, "Session Types");
 			// ==========
 
 			{
-				var row = AddRow(list);
-				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Set master alarm volume to X, before sounding alarm"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				Func<string> getText = ()=>settings.setMasterAlarmVolume == -1 ? "[don't set]" : settings.setMasterAlarmVolume + "%";
-				label.Text = getText();
-                row.Click += delegate
+				var row = AddRow(list, ViewGroup.LayoutParams.WrapContent, addSeparator: false);
+				//row.AddChild(new TextView(this) {Text = "Session Types", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));
+
+				Action refreshSessionTypes = null;
+				Action refreshSessionTypeInfo = null;
+
+				var buttonsRow = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal});
+				var newButton = buttonsRow.AddChild(new Button(this) {Text = "New session type"}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, .7f));
+				newButton.Click += (sender, e)=>
 				{
-					AlertDialog.Builder alert = new AlertDialog.Builder(this);
-					alert.SetTitle("Set master alarm volume to X, before sounding alarm");
+					var name = "NameMe";
+					while (settings.sessionTypes.Any(a=>a.name == name))
+						name += "_2";
+					settings.sessionTypes.Add(new SessionType(name));
+					settings.selectedSessionTypeName = name;
+					refreshSessionTypes();
+					refreshSessionTypeInfo();
+				};
+				var deleteButton = buttonsRow.AddChild(new Button(this) {Enabled = false, Text = "Delete"}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .1f));
+				deleteButton.Click += (sender, e)=>
+				{
+					settings.sessionTypes.Remove(settings.sessionTypes.First(a=>a.name == settings.selectedSessionTypeName));
+					refreshSessionTypes();
+					refreshSessionTypeInfo();
+				};
+				
+				var listView = row.AddChild(new VListView(this), new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent));
+				listView.ChoiceMode = ChoiceMode.Single;
 
-					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-					var text = linear.AddChild(new TextView(this) {Text = getText(), Gravity = GravityFlags.CenterHorizontal});
-					text.SetPadding(10, 10, 10, 10);
-					var minValue = -1;
-					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 100 - minValue});
-					seek.SetValue(minValue, settings.setMasterAlarmVolume);
-					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.GetValue(minValue) == -1 ? "[don't set]" : seek.GetValue(minValue) + "%"; };
-					alert.SetView(linear);
-
-					alert.SetPositiveButton("Ok", (sender, e)=>
+				refreshSessionTypes = ()=>
+				{
+					listView.Adapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleListItemSingleChoice, Android.Resource.Id.Text1, settings.sessionTypes.Select(a=>a.name).ToArray());
+					//listView.SetSelection(settings.sessionTypes.FindIndex(a=>a.name == settings.selectedSessionTypeName))
+					//listView.Post(()=>listView.SetSelection(settings.sessionTypes.FindIndex(a=>a.name == settings.selectedSessionTypeName)));
+					listView.SetItemChecked(settings.sessionTypes.FindIndex(a=>a.name == settings.selectedSessionTypeName), true);
+                    listView.ItemClick += (sender, e)=>
 					{
-						settings.setMasterAlarmVolume = seek.GetValue(minValue);
+						settings.selectedSessionTypeName = settings.sessionTypes[e.Parent.IndexOfChild(e.View)].name;
+						refreshSessionTypeInfo();
+					};
+				};
+				refreshSessionTypes();
+				
+				refreshSessionTypeInfo = ()=>
+				{
+					var selectedSessionType = settings.sessionTypes.FirstOrDefault(a=>a.name == settings.selectedSessionTypeName);
+					while (row.ChildCount > 2) // while there are controls other than the button-row and list-view (i.e. when there are old selected-session-type controls)
+						row.RemoveViewAt(2);
+
+					deleteButton.Enabled = selectedSessionType != null; //&& selectedSessionType.name != "Rest" && selectedSessionType.name != "Work";
+
+					{
+						var row2 = AddRow(row);
+						row2.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Set master alarm volume to X, before sounding alarm"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row2.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						Func<string> getText = ()=> selectedSessionType.setMasterAlarmVolume == -1 ? "[don't set]" : selectedSessionType.setMasterAlarmVolume + "%";
 						label.Text = getText();
-					});
-					alert.SetNegativeButton("Cancel", (sender, e)=>{});
-					alert.Show();
-				};
-			}
+						row2.Click += delegate
+						{
+							AlertDialog.Builder alert = new AlertDialog.Builder(this);
+							alert.SetTitle("Set master alarm volume to X, before sounding alarm");
 
-			{
-				//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
-				var row = AddRow(list);
-				row.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				label.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
-				row.Click += delegate
-				{
-					FileChooserDialog dialog = new FileChooserDialog(this);
-					if (settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Directory.Exists)
-						dialog.loadFolder(new FileInfo(settings.alarmSoundFilePath).Directory.FullName);
-					dialog.addListener((file, create)=>
+							LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+							var text = linear.AddChild(new TextView(this) {Text = getText(), Gravity = GravityFlags.CenterHorizontal});
+							text.SetPadding(10, 10, 10, 10);
+							var minValue = -1;
+							SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 100 - minValue});
+							seek.SetValue(minValue, selectedSessionType.setMasterAlarmVolume);
+							seek.ProgressChanged += (sender, e)=>{ text.Text = seek.GetValue(minValue) == -1 ? "[don't set]" : seek.GetValue(minValue) + "%"; };
+							alert.SetView(linear);
+
+							alert.SetPositiveButton("Ok", (sender, e)=>
+							{
+								selectedSessionType.setMasterAlarmVolume = seek.GetValue(minValue);
+								label.Text = getText();
+							});
+							alert.SetNegativeButton("Cancel", (sender, e)=>{});
+							alert.Show();
+						};
+					}
+
 					{
-						settings.alarmSoundFilePath = file.Path;
-						label.Text = settings.alarmSoundFilePath != null && new FileInfo(settings.alarmSoundFilePath).Exists ? settings.alarmSoundFilePath : "[none]";
-						dialog.Dismiss();
+						//var alarmSoundPanel = root.Append(new LinearLayout(this) {Orientation = Orientation.Vertical}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, 50));
+						var row2 = AddRow(row);
+						row2.AddChild(new TextView(this) {Text = "Alarm sound", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row2.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						label.Text = selectedSessionType.alarmSoundFilePath != null && new FileInfo(selectedSessionType.alarmSoundFilePath).Exists ? selectedSessionType.alarmSoundFilePath : "[none]";
+						row2.Click += delegate
+						{
+							FileChooserDialog dialog = new FileChooserDialog(this);
+							if (selectedSessionType.alarmSoundFilePath != null && new FileInfo(selectedSessionType.alarmSoundFilePath).Directory.Exists)
+								dialog.loadFolder(new FileInfo(selectedSessionType.alarmSoundFilePath).Directory.FullName);
+							dialog.addListener((file, create)=>
+							{
+								selectedSessionType.alarmSoundFilePath = file.Path;
+								label.Text = selectedSessionType.alarmSoundFilePath != null && new FileInfo(selectedSessionType.alarmSoundFilePath).Exists ? selectedSessionType.alarmSoundFilePath : "[none]";
+								dialog.Dismiss();
 
-						//MainActivity.main.SaveSettings();
-						//Reload();
-					});
-					dialog.Show();
-				};
-			}
+								//MainActivity.main.SaveSettings();
+								//Reload();
+							});
+							dialog.Show();
+						};
+					}
 
-			{
-				var row = AddRow(list);
-				row.AddChild(new TextView(this) {Text = "Min volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				label.Text = settings.minVolume + "%";
-				row.Click += delegate
-				{
-					AlertDialog.Builder alert = new AlertDialog.Builder(this);
-					alert.SetTitle("Min volume");
-
-					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-					var text = linear.AddChild(new TextView(this) {Text = settings.minVolume + "%", Gravity = GravityFlags.CenterHorizontal});
-					text.SetPadding(10, 10, 10, 10);
-					SeekBar seek = linear.AddChild(new SeekBar(this));
-					seek.Progress = settings.minVolume;
-					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
-					alert.SetView(linear);
-
-					alert.SetPositiveButton("Ok", (sender, e)=>
 					{
-						settings.minVolume = seek.Progress;
-						label.Text = settings.minVolume + "%";
-					});
-					alert.SetNegativeButton("Cancel", (sender, e)=>{});
-					alert.Show();
-				};
-			}
+						var row2 = AddRow(row);
+						row2.AddChild(new TextView(this) {Text = "Min volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row2.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						label.Text = selectedSessionType.minVolume + "%";
+						row2.Click += delegate
+						{
+							AlertDialog.Builder alert = new AlertDialog.Builder(this);
+							alert.SetTitle("Min volume");
 
-			{
-				var row = AddRow(list);
-				row.AddChild(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				label.Text = settings.maxVolume + "%";
-				row.Click += delegate
-				{
-					AlertDialog.Builder alert = new AlertDialog.Builder(this);
-					alert.SetTitle("Max volume");
+							LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+							var text = linear.AddChild(new TextView(this) {Text = selectedSessionType.minVolume + "%", Gravity = GravityFlags.CenterHorizontal});
+							text.SetPadding(10, 10, 10, 10);
+							SeekBar seek = linear.AddChild(new SeekBar(this));
+							seek.Progress = selectedSessionType.minVolume;
+							seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
+							alert.SetView(linear);
 
-					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-					var text = linear.AddChild(new TextView(this) {Text = settings.maxVolume + "%", Gravity = GravityFlags.CenterHorizontal});
-					text.SetPadding(10, 10, 10, 10);
-					SeekBar seek = linear.AddChild(new SeekBar(this));
-					seek.Progress = settings.maxVolume;
-					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
-					alert.SetView(linear);
+							alert.SetPositiveButton("Ok", (sender, e)=>
+							{
+								selectedSessionType.minVolume = seek.Progress;
+								label.Text = selectedSessionType.minVolume + "%";
+							});
+							alert.SetNegativeButton("Cancel", (sender, e)=>{});
+							alert.Show();
+						};
+					}
 
-					alert.SetPositiveButton("Ok", (sender, e)=>
 					{
-						settings.maxVolume = seek.Progress;
-						label.Text = settings.maxVolume + "%";
-					});
-					alert.SetNegativeButton("Cancel", (sender, e)=> { });
-					alert.Show();
-				};
-			}
+						var row2 = AddRow(row);
+						row2.AddChild(new TextView(this) {Text = "Max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row2.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						label.Text = selectedSessionType.maxVolume + "%";
+						row2.Click += delegate
+						{
+							AlertDialog.Builder alert = new AlertDialog.Builder(this);
+							alert.SetTitle("Max volume");
 
-			{
-				var row = AddRow(list, addSeparator: false);
-				row.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				label.Text = settings.timeToMaxVolume + " minutes";
-				row.Click += delegate
-				{
-					AlertDialog.Builder alert = new AlertDialog.Builder(this);
-					alert.SetTitle("Time to max volume");
+							LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+							var text = linear.AddChild(new TextView(this) {Text = selectedSessionType.maxVolume + "%", Gravity = GravityFlags.CenterHorizontal});
+							text.SetPadding(10, 10, 10, 10);
+							SeekBar seek = linear.AddChild(new SeekBar(this));
+							seek.Progress = selectedSessionType.maxVolume;
+							seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + "%"; };
+							alert.SetView(linear);
 
-					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
-					var text = linear.AddChild(new TextView(this) {Text = settings.timeToMaxVolume + " minutes", Gravity = GravityFlags.CenterHorizontal});
-					text.SetPadding(10, 10, 10, 10);
-					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
-					seek.Progress = settings.timeToMaxVolume;
-					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
-					alert.SetView(linear);
+							alert.SetPositiveButton("Ok", (sender, e)=>
+							{
+								selectedSessionType.maxVolume = seek.Progress;
+								label.Text = selectedSessionType.maxVolume + "%";
+							});
+							alert.SetNegativeButton("Cancel", (sender, e)=>{});
+							alert.Show();
+						};
+					}
 
-					alert.SetPositiveButton("Ok", (sender, e)=>
 					{
-						settings.timeToMaxVolume = seek.Progress;
-						label.Text = settings.timeToMaxVolume + " minutes";
-					});
-					alert.SetNegativeButton("Cancel", (sender, e)=> { });
-					alert.Show();
-				};
-			}
+						var row2 = AddRow(row, addSeparator: false);
+						row2.AddChild(new TextView(this) {Text = "Time to max volume", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row2.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						label.Text = selectedSessionType.timeToMaxVolume + " minutes";
+						row2.Click += delegate
+						{
+							AlertDialog.Builder alert = new AlertDialog.Builder(this);
+							alert.SetTitle("Time to max volume");
 
-			/*{
-				var row = AddRow(list);
-				row.AddChild(new TextView(this) {Text = "Volume fade type", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
-				label.Text = settings.volumeFadeType.ToString();
-				row.Click += delegate
-				{
-					AlertDialog dialog = null;
-					var builder = new AlertDialog.Builder(this);
-                    builder.SetTitle("Volume fade type");
-					var keys = Enum.GetValues(typeof(VolumeScaleType)).OfType<VolumeScaleType>().ToList();
-					builder.SetSingleChoiceItems(keys.Select(a=>a.ToString()).ToArray(), keys.IndexOf(settings.volumeFadeType), (sender2, e2)=>{});
-					builder.SetPositiveButton("Ok", (sender2, e2)=>
-					{
-						ListView listView = dialog.ListView;
-						settings.volumeFadeType = (VolumeScaleType)Enum.Parse(typeof(VolumeScaleType), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
+							LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+							var text = linear.AddChild(new TextView(this) {Text = selectedSessionType.timeToMaxVolume + " minutes", Gravity = GravityFlags.CenterHorizontal});
+							text.SetPadding(10, 10, 10, 10);
+							SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 60});
+							seek.Progress = selectedSessionType.timeToMaxVolume;
+							seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress + " minutes"; };
+							alert.SetView(linear);
+
+							alert.SetPositiveButton("Ok", (sender, e)=>
+							{
+								selectedSessionType.timeToMaxVolume = seek.Progress;
+								label.Text = selectedSessionType.timeToMaxVolume + " minutes";
+							});
+							alert.SetNegativeButton("Cancel", (sender, e)=> { });
+							alert.Show();
+						};
+					}
+
+					/*{
+						var row = AddRow(list);
+						row.AddChild(new TextView(this) {Text = "Volume fade type", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+						var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
 						label.Text = settings.volumeFadeType.ToString();
-					});
-					builder.SetNegativeButton("Cancel", (sender2, e2)=>{});
-					dialog = builder.Show();
+						row.Click += delegate
+						{
+							AlertDialog dialog = null;
+							var builder = new AlertDialog.Builder(this);
+							builder.SetTitle("Volume fade type");
+							var keys = Enum.GetValues(typeof(VolumeScaleType)).OfType<VolumeScaleType>().ToList();
+							builder.SetSingleChoiceItems(keys.Select(a=>a.ToString()).ToArray(), keys.IndexOf(settings.volumeFadeType), (sender2, e2)=>{});
+							builder.SetPositiveButton("Ok", (sender2, e2)=>
+							{
+								ListView listView = dialog.ListView;
+								settings.volumeFadeType = (VolumeScaleType)Enum.Parse(typeof(VolumeScaleType), listView.Adapter.GetItem(listView.CheckedItemPosition).ToString());
+								label.Text = settings.volumeFadeType.ToString();
+							});
+							builder.SetNegativeButton("Cancel", (sender2, e2)=>{});
+							dialog = builder.Show();
+						};
+					}*/
 				};
-			}*/
+				refreshSessionTypeInfo();
+			}
 
 			AddSeparator(list, "Hotkeys");
 			// ==========
@@ -565,7 +620,7 @@ namespace Main
 				label.SetTypeface(MainActivity.main.baseTypeface, TypefaceStyle.Bold);
 			}
 
-			var rect = new RectShape();
+			/*var rect = new RectShape();
             var shape = new ShapeDrawable(rect);
 			shape.Paint.Color = new Color(255, 255, 255, 200);
 			shape.Paint.SetStyle(Paint.Style.Stroke);
@@ -573,7 +628,9 @@ namespace Main
 			//shape.SetPadding(3, 3, 3, 3);
 			//result.Background = shape;
 			result.Background = new InsetDrawable(shape, -3, -3, -3, 3);
-			//result.SetPadding(3, 3, 3, 3); // must come after
+			//result.SetPadding(3, 3, 3, 3); // must come after*/
+			result.Background = new BorderDrawable(new Color(255, 255, 255, 200), 0, 0, 0, 3);
+			//result.SetPadding(0, 0, 0, 5);
 
 			return result;
 		}
@@ -582,15 +639,15 @@ namespace Main
 			var result = root.AddChild(new LinearLayout(this) {Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
 			//if (root.ChildCount > 1)
 			if (addSeparator)
-			{
 				//result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
-				var rect = new RectShape();
+				/*var rect = new RectShape();
 				var shape = new ShapeDrawable(rect);
 				shape.Paint.Color = new Color(255, 255, 255, 128);
 				shape.Paint.SetStyle(Paint.Style.Stroke);
 				shape.Paint.StrokeWidth = 1;
-				result.Background = new InsetDrawable(shape, -1, -1, -1, 0);
-			}
+				result.Background = new InsetDrawable(shape, -1, -1, -1, 1);*/
+				result.Background = new BorderDrawable(new Color(255, 255, 255, 128), 0, 0, 0, 1);
+				//result.SetPadding(0, 0, 0, 5);
 			result.SetPadding(15, 15, 15, 15); // must come after
 			return result;
 		}

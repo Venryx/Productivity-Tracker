@@ -23,7 +23,9 @@ using Android.Util;
 using Java.IO;
 using Java.Lang;
 using Java.Util;
+using VDFN;
 /*
+using Exception = System.Exception;
 using Math = System.Math;
 using File = System.IO.File;
 using Timer = System.Timers.Timer;
@@ -42,6 +44,7 @@ namespace Main
 	{
 		public static MainActivity main;
 		static MainActivity() { VDFExtensions.Init(); }
+		const int ActivityID = 100;
 
 		static DirectoryInfo RootFolder=>new DirectoryInfo("/storage/sdcard0/Productivity Tracker/");
 		public MainData mainData = new MainData();
@@ -138,8 +141,12 @@ namespace Main
 		PercentRelativeLayout graphBottomBar;
 		ImageView currentTimeMarker;
 		PercentRelativeLayout graph_overlayRoot;
+		Button stopButton;
+		Button pauseButton;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
+		LinearLayout restButtons;
+		LinearLayout workButtons;
 		//TextView countdownLabel;
 		Button countdownLabel;
 		FrameLayout mouseInputBlocker;
@@ -160,7 +167,60 @@ namespace Main
 		{
 			main = this;
 			base.OnCreate(bundle);
-			SetContentView(Resource.Layout.Main);
+			//SetContentView(Resource.Layout.Main);
+			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
+			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
+			//var root = (LinearLayout)rootHolder.GetChildAt(0);
+			var root = new LinearLayout(this) {Orientation = Orientation.Horizontal};
+			SetContentView(root);
+
+			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .82f));
+			{
+				graphRoot = left.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .93f));
+				/*var shape = new ShapeDrawable(new RectShape());
+				shape.Paint.Color = new Color(0, 0, 0, 255);
+				shape.Paint.SetStyle(Paint.Style.Stroke);
+				shape.Paint.StrokeWidth = 5;
+				graphRoot.Background = new InsetDrawable(shape, -5, -5, 5, 5); // top is pushed-out/outset, so bottom should be pulled-in/inset (so final vertical size is same, just offset, keeping the bottom-border on-screen)
+				graphRoot.Background = shape;*/
+				graphRoot.Background = new BorderDrawable(Color.Black, 0, 0, 5, 5);
+				graphRoot.SetPadding(0, 0, 5, 5);
+
+				var timeOverPanelHolder = left.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(V.MatchParent, 0, .07f));
+				{
+					stopButton = timeOverPanelHolder.AddChild(new Button(this) {Text = "Stop"}, new LinearLayout.LayoutParams(0, V.MatchParent, .075f));
+					stopButton.Click += delegate { StopSession(); };
+					pauseButton = timeOverPanelHolder.AddChild(new Button(this) {Text = "Stop"}, new LinearLayout.LayoutParams(0, V.MatchParent, .075f));
+					pauseButton.Click += delegate
+					{
+						if (CurrentSession.paused)
+							ResumeSession();
+						else
+							PauseSession();
+					};
+
+					var timeOverPanel = timeOverPanelHolder.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(0, V.MatchParent, .85f) { LeftMargin = 3});
+					{
+						timeOverBar = timeOverPanel.AddChild(new ImageView(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+					}
+				}
+			}
+
+			var right = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(0, V.MatchParent, .18f));
+			{
+				var timeLeftPanel = right.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(0, V.MatchParent, .5f));
+				{
+					timeLeftBar = timeLeftPanel.AddChild(new ImageView(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+				}
+
+				restButtons = right.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .25f));
+				restButtons.AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Rest" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+				workButtons = right.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .25f));
+				workButtons.AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Work"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+
+				UpdateTimerStepButtons();
+			}
+
 			// called when C# code crashes?
 			AppDomain.CurrentDomain.UnhandledException += (sender, e)=>LogErrorMessageToFile($"Exception caught by AppDomain.CurrentDomain.UnhandledException\n==========\nTerminating: {e.IsTerminating}\nExceptionObject: {e.ExceptionObject}");
 			// called when Java code, on the UI thread, crashes?
@@ -174,9 +234,6 @@ namespace Main
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
-			graphRoot = FindViewById<FrameLayout>(Resource.Id.GraphRoot);
-			timeLeftBar = FindViewById<ImageView>(Resource.Id.TimeLeftBar);
-			timeOverBar = FindViewById<ImageView>(Resource.Id.TimeOverBar);
 
 			// has to start with something
 			timeLeftBar.Background = Drawables.clip_yPlus_blue_dark;
@@ -210,12 +267,8 @@ namespace Main
 
 			// general
 			// ==========
-
+			
 			UpdateKeepScreenOn();
-
-			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
-			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
-			var root = (LinearLayout)rootHolder.GetChildAt(0);
 
 			var overlayHolder = rootHolder.AddChild(new FrameLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
 			var focusTaker = overlayHolder.AddChild(new Button(this), new FrameLayout.LayoutParams(0, 0) {LeftMargin = -1000}); // as first button, takes focus, so gamepad A/shutter button can't click other things
@@ -234,30 +287,10 @@ namespace Main
 			var mouseInputBlockerMessageLabel = mouseInputBlocker.AddChild(new TextView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent) {Gravity = GravityFlags.Center});
 			mouseInputBlockerMessageLabel.Text = "Mouse input is currently blocked. Press the screen with two fingers simultaneously to unblock.";
 
-			// time-left bar
-			// ==========
-
-			FindViewById<LinearLayout>(Resource.Id.RestButtons).AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Rest" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-			FindViewById<LinearLayout>(Resource.Id.WorkButtons).AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Work" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-
-			UpdateTimerStepButtons();
-			UpdateDynamicUI();
-
-			// time-over bar
-			// ==========
-
-			FindViewById<Button>(Resource.Id.Pause).Click += delegate
-			{
-				if (CurrentSession.paused)
-					ResumeSession();
-				else
-					PauseSession();
-			};
-			FindViewById<Button>(Resource.Id.Stop).Click += delegate { StopSession(); };
-
 			// others
 			// ==========
 
+			UpdateDynamicUI();
 			UpdateNotification();
 			// if current-timer should be running, make sure its running by pausing-and-resuming (scheduled alarm awakening might have been lost by a device reboot)
 			// maybe make-so: current-timer's scheduled awakening is rescheduled on device startup as well
@@ -331,23 +364,21 @@ namespace Main
 		}
 		public void UpdateTimerStepButtons()
 		{
-			var restButtonsPanel = FindViewById<LinearLayout>(Resource.Id.RestButtons);
-			while (restButtonsPanel.ChildCount > 1)
-				restButtonsPanel.RemoveViewAt(1);
+			while (restButtons.ChildCount > 1)
+				restButtons.RemoveViewAt(1);
 			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
 			{
-				var timerStepButton = restButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
+				var timerStepButton = restButtons.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
 				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
 				timerStepButton.Text = timerStepLength.ToString();
 				timerStepButton.Click += (sender, e)=>{ StartSession("Rest", timerStepLength); };
 			}
 
-			var workButtonsPanel = FindViewById<LinearLayout>(Resource.Id.WorkButtons);
-			while (workButtonsPanel.ChildCount > 1)
-				workButtonsPanel.RemoveViewAt(1);
+			while (workButtons.ChildCount > 1)
+				workButtons.RemoveViewAt(1);
 			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
 			{
-				var timerStepButton = workButtonsPanel.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
+				var timerStepButton = workButtons.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
 				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
 				timerStepButton.Text = timerStepLength.ToString();
 				timerStepButton.Click += (sender, e)=> { StartSession("Work", timerStepLength); };
@@ -763,22 +794,22 @@ namespace Main
 			else
 			{
 				var timeOver_withLocking = CurrentSession.timeOver_withLocking; // in seconds
-				var timeOverForClipEmpty = mainData.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var timeOverForClipEmpty = CurrentSession.sessionType.timeToMaxVolume * SecondsPerMinute; // in seconds
 				var percentThroughTimeOverBar = V.Clamp(0, 1, (double)timeOver_withLocking / timeOverForClipEmpty);
 
 				if (alarmPlayer == null)
 				{
-					if (mainData.settings.setMasterAlarmVolume != -1)
+					if (CurrentSession.sessionType.setMasterAlarmVolume != -1)
 					{
 						var audioManager = (AudioManager)GetSystemService(AudioService);
 						int maxVolume = audioManager.GetStreamMaxVolume(Stream.Alarm);
-						audioManager.SetStreamVolume(Stream.Alarm, (int)(((double)mainData.settings.setMasterAlarmVolume / 100) * maxVolume), 0);
+						audioManager.SetStreamVolume(Stream.Alarm, (int)(((double)CurrentSession.sessionType.setMasterAlarmVolume / 100) * maxVolume), 0);
 					}
 
 					//alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer = new MediaPlayer();
 					alarmPlayer.SetAudioStreamType(Stream.Alarm);
-					alarmPlayer.SetDataSource(this, new FileInfo(mainData.settings.alarmSoundFilePath).ToFile().ToURI_Android());
+					alarmPlayer.SetDataSource(this, new FileInfo(CurrentSession.sessionType.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer.Prepare();
 					alarmPlayer.Looping = true;
 					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
@@ -786,16 +817,16 @@ namespace Main
 					alarmPlayer.Start();
 				}
 
-				var volume = V.Lerp(mainData.settings.minVolume / 100d, mainData.settings.maxVolume / 100d, percentThroughTimeOverBar);
+				var volume = V.Lerp(CurrentSession.sessionType.minVolume / 100d, CurrentSession.sessionType.maxVolume / 100d, percentThroughTimeOverBar);
                 alarmPlayer.SetVolume((float)volume, (float)volume);
 				//alarmPlayer.VSetVolume(V.Lerp(data.settings.minVolume / 100d, data.settings.maxVolume / 100d, percentThroughTimeOverBar), data.settings.volumeFadeType);
 			}
 		}
 		void UpdateDynamicUI()
 		{
-			FindViewById<Button>(Resource.Id.Stop).Enabled = CurrentSession != null;
-			FindViewById<Button>(Resource.Id.Pause).Enabled = CurrentSession != null;
-			FindViewById<Button>(Resource.Id.Pause).Text = CurrentSession != null && CurrentSession.paused ? "Resume" : "Pause";
+			stopButton.Enabled = CurrentSession != null;
+			pauseButton.Enabled = CurrentSession != null;
+			pauseButton.Text = CurrentSession != null && CurrentSession.paused ? "Resume" : "Pause";
 			countdownLabel.Enabled = CurrentSession != null && !CurrentSession.paused;
 			
 			var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Background;
@@ -812,7 +843,7 @@ namespace Main
 				var timeLeft_clipPercent = V.Clamp(0, 1, (double)timeLeft / timeLeftForClipFull);
 				timeLeftBar_clip.SetLevel((int)(10000 * timeLeft_clipPercent));
 
-				var timeOverForClipEmpty = mainData.settings.timeToMaxVolume * SecondsPerMinute; // in seconds
+				var timeOverForClipEmpty = CurrentSession.sessionType.timeToMaxVolume * SecondsPerMinute; // in seconds
 				var timeOver_clipPercent = V.Clamp(0, 1, 1 - ((double)timeOver_withLocking / timeOverForClipEmpty));
 				timeOverBar_clip.SetLevel((int)(10000 * timeOver_clipPercent));
 
@@ -967,13 +998,13 @@ namespace Main
 				notificationBuilder.SetContentText($"{CurrentSession.type} timer {(CurrentSession.paused ? "paused" : "running")}. Time left: " + timeLeftText);
 				var notification = notificationBuilder.Build();
 				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
-				// we use a layout id because it is a unique number; we use it later to cancel
-				notificationManager.Notify(Resource.Layout.Main, notification);
+				// we use the activity-id because it is a unique number; we use it later to cancel
+				notificationManager.Notify(ActivityID, notification);
 			}
 			else // if stopped, or timer timed-out
 			{
 				var notificationManager = (NotificationManager)GetSystemService(NotificationService);
-				notificationManager.Cancel(Resource.Layout.Main);
+				notificationManager.Cancel(ActivityID);
 				if (timeLeft == 0) // if timer just timed-out
 				{
 					var launchMain = Intent;

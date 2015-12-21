@@ -107,7 +107,7 @@ namespace android.support.percent
 		}
 		/// <summary>Constructs a PercentLayoutInfo from attributes associated with a View. Call this method from {@code
 		///     LayoutParams(Context c, AttributeSet attrs)} constructor.</summary>
-		public static PercentLayoutInfo getPercentLayoutInfo(Context context, IAttributeSet attrs)
+		/*public static PercentLayoutInfo getPercentLayoutInfo(Context context, IAttributeSet attrs)
 		{
 			PercentLayoutInfo info = null;
 			TypedArray array = context.ObtainStyledAttributes(attrs, Resource.Styleable.PercentLayout_Layout);
@@ -198,7 +198,7 @@ namespace android.support.percent
 			if (Log.IsLoggable(TAG, LogPriority.Debug))
 				Log.Debug(TAG, "constructed: " + info);
 			return info;
-		}
+		}*/
 		/// <summary>Iterates over children and restores their original dimensions that were changed for percentage values. Calling
 		///     this method only makes sense if you previously called
 		///     <seealso cref = "PercentLayoutHelper#adjustChildren(int, int)" />.</summary>

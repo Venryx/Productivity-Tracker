@@ -1,4 +1,4 @@
-﻿using Android.Content;
+﻿/*using Android.Content;
 using Android.Widget;
 using Android.Util;
 using Android.Views;
@@ -92,7 +92,7 @@ namespace android.support.percent
 		}
 		// custom removed (had to, for it to compile)
 		/*protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams() { return new LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent); }
-		public override ViewGroup.LayoutParams GenerateLayoutParams(IAttributeSet attrs) { return new LayoutParams(Context, attrs); }*/
+		public override ViewGroup.LayoutParams GenerateLayoutParams(IAttributeSet attrs) { return new LayoutParams(Context, attrs); }*#/
 		protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
 		{
 			mHelper.adjustChildren(widthMeasureSpec, heightMeasureSpec);
@@ -127,4 +127,4 @@ namespace android.support.percent
 			protected override void SetBaseAttributes(TypedArray a, int widthAttr, int heightAttr) { PercentLayoutHelper.fetchWidthAndHeight(this, a, widthAttr, heightAttr); }
 		}
 	}
-}
+}*/

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using VDFN;
 
 namespace Main
 {
@@ -10,11 +12,22 @@ namespace Main
 		public Session(string type, DateTime timeStarted, int timeLeft)
 		{
 			this.type = type;
+			LoadSessionTypeFromSessionTypeName();
 			this.timeStarted = timeStarted;
 			this.timeLeft = timeLeft;
 		}
 
-		public string type;
+		//[VDFPreDeserialize] protected void PreDeserialize(VDFNode node, VDFNodePath path, VDFLoadOptions options) { sessionType = MainActivity.main.mainData.settings.sessionTypes.FirstOrDefault(a=>a.name == type); }
+		[VDFPostDeserialize] protected void PostDeserialize(VDFNode node, VDFNodePath path, VDFLoadOptions options) { LoadSessionTypeFromSessionTypeName(); }
+		public void LoadSessionTypeFromSessionTypeName() { sessionType = MainActivity.main.mainData.settings.sessionTypes.FirstOrDefault(a=>a.name == type); }
+		[VDFPreSerialize] protected void PreSerialize()
+		{
+			if (sessionType != null)
+				type = sessionType.name;
+		}
+
+		public string type; // make-so: named sessionTypeName
+		[VDFProp(false)] public SessionType sessionType;
 		public DateTime timeStarted; // utc
 		public DateTime? timeStopped; // utc
 		[VDFProp(popOutL2: true)] public List<Subsession> subsessions = new List<Subsession>();

@@ -1,5 +1,12 @@
 ﻿using System;
 using System.Threading;
+using Android.Content;
+using Android.Util;
+using Android.Views;
+using Android.Widget;
+using Java.Lang;
+using VDFN;
+using Math = System.Math;
 
 public static class V
 {
@@ -68,4 +75,16 @@ public class ObjectWrapper : Java.Lang.Object
 {
 	public ObjectWrapper(object value) { this.value = value; }
 	public object value;
+}
+
+public class VListView : ListView
+{
+	public VListView(Context context) : base(context) {}
+	public VListView(Context context, IAttributeSet attrs) : base(context, attrs) {}
+	public VListView(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle) {}
+	protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+	{
+        int expandSpec = MeasureSpec.MakeMeasureSpec(int.MaxValue >> 2, MeasureSpecMode.AtMost);
+        base.OnMeasure(widthMeasureSpec, expandSpec);
+    }
 }

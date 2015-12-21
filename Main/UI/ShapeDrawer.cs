@@ -18,13 +18,48 @@ namespace Main
 				shape.Draw(canvas);
 		}
 	}
+	// probably make-so: ShapeDrawer is powerful enough for BorderDrawer to work just by sending different prop-values to it
+	/*public class BorderDrawer : View
+	{
+		public BorderDrawer(Context context) : base(context) {}
+		public BorderDrawer(Context context, Color color, int leftWidth, int topWidth, int rightWidth, int bottomWidth) : base(context)
+		{
+			this.color = color;
+			this.leftWidth = leftWidth;
+			this.topWidth = topWidth;
+			this.rightWidth = rightWidth;
+			this.bottomWidth = bottomWidth;
+
+			paint = new Paint();
+			paint.Flags |= PaintFlags.AntiAlias;
+			paint.SetStyle(Paint.Style.Fill);
+		}
+
+		Color color;
+		int leftWidth;
+		int topWidth;
+		int rightWidth;
+		int bottomWidth;
+
+		Paint paint;
+
+		public List<VShape> shapes = new List<VShape>();
+		public void AddShape(VShape shape) { shapes.Add(shape); }
+		protected override void OnDraw(Canvas canvas)
+		{
+			canvas.DrawRect(new RectF(0, 0, leftWidth, canvas.Height), paint);
+			canvas.DrawRect(new RectF(0, 0, canvas.Width, topWidth), paint);
+			canvas.DrawRect(new RectF(canvas.Width - rightWidth, 0, rightWidth, canvas.Height), paint);
+			canvas.DrawRect(new RectF(0, canvas.Height - bottomWidth, canvas.Width, bottomWidth), paint);
+		}
+	}*/
 }
 
 /*public enum VShapeOp
 {
 	Clear
 }*/
-public class VShape
+	public class VShape
 {
 	public VShape()
 	{

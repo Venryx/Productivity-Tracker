@@ -20,6 +20,7 @@ using Uri = Android.Net.Uri;
 
 public static class ClassExtensions
 {
+	// ViewGroup
 	public static T AddChild<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null, int index = -1) where T : View
 	{
 		//if (index != -1)
@@ -33,6 +34,13 @@ public static class ClassExtensions
 			else
 				s.AddView(view);*/
 		return view;
+	}
+	public static List<View> GetChildren(this ViewGroup s)
+	{
+		var result = new List<View>();
+		for (var i = 0; i < s.ChildCount; i++)
+			result.Add(s.GetChildAt(i));
+		return result;
 	}
 
 	// int
@@ -160,6 +168,13 @@ public static class ClassExtensions
 
 	// IEnumerable<T>
 	public static string JoinUsing(this IEnumerable list, string separator) { return string.Join(separator, list.OfType<object>().ToArray()); }
+
+	// Dictionary<TKey, TValue>
+	public static void AddDictionary<TKey, TValue>(this Dictionary<TKey, TValue> s, Dictionary<TKey, TValue> other)
+	{
+		foreach (TKey key in other.Keys)
+			s.Add(key, other[key]);
+	}
 
 	// Array
 	public static bool HasIndex(this Array array, int index) { return index >= 0 && index < array.Length; }

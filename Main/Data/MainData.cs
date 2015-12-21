@@ -17,11 +17,12 @@ using Android.Text;
 using Java.IO;
 using Java.Lang;
 using Java.Util;
+using VDFN;
 using File = System.IO.File;
 using Math = System.Math;
+using Timer = System.Timers.Timer;
 using Orientation = Android.Widget.Orientation;
 using Stream = Android.Media.Stream;
-using Timer = System.Timers.Timer;
 
 namespace Main
 {
@@ -58,15 +59,11 @@ namespace Main
 		//public bool addCustomButton;
 		//public bool addAlarmButton;
 
-		// alarm
+		// session types
 		// ==========
 
-		public int setMasterAlarmVolume = -1;
-		public string alarmSoundFilePath;
-		public int minVolume;
-		public int maxVolume = 50;
-		public int timeToMaxVolume = 10;
-		//public VolumeScaleType volumeFadeType = VolumeScaleType.Loudness;
+		public List<SessionType> sessionTypes = new List<SessionType> {new SessionType("Rest"), new SessionType("Work")};
+		public string selectedSessionTypeName;
 
 		// others
 		// ==========
@@ -74,6 +71,18 @@ namespace Main
 		public bool blockUnusedKeys;
 		//public bool blockMouseEvents;
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();
+	}
+	[VDFType(propIncludeRegexL1: "")] public class SessionType
+	{
+		public SessionType(string name) { this.name = name; }
+
+		public string name;
+		public int setMasterAlarmVolume = -1;
+		public string alarmSoundFilePath;
+		public int minVolume;
+		public int maxVolume = 50;
+		public int timeToMaxVolume = 10;
+		//public VolumeScaleType volumeFadeType = VolumeScaleType.Loudness;
 	}
 	public enum HotkeyAction
 	{
@@ -92,11 +101,5 @@ namespace Main
 		public Keycode key;
 		public HotkeyAction action;
 		public int action_startTimer_length = 10;
-	}
-
-	public enum TimerType
-	{
-		Rest,
-		Work
 	}
 }

@@ -1,0 +1,10 @@
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\Tests.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\Tests.pdb
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\FluentAssertions.Core.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\FluentAssertions.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\xunit.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\obj\Release\Tests.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\obj\Release\Tests.pdb
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\Productivity Tracker.dll
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\bin\Release\Productivity Tracker.pdb
+C:\Root\Programs\^Projects\Productivity-Tracker\Main\Tests\obj\Release\Tests.csprojResolveAssemblyReference.cache

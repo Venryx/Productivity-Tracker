@@ -1,4 +1,5 @@
-﻿using Android.App;
+﻿using System.Collections.Generic;
+using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -62,4 +63,42 @@ public static class Drawables
 		result.Paint.StrokeWidth = strokeWidth;
 		return result;
 	}
+}
+
+public class BorderDrawable : Drawable
+{
+	public BorderDrawable(Color color, int leftWidth, int topWidth, int rightWidth, int bottomWidth)
+	{
+		//this.color = color;
+		this.leftWidth = leftWidth;
+		this.topWidth = topWidth;
+		this.rightWidth = rightWidth;
+		this.bottomWidth = bottomWidth;
+
+		paint = new Paint();
+		//paint.Flags |= PaintFlags.AntiAlias;
+		paint.SetStyle(Paint.Style.Fill);
+		paint.Color = color;
+	}
+
+	//Color color;
+	int leftWidth;
+	int topWidth;
+	int rightWidth;
+	int bottomWidth;
+
+	Paint paint;
+
+	public override void Draw(Canvas canvas)
+	{
+		canvas.DrawRect(new RectF(0, 0, leftWidth, canvas.Height), paint);
+		canvas.DrawRect(new RectF(0, 0, canvas.Width, topWidth), paint);
+		canvas.DrawRect(new RectF(canvas.Width - rightWidth, 0, canvas.Width, canvas.Height), paint);
+		canvas.DrawRect(new RectF(0, canvas.Height - bottomWidth, canvas.Width, canvas.Height), paint);
+	}
+	
+	// required members
+	public override void SetAlpha(int alpha) {}
+	public override void SetColorFilter(ColorFilter cf) {}
+	public override int Opacity { get; }
 }

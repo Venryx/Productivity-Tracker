@@ -1,4 +1,5 @@
 using System;
+using VDFN;
 
 public struct Vector2i
 {
