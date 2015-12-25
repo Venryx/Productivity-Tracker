@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Android.Content;
+using Android.Graphics;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -68,6 +69,9 @@ public static class VDFExtensions
 		VDFTypeInfo.AddDeserializeMethod_FromParent<DateTime>(node=>new DateTime(node * TimeSpan.TicksPerMillisecond));
 		VDFTypeInfo.AddSerializeMethod<DateTime?>(a=>a?.TotalMilliseconds() ?? -1);
 		VDFTypeInfo.AddDeserializeMethod_FromParent<DateTime?>(node=>node.primitiveValue != null ? new DateTime(node * TimeSpan.TicksPerMillisecond) : (DateTime?)null);
+
+		VDFTypeInfo.AddSerializeMethod<Color>((self, path, options)=>self.ToHexStr());
+		VDFTypeInfo.AddDeserializeMethod_FromParent<Color>((node, path, options)=>Color.ParseColor((string)node.primitiveValue));
 	}
 }
 

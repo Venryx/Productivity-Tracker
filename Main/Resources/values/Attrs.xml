@@ -28,4 +28,8 @@
 		<attr name="layout_marginEndPercent" format="fraction"/> -->
 		<attr name="layout_aspectRatio" format="fraction"/>
 	</declare-styleable>
+
+	<declare-styleable name="AmbilWarnaPreference">
+		<attr name="supportsAlpha" format="boolean"/>
+	</declare-styleable>
 </resources>

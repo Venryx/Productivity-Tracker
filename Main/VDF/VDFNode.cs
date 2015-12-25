@@ -322,8 +322,8 @@ namespace VDFN
 							(obj as IList).Add(item);
 					}
 				foreach (string keyString in mapChildren.Keys)
-					try
-					{
+					//try
+					//{
 						if (obj is IDictionary)
 						{
 							var key = VDF.Deserialize("\"" + keyString + "\"", typeGenericArgs[0], options);
@@ -332,8 +332,8 @@ namespace VDFN
 						}
 						else if (typeInfo.props.ContainsKey(keyString)) // maybe temp; just ignore props that are missing
 							typeInfo.props[keyString].SetValue(obj, mapChildren[keyString].ToObject(typeInfo.props[keyString].GetPropType(), options, path.ExtendAsChild(typeInfo.props[keyString], null)));
-					}
-					catch (Exception ex) { throw new VDFException("Error loading map-child with key '" + keyString + "'.", ex); }
+					//}
+					//catch (Exception ex) { throw new VDFException("Error loading map-child with key '" + keyString + "'.", ex); }
 					/*catch (Exception ex)
 					{
 						var field = ex.GetType().GetField("message", BindingFlags.NonPublic | BindingFlags.Instance) ?? ex.GetType().GetField("_message", BindingFlags.NonPublic | BindingFlags.Instance);

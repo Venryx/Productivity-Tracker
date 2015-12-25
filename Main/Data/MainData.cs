@@ -74,9 +74,11 @@ namespace Main
 	}
 	[VDFType(propIncludeRegexL1: "")] public class SessionType
 	{
+		[VDFPreDeserialize] protected SessionType() {}
 		public SessionType(string name) { this.name = name; }
 
 		public string name;
+		public Color color = Color.Black;
 		public int setMasterAlarmVolume = -1;
 		public string alarmSoundFilePath;
 		public int minVolume;
@@ -87,8 +89,7 @@ namespace Main
 	public enum HotkeyAction
 	{
 		None,
-		StartSession_Rest,
-		StartSession_Work,
+		StartSession,
 		PauseSession,
 		ToggleSessionPaused,
 		StopSession,
@@ -98,8 +99,10 @@ namespace Main
 	}
 	[VDFType(propIncludeRegexL1: "")] public class Hotkey
 	{
+		[VDFPreDeserialize] public Hotkey() {}
 		public Keycode key;
 		public HotkeyAction action;
-		public int action_startTimer_length = 10;
+		public string action_startSession_type;
+		public int action_startSession_length = 10;
 	}
 }

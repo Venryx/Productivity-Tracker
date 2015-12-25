@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using android.support.percent;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -20,9 +21,20 @@ using Uri = Android.Net.Uri;
 
 public static class ClassExtensions
 {
+	// T
+	public static T VAct<T>(this T s, Action<T> action) { action(s); return s; }
+
+	// View
+	public static int lastViewAutoID = 1000;
+	public static T SetID<T>(this T s, int id = -1) where T : View { s.Id = id != -1 ? id : ++lastViewAutoID; return s; }
+
 	// ViewGroup
 	public static T AddChild<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null, int index = -1) where T : View
 	{
+		// maybe temp: automatically give the added child an ID (so other views can reference it in, e.g. RelativeLayout layout rules)
+		if (view.Id == -1)
+			view.SetID();
+
 		//if (index != -1)
 		if (layout != null)
 			s.AddView(view, index, layout);
@@ -35,6 +47,7 @@ public static class ClassExtensions
 				s.AddView(view);*/
 		return view;
 	}
+	public static T GetChild<T>(this ViewGroup s, int index) where T : View { return (T)s.GetChildAt(index); }
 	public static List<View> GetChildren(this ViewGroup s)
 	{
 		var result = new List<View>();
@@ -42,6 +55,14 @@ public static class ClassExtensions
 			result.Add(s.GetChildAt(i));
 		return result;
 	}
+
+	// RelativeLayout.LayoutParams
+	public static RelativeLayout.LayoutParams VAddRule(this RelativeLayout.LayoutParams s, LayoutRules verb) { s.AddRule(verb); return s; }
+	public static RelativeLayout.LayoutParams VAddRule(this RelativeLayout.LayoutParams s, LayoutRules verb, int anchor) { s.AddRule(verb, anchor); return s; }
+
+	// PercentRelativeLayout.LayoutParams
+	public static PercentRelativeLayout.LayoutParams VAddRule(this PercentRelativeLayout.LayoutParams s, LayoutRules verb) { s.AddRule(verb); return s; }
+	public static PercentRelativeLayout.LayoutParams VAddRule(this PercentRelativeLayout.LayoutParams s, LayoutRules verb, int anchor) { s.AddRule(verb, anchor); return s; }
 
 	// int
 	//public static int Minus(this int s, int amount, int modulus) { return (s - amount) % 7; }
@@ -55,6 +76,10 @@ public static class ClassExtensions
 			result = -result;
 		return result;
 	}
+	public static string ToHexStr(this int s, int digitCount = 8, bool addHexChar = true) { return (addHexChar ? "#" : "") + s.ToString($"X{digitCount}"); }
+
+	// uint
+	public static string ToHexStr(this uint s, int digitCount = 8, bool addHexChar = true) { return (addHexChar ? "#" : "") + s.ToString($"X{digitCount}"); }
 
 	// double
 	/*public static double FloorToMultipleOf(this double s, double val) { return Math.Floor(s / val) * val; }
@@ -102,6 +127,25 @@ public static class ClassExtensions
 			currentPos = subIndex;
 		}
 		return currentPos;
+	}
+	public static List<char> digitChars = new List<char> {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+	public static string Increment(this string s, int amount = 1)
+	{
+		var numberStartPos = s.ToList().FindLastIndex(a=>!digitChars.Contains(a)) + 1;
+		var oldNumber = int.Parse(s.Substring(numberStartPos));
+		return s.Substring(0, numberStartPos) + (oldNumber + amount);
+	}
+	public static string UntilMatchesX_Increment(this string s, Func<string, bool> xMatchFunc, string appendStringOnFirstNonMatch = null)
+	{
+		var result = s;
+		if (xMatchFunc(result))
+			return result;
+
+		if (appendStringOnFirstNonMatch != null)
+			result += appendStringOnFirstNonMatch;
+		while (!xMatchFunc(result))
+			result = result.Increment();
+		return result;
 	}
 
 	// DateTime
@@ -254,6 +298,7 @@ public static class ClassExtensions
 
 	// Color
 	public static Color NewA(this Color s, byte alpha) { return new Color(s.R, s.G, s.B, alpha); }
+	public static string ToHexStr(this Color s, int digitCount = 8, bool addHexChar = true) { return s.ToArgb().ToHexStr(digitCount, addHexChar); }
 
 	// ColorDrawable
 	public static ColorDrawable Clone(this ColorDrawable s) { return new ColorDrawable(s.Color); }

@@ -125,9 +125,11 @@ namespace android.support.percent
 		{
 			internal PercentLayoutHelper.PercentLayoutInfo mPercentLayoutInfo;
 			//public LayoutParams(Context c, IAttributeSet attrs) : base(c, attrs) { mPercentLayoutInfo = PercentLayoutHelper.getPercentLayoutInfo(c, attrs); }
-			public LayoutParams(int width, int height) : base(width, height) { }
-			public LayoutParams(ViewGroup.LayoutParams source) : base(source) { }
-			public LayoutParams(MarginLayoutParams source) : base(source) { }
+			//public LayoutParams() : this(V.MatchParent, V.MatchParent) {} // custom
+			public LayoutParams() : this(V.WrapContent, V.WrapContent) {} // custom
+			public LayoutParams(int width, int height) : base(width, height) {}
+			public LayoutParams(ViewGroup.LayoutParams source) : base(source) {}
+			public LayoutParams(MarginLayoutParams source) : base(source) {}
 			public virtual PercentLayoutHelper.PercentLayoutInfo PercentLayoutInfo
 			{
 				get

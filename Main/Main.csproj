@@ -63,6 +63,10 @@
     <Compile Include="Data\Session.cs" />
     <Compile Include="Data\Day.cs" />
     <Compile Include="Data\MainData.cs" />
+    <Compile Include="UI\Android Color Picker\Dialog.cs" />
+    <Compile Include="UI\Android Color Picker\Square.cs" />
+    <Compile Include="UI\Android Color Picker\widget\Preference.cs" />
+    <Compile Include="UI\Android Color Picker\widget\PrefWidgetView.cs" />
     <Compile Include="UI\Percent Support Library\PercentFrameLayout.cs" />
     <Compile Include="UI\Percent Support Library\PercentLayoutHelper.cs" />
     <Compile Include="UI\Percent Support Library\PercentRelativeLayout.cs" />
@@ -139,6 +143,45 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\UpArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_alphacheckered_tiled.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_target.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_arrow_down.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_arrow_right.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_cursor.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\ambilwarna_dialog.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\ambilwarna_pref_widget.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout-land\ambilwarna_dialog.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\Dimen.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values-land\Dimen.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values-xlarge-land\Dimen.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_alphacheckered.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ambilwarna_hue.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

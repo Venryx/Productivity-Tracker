@@ -143,10 +143,9 @@ namespace Main
 		PercentRelativeLayout graph_overlayRoot;
 		Button stopButton;
 		Button pauseButton;
+		LinearLayout right;
 		ImageView timeLeftBar;
 		ImageView timeOverBar;
-		LinearLayout restButtons;
-		LinearLayout workButtons;
 		//TextView countdownLabel;
 		Button countdownLabel;
 		FrameLayout mouseInputBlocker;
@@ -174,7 +173,7 @@ namespace Main
 			var root = new LinearLayout(this) {Orientation = Orientation.Horizontal};
 			SetContentView(root);
 
-			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .82f));
+			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, 1));
 			{
 				graphRoot = left.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .93f));
 				/*var shape = new ShapeDrawable(new RectShape());
@@ -206,19 +205,12 @@ namespace Main
 				}
 			}
 
-			var right = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(0, V.MatchParent, .18f));
+			right = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(0, V.MatchParent)); // width is set by UpdateTimerStepButtons
 			{
 				var timeLeftPanel = right.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(0, V.MatchParent, .5f));
 				{
 					timeLeftBar = timeLeftPanel.AddChild(new ImageView(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 				}
-
-				restButtons = right.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .25f));
-				restButtons.AddChild(new TextView(this) { Gravity = GravityFlags.CenterHorizontal, Text = "Rest" }, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-				workButtons = right.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, .25f));
-				workButtons.AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = "Work"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-
-				UpdateTimerStepButtons();
 			}
 
 			// called when C# code crashes?
@@ -231,6 +223,7 @@ namespace Main
 
 			LoadMainData();
 			LoadDaysTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+			UpdateTimerStepButtons();
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
@@ -242,13 +235,13 @@ namespace Main
 			// productivity graph
 			// ==========
 
-			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			{
-				rowsPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, 1));
+				rowsPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, 1));
 				{
 					AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce);
 				}
-				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 30));
+				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 30));
 				{
 					//currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(V.WrapContent, V.WrapContent));
 					currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(80, 48));
@@ -260,7 +253,7 @@ namespace Main
 					UpdateHourMarkers();
 				}
 			}
-			graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			{
 				GenerateGraphOverlay();
 			}
@@ -270,7 +263,7 @@ namespace Main
 			
 			UpdateKeepScreenOn();
 
-			var overlayHolder = rootHolder.AddChild(new FrameLayout(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			var overlayHolder = rootHolder.AddChild(new FrameLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			var focusTaker = overlayHolder.AddChild(new Button(this), new FrameLayout.LayoutParams(0, 0) {LeftMargin = -1000}); // as first button, takes focus, so gamepad A/shutter button can't click other things
 			countdownLabel = overlayHolder.AddChild(new Button(this) {TextSize = 30, Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(230, 110));
 			countdownLabel.SetPadding(0, 0, 0, 0);
@@ -281,9 +274,9 @@ namespace Main
 				UpdateDynamicUI();
 				UpdateNotification();
 			};
-			//mouseInputBlocker = overlayHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			//mouseInputBlocker = overlayHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			//mouseInputBlocker.SetZ(10);
-			mouseInputBlocker = rootHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+			mouseInputBlocker = rootHolder.AddChild(new FrameLayout(this) {Visibility = ViewStates.Gone}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			var mouseInputBlockerMessageLabel = mouseInputBlocker.AddChild(new TextView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent) {Gravity = GravityFlags.Center});
 			mouseInputBlockerMessageLabel.Text = "Mouse input is currently blocked. Press the screen with two fingers simultaneously to unblock.";
 
@@ -364,24 +357,20 @@ namespace Main
 		}
 		public void UpdateTimerStepButtons()
 		{
-			while (restButtons.ChildCount > 1)
-				restButtons.RemoveViewAt(1);
-			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
+			while (right.ChildCount > 1)
+				right.RemoveViewAt(1);
+			right.LayoutParameters = (right.LayoutParameters as LinearLayout.LayoutParams).VAct(a=>a.Width = (100 * mainData.settings.sessionTypes.Count) + 230);
+			foreach (SessionType sessionType in mainData.settings.sessionTypes)
 			{
-				var timerStepButton = restButtons.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) { Gravity = GravityFlags.CenterVertical }, 1);
-				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
-				timerStepButton.Text = timerStepLength.ToString();
-				timerStepButton.Click += (sender, e)=>{ StartSession("Rest", timerStepLength); };
-			}
-
-			while (workButtons.ChildCount > 1)
-				workButtons.RemoveViewAt(1);
-			for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
-			{
-				var timerStepButton = workButtons.AddChild(new Button(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
-				var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
-				timerStepButton.Text = timerStepLength.ToString();
-				timerStepButton.Click += (sender, e)=> { StartSession("Work", timerStepLength); };
+				var column = right.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(100, V.MatchParent));
+				column.AddChild(new TextView(this) {Gravity = GravityFlags.CenterHorizontal, Text = sessionType.name}, new LinearLayout.LayoutParams(V.MatchParent, ViewGroup.LayoutParams.WrapContent));
+				for (var i = 0; i < mainData.settings.numberOfTimerSteps; i++)
+				{
+					var timerStepButton = column.AddChild(new Button(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .75f) {Gravity = GravityFlags.CenterVertical}, 1);
+					var timerStepLength = mainData.settings.timeIncrementForTimerSteps * i; // in minutes
+					timerStepButton.Text = timerStepLength.ToString();
+					timerStepButton.Click += (sender, e)=> { StartSession(sessionType.name, timerStepLength); };
+				}
 			}
 		}
 
@@ -427,12 +416,10 @@ namespace Main
 			return firstColumnUtcDateTime;
 		}
 		DateTime Row_GetJustAfterLastColumnDateTime(int rowOffset) { return Row_GetFirstColumnDateTime(rowOffset).AddHours(24); }
-		int lastViewAutoID = 1000;
 		PercentRelativeLayout CreateRowBox(int rowOffset)
 		{
-			var result = new PercentRelativeLayout(this);
-			result.Id = ++lastViewAutoID;
-            var layoutParams = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+			var result = new PercentRelativeLayout(this).SetID();
+            var layoutParams = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent);
 			/*layoutParams.AddRule(LayoutRules.AlignParentBottom);
 			var boxHeight = 1d / mainData.settings.daysVisibleAtOnce;
 			//var boxHeight = daysPanel.Height / mainData.settings.daysVisibleAtOnce;
@@ -506,42 +493,33 @@ namespace Main
 						// ==========
 
 						var lowSegmentTime = subsession.timeStarted - lastSubsessionEndTime;
-						//if (lowSegmentTime.TotalMinutes >= 1)
+						if (lowSegmentTime.TotalMinutes > 0) // if negative, it means it was an overflow session from previous row (and so has no gap)
 						{
-							var lowSegment = new ImageView(this);
-							lowSegment.Id = ++lastViewAutoID;
-							if (lastSubsessionSession == session)
-								lowSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 128) : new Color(0, 128, 0)));
-							var lowSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							var lowSegment = new ImageView(this).SetID();
+                            if (lastSubsessionSession == session)
+								lowSegment.Background = Drawables.CreateFill(session.sessionType.color);
+							var lowSegmentLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent).VAddRule(LayoutRules.AlignParentBottom);
 							lowSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)((lastSubsessionEndTime - firstColumnUtcHourTime).TotalMinutes / (24 * 60));
-							lowSegmentLayout.AddRule(LayoutRules.AlignParentBottom);
 							lowSegmentLayout.PercentLayoutInfo.widthPercent = (float)(lowSegmentTime.TotalMinutes / minutesInDay);
 							if (mainData.settings.fastMode && lastSubsessionSession == session) // if fast mode (and pause-type gap), exhaggerate view size to 60x
 								lowSegmentLayout.PercentLayoutInfo.widthPercent *= 60;
 							lowSegmentLayout.PercentLayoutInfo.heightPercent = .15f;
-							lowSegment.LayoutParameters = lowSegmentLayout;
 							result.AddChild(lowSegment, lowSegmentLayout);
 
 							var arc = new ShapeDrawer(this);
 							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
 							//arc.AddShape(new VRectangle(0, .5, 1, 1) {Op = VShapeOp.Clear});
 							arc.AddShape(new VRectangle(0, .5, 1, 1) {Color = Color.Black.NewA(128)});
-							var arcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							arcLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
-							arcLayout.AddRule(LayoutRules.AlignParentBottom);
+							var arcLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent).VAddRule(LayoutRules.AlignLeft, lowSegment.Id).VAddRule(LayoutRules.AlignParentBottom);
 							arcLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
 							arcLayout.PercentLayoutInfo.heightPercent = .15f;
-							arc.LayoutParameters = arcLayout;
 							result.AddChild(arc, arcLayout);
 
 							var label = new TextView(this);
-							var labelLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							labelLayout.AddRule(LayoutRules.AlignLeft, lowSegment.Id);
-							labelLayout.AddRule(LayoutRules.AlignParentBottom);
+							var labelLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent).VAddRule(LayoutRules.AlignLeft, lowSegment.Id).VAddRule(LayoutRules.AlignParentBottom);
 							labelLayout.PercentLayoutInfo.widthPercent = lowSegmentLayout.PercentLayoutInfo.widthPercent;
 							labelLayout.PercentLayoutInfo.heightPercent = .15f;
 							labelLayout.BottomMargin = 2;
-							label.LayoutParameters = labelLayout;
 							label.Gravity = GravityFlags.Center;
 							//label.SetPadding(0, 0, 0, 3);
 							label.TextSize = 10;
@@ -558,15 +536,13 @@ namespace Main
 						var highSegmentTime = timeStopped_orNow_keptOnGraph - timeStarted_keptOnGraph;
 						//if (highSegmentTime.TotalMinutes >= 1)
 						{
-							var highSegment = new ImageView(this);
-							highSegment.Id = ++lastViewAutoID;
-							highSegment.Background = Drawables.CreateFill(new Color(session.type == "Rest" ? new Color(0, 0, 255) : new Color(0, 255, 0)));
-							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+							var highSegment = new ImageView(this).SetID();
+							highSegment.Background = Drawables.CreateFill(session.sessionType.color);
+							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent);
 							highSegmentLayout.PercentLayoutInfo.leftMarginPercent = (float)((subsession.timeStarted - firstColumnUtcHourTime).TotalMinutes / (24 * 60));
 							highSegmentLayout.PercentLayoutInfo.widthPercent = (float)(highSegmentTime.TotalMinutes / minutesInDay);
 							if (mainData.settings.fastMode) // if fast mode, exhaggerate view size to 60x
 								highSegmentLayout.PercentLayoutInfo.widthPercent *= 60;
-							highSegment.LayoutParameters = highSegmentLayout;
 							result.AddChild(highSegment, highSegmentLayout);
 							lastSubsessionSession = session;
 							lastSubsessionEndTime = timeStopped_orNow_keptOnGraph;
@@ -574,22 +550,16 @@ namespace Main
 							var arc = new ShapeDrawer(this);
 							arc.AddShape(new VOval(0, 0, 1, 1) {ClipRect = new RectF(0, 0, 1, .5f), Color = Color.Black.NewA(128)});
 							arc.AddShape(new VRectangle(0, .5, 1, 1) {Color = Color.Black.NewA(128)});
-							var arcLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							arcLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
-							arcLayout.AddRule(LayoutRules.AlignParentBottom);
+							var arcLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent).VAddRule(LayoutRules.AlignLeft, highSegment.Id).VAddRule(LayoutRules.AlignParentBottom);
 							arcLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
 							arcLayout.PercentLayoutInfo.heightPercent = .15f;
-							arc.LayoutParameters = arcLayout;
 							result.AddChild(arc, arcLayout);
 
 							var label = new TextView(this);
-							var labelLayout = new PercentRelativeLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-							labelLayout.AddRule(LayoutRules.AlignLeft, highSegment.Id);
-							labelLayout.AddRule(LayoutRules.AlignParentBottom);
+							var labelLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent).VAddRule(LayoutRules.AlignLeft, highSegment.Id).VAddRule(LayoutRules.AlignParentBottom);
 							labelLayout.PercentLayoutInfo.widthPercent = highSegmentLayout.PercentLayoutInfo.widthPercent;
 							labelLayout.PercentLayoutInfo.heightPercent = .15f;
 							labelLayout.BottomMargin = 2;
-							label.LayoutParameters = labelLayout;
 							label.Gravity = GravityFlags.Center;
 							label.TextSize = 10;
 							label.Text = ((int)highSegmentTime.TotalMinutes).ToString();
@@ -678,8 +648,8 @@ namespace Main
 		{
 			// data
             CurrentSession.paused = true;
-			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue_dark : Drawables.clip_yPlus_green_dark;
-			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue_dark : Drawables.clip_xPlus_green_dark;
+			timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
+			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Right, ClipDrawableOrientation.Horizontal);
 			Session_ProcessTimeUpToNow();
 			if (endSubsession)
 				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
@@ -695,8 +665,8 @@ namespace Main
 			// data
 			CurrentSession.processedTimeExtent = DateTime.UtcNow;
 			CurrentSession.paused = false;
-			timeLeftBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_yPlus_blue : Drawables.clip_yPlus_green;
-			timeOverBar.Background = CurrentSession.type == "Rest" ? Drawables.clip_xPlus_blue : Drawables.clip_xPlus_green;
+			timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
+			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Right, ClipDrawableOrientation.Horizontal);
 			//ProcessTimeUpToNow();
 			if (startSubsession)
 				CurrentSession.subsessions.Add(new Subsession(DateTime.UtcNow));
@@ -1050,6 +1020,7 @@ namespace Main
 				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
 
 				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+				linear.SetPadding(30, 30, 30, 30);
 				var text = linear.AddChild(new TextView(this));
 				text.Text = @"
 Author: Stephen Wicklund (Venryx)
@@ -1057,7 +1028,6 @@ Author: Stephen Wicklund (Venryx)
 This is an open source project, under the GPLv2 license.
 The source code is available to view and modify.
 Link: http://github.com/Venryx/Productivity-Tracker".Trim();
-				text.SetPadding(30, 30, 30, 30);
 				alert.SetView(linear);
 
 				alert.SetPositiveButton("Ok", (sender, e)=> { });
@@ -1078,8 +1048,8 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 				if (key == hotkey.key)
 				{
 					usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
-					if (hotkey.action == HotkeyAction.StartSession_Rest || hotkey.action == HotkeyAction.StartSession_Work)
-						StartSession(hotkey.action == HotkeyAction.StartSession_Rest ? "Rest" : "Work", hotkey.action_startTimer_length);
+					if (hotkey.action == HotkeyAction.StartSession)
+						StartSession(hotkey.action_startSession_type, hotkey.action_startSession_length);
 					else if (hotkey.action == HotkeyAction.PauseSession)
 						PauseSession();
 					else if (hotkey.action == HotkeyAction.ToggleSessionPaused)
@@ -1159,9 +1129,9 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 			alert.SetTitle("Recent keys pressed");
 
 			LinearLayout linear = new LinearLayout(this) { Orientation = Orientation.Vertical };
+			linear.SetPadding(30, 30, 30, 30);
 			var text = linear.AddChild(new TextView(this));
 			text.Text = recentKeys_strings.JoinUsing("\n");
-			text.SetPadding(30, 30, 30, 30);
 			alert.SetView(linear);
 
 			alert.SetPositiveButton("Ok", (sender, e) => { });

@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Reflection;
+using Android.Graphics;
 using FluentAssertions;
 using Xunit;
 using Random = System.Random;
@@ -19,6 +20,7 @@ namespace Tests
 		// ==========
 
 		[Fact] void Regex() { new Regex("(^| )not | not( |$)").Replace("can not fly", "$1", 1).Should().Be("can fly"); }
+		[Fact] void ColorToHexStr() { new Color(0, 128, 255, 0).ToHexStr().Should().Be("#000080FF"); }
 
 		[Fact] void ShowAllClassSizes()
 		{
