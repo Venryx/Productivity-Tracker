@@ -319,6 +319,33 @@ namespace Main
 			// ==========
 			
 			{
+				var row = AddRow(list);
+				row.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Key hold length"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				var label = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));
+				Action updateLabelText = ()=>label.Text = settings.keyHoldLength == 0 ? "0 [instant]" : settings.keyHoldLength.ToString();
+				updateLabelText();
+                row.Click += delegate
+				{
+					LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+					var text = linear.AddChild(new TextView(this) {Text = settings.keyHoldLength.ToString(), Gravity = GravityFlags.CenterHorizontal});
+					text.SetPadding(10, 10, 10, 10);
+					SeekBar seek = linear.AddChild(new SeekBar(this) {Max = 100});
+					seek.Progress = (int)(settings.keyHoldLength * 10);
+					seek.ProgressChanged += (sender, e)=>{ text.Text = seek.Progress == 0 ? "0 [instant]" : (seek.Progress / 10d).ToString("F1"); };
+
+					new AlertDialog.Builder(this).SetTitle("Key hold length")
+						.SetView(linear)
+						.SetPositiveButton("OK", (sender, e)=>
+						{
+							settings.keyHoldLength = seek.Progress / 10d;
+							updateLabelText();
+						})
+						.SetNegativeButton("Cancel", (sender, e)=>{})
+						.Show();
+				};
+			}
+
+			{
 				var row = AddRow(list, vertical: false, addSeparator: false);
 				var leftSide = row.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MatchParent, .5f));
 				leftSide.AddChild(new TextView(this) {TextSize = largeTextSize, Text = "Block unused keys"}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 0, .5f));

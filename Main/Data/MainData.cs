@@ -68,6 +68,7 @@ namespace Main
 		// others
 		// ==========
 
+		public double keyHoldLength = 3;
 		public bool blockUnusedKeys;
 		//public bool blockMouseEvents;
 		[VDFProp(popOutL2: true)] public List<Hotkey> hotkeys = new List<Hotkey>();

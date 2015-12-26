@@ -1037,17 +1037,33 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 		}
 
 		public List<string> recentKeys_strings = new List<string>();
-		public override bool OnKeyDown(Keycode key, KeyEvent e)
+		Dictionary<Keycode, DateTime> key_lastNonuppedDownTime = new Dictionary<Keycode, DateTime>(); // (for last 'real' down time, i.e. actual act of depression, rather than just key-still-being-held-down event)
+		public override bool OnKeyDown(Keycode key, KeyEvent e) // ('on key down or held', is more accurate name)
 		{
 			recentKeys_strings.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + key);
 			while (recentKeys_strings.Count > 30)
 				recentKeys_strings.RemoveAt(0);
 
-			var usedKey = false;
+			if (!key_lastNonuppedDownTime.ContainsKey(key))
+				key_lastNonuppedDownTime[key] = DateTime.UtcNow;
+			//else
+			if ((DateTime.UtcNow - key_lastNonuppedDownTime[key]).TotalSeconds >= mainData.settings.keyHoldLength && key_lastNonuppedDownTime[key] != DateTime.MinValue)
+			{
+				RunHotkeysFor(key);
+				key_lastNonuppedDownTime[key] = DateTime.MinValue;
+			}
+
+			if (mainData.settings.blockUnusedKeys)
+				return true;
+			return base.OnKeyDown(key, e);
+		}
+		void RunHotkeysFor(Keycode key)
+		{
+			//var usedKey = false;
 			foreach (Hotkey hotkey in mainData.settings.hotkeys)
-				if (key == hotkey.key)
+				if (hotkey.key == key)
 				{
-					usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
+					//usedKey = true; // consider key used, even if the action is "None" (so, e.g. if user set hotkey for volume-up, they can also absorb volume-down key presses with "None" action hotkey)
 					if (hotkey.action == HotkeyAction.StartSession)
 						StartSession(hotkey.action_startSession_type, hotkey.action_startSession_length);
 					else if (hotkey.action == HotkeyAction.PauseSession)
@@ -1074,34 +1090,38 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 							TurnScreenOn();
 					}
 				}
+			//return usedKey;
+		}
+		public override bool OnKeyUp(Keycode key, KeyEvent e)
+		{
+			if ((DateTime.UtcNow - key_lastNonuppedDownTime[key]).TotalSeconds >= mainData.settings.keyHoldLength && key_lastNonuppedDownTime[key] != DateTime.MinValue)
+			{
+				RunHotkeysFor(key);
+				key_lastNonuppedDownTime[key] = DateTime.MinValue;
+			}
+			key_lastNonuppedDownTime.Remove(key);
 
-			if (usedKey || mainData.settings.blockUnusedKeys)
+			if (mainData.settings.blockUnusedKeys)
 				return true;
-			return base.OnKeyDown(key, e);
+			return base.OnKeyUp(key, e);
 		}
-		public override bool OnKeyUp(Keycode keyCode, KeyEvent e)
+		public override bool OnKeyLongPress(Keycode key, KeyEvent e)
 		{
 			if (mainData.settings.blockUnusedKeys)
 				return true;
-			return base.OnKeyUp(keyCode, e);
+			return base.OnKeyLongPress(key, e);
 		}
-		public override bool OnKeyLongPress(Keycode keyCode, KeyEvent e)
+		public override bool OnKeyMultiple(Keycode key, int repeatCount, KeyEvent e)
 		{
 			if (mainData.settings.blockUnusedKeys)
 				return true;
-			return base.OnKeyLongPress(keyCode, e);
+			return base.OnKeyMultiple(key, repeatCount, e);
 		}
-		public override bool OnKeyMultiple(Keycode keyCode, int repeatCount, KeyEvent e)
+		public override bool OnKeyShortcut(Keycode key, KeyEvent e)
 		{
 			if (mainData.settings.blockUnusedKeys)
 				return true;
-			return base.OnKeyMultiple(keyCode, repeatCount, e);
-		}
-		public override bool OnKeyShortcut(Keycode keyCode, KeyEvent e)
-		{
-			if (mainData.settings.blockUnusedKeys)
-				return true;
-			return base.OnKeyShortcut(keyCode, e);
+			return base.OnKeyShortcut(key, e);
 		}
 		/*public override bool OnGenericMotionEvent(MotionEvent e)
 		{
