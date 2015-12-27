@@ -69,7 +69,7 @@ namespace Main
 			var today = DateTime.UtcNow.Date;
 			/*for (var i = -xDays + 1; i <= 0; i++)
 				LoadDay(today.AddDays(i));*/
-			for (var i = 0; i > -xDays; i--)
+			for (var i = -days.Count; i > -xDays; i--)
 				LoadDay(today.AddDays(i));
 		}
 		void LoadDay(DateTime date)
@@ -137,7 +137,9 @@ namespace Main
 		public Typeface baseTypeface;
 		FrameLayout graphRoot;
 		LinearLayout graph_nonOverlayRoot;
-		PercentRelativeLayout rowsPanel;
+		ScrollView rowsPanelScroller;
+		//PercentRelativeLayout rowsPanel;
+		LinearLayout rowsPanel;
 		PercentRelativeLayout graphBottomBar;
 		ImageView currentTimeMarker;
 		PercentRelativeLayout graph_overlayRoot;
@@ -170,7 +172,7 @@ namespace Main
 			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
 			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
 			//var root = (LinearLayout)rootHolder.GetChildAt(0);
-			var root = new LinearLayout(this) {Orientation = Orientation.Horizontal};
+			var root = new LinearLayout(this);
 			SetContentView(root);
 
 			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, 1));
@@ -185,7 +187,7 @@ namespace Main
 				graphRoot.Background = new BorderDrawable(Color.Black, 0, 0, 5, 5);
 				graphRoot.SetPadding(0, 0, 5, 5);
 
-				var timeOverPanelHolder = left.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(V.MatchParent, 0, .07f));
+				var timeOverPanelHolder = left.AddChild(new LinearLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .07f));
 				{
 					stopButton = timeOverPanelHolder.AddChild(new Button(this) {Text = "Stop"}, new LinearLayout.LayoutParams(0, V.MatchParent, .075f));
 					stopButton.Click += delegate { StopSession(); };
@@ -205,7 +207,7 @@ namespace Main
 				}
 			}
 
-			right = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Horizontal}, new LinearLayout.LayoutParams(0, V.MatchParent)); // width is set by UpdateTimerStepButtons
+			right = root.AddChild(new LinearLayout(this), new LinearLayout.LayoutParams(0, V.MatchParent)); // width is set by UpdateTimerStepButtons
 			{
 				var timeLeftPanel = right.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(0, V.MatchParent, .5f));
 				{
@@ -222,24 +224,55 @@ namespace Main
 			//Thread.CurrentThread().UncaughtExceptionHandler = new JavaErrorCatcher();
 
 			LoadMainData();
-			LoadDaysTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+			LoadDaysTillReachesXCount(mainData.settings.daysVisibleAtOnce + 2);
 			UpdateTimerStepButtons();
 
 			VolumeControlStream = Stream.Alarm;
 			baseTypeface = new Button(this).Typeface;
 
 			// has to start with something
-			timeLeftBar.Background = Drawables.clip_yPlus_blue_dark;
-			timeOverBar.Background = Drawables.clip_xPlus_blue_dark;
+			//timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
+			//timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Left, ClipDrawableOrientation.Horizontal);
 
 			// productivity graph
 			// ==========
 
 			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 			{
-				rowsPanel = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, 1));
+				rowsPanelScroller = graph_nonOverlayRoot.AddChild(new ScrollView(this), new LinearLayout.LayoutParams(V.MatchParent, 0, 1));
+				/*rowsPanelScroller.ViewTreeObserver.ScrollChanged += (sender, e)=>
 				{
-					AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce);
+					if (rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
+					{
+						LoadDaysTillReachesXCount(days.Count + 1);
+						AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
+						//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
+					}
+				};*/
+				rowsPanelScroller.Touch += (sender, e)=>
+				{
+					if (e.Event.Action == MotionEventActions.Up && rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
+					{
+						LoadDaysTillReachesXCount(days.Count + 1);
+						AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
+						//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
+					}
+					e.Handled = false;
+				};
+
+				// ugh; need because a scroll-view can't contain a relative-layout directly, apparently (the relative-layout's rules don't all work)
+				//var rowsPanelContent = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+				//rowsPanel = rowsPanelContent.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent));
+				rowsPanel = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.WrapContent));
+				{
+					AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+					//rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce);
+					onWindowGainInitialFocus += ()=>rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
+					/*rowsPanel.Post(()=>
+					{
+						AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+						rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
+					});*/
 				}
 				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 30));
 				{
@@ -342,10 +375,17 @@ namespace Main
 			base.OnStop();
 			SaveMainData();
 		}*/
+		bool hasHadFocus;
+		Action onWindowGainInitialFocus = ()=>{};
 		public override void OnWindowFocusChanged(bool hasFocus)
 		{
-			if (hasFocus) // ui should be laid-out at this point
+			if (hasFocus && !hasHadFocus) // ui should be laid-out at this point
+			{
+				hasHadFocus = true;
 				UpdateCurrentTimerMarkerPosition();
+				//rowsPanelScroller.VScrollTo(0, int.MaxValue);
+				onWindowGainInitialFocus();
+			}
 		}
 
 		public void UpdateKeepScreenOn()
@@ -406,6 +446,13 @@ namespace Main
 		{
 			// assumes all more-to-bottom rows have been added (e.g. row(-1) expects row(0) to have been added)
 			rowsPanel.AddChild(CreateRowBox(rowOffset), index: rowsPanel.ChildCount + rowOffset);
+
+			/*rowsPanelScroller.Post(()=>
+			{
+				var boxHeight = rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce;
+				rowsPanel.SetMinimumHeight(boxHeight * rowsPanel.GetChildren().Count);
+				//rowsPanel.LayoutParameters = rowsPanel.LayoutParameters.VAct(a=>a.Height = boxHeight * rowsPanel.GetChildren().Count);
+			});*/
 		}
 		DateTime Row_GetFirstColumnDateTime(int rowOffset)
 		{
@@ -419,39 +466,47 @@ namespace Main
 		PercentRelativeLayout CreateRowBox(int rowOffset)
 		{
 			var result = new PercentRelativeLayout(this).SetID();
-            var layoutParams = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent);
-			/*layoutParams.AddRule(LayoutRules.AlignParentBottom);
-			var boxHeight = 1d / mainData.settings.daysVisibleAtOnce;
-			//var boxHeight = daysPanel.Height / mainData.settings.daysVisibleAtOnce;
-			layoutParams.PercentLayoutInfo.bottomMarginPercent = (float)(boxHeight * -rowOffset);
-			//layoutParams.BottomMargin = boxHeight * -rowOffset;
-			layoutParams.PercentLayoutInfo.heightPercent = (float)boxHeight;
-			//layoutParams.Height = boxHeight;*/
+			/*//result.Post(()=>
+			//{
+			var layout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.WrapContent);
+			/*var boxHeight = rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce;
+			layout.AddRule(LayoutRules.AlignParentBottom);
+			layout.BottomMargin = boxHeight * -rowOffset;
+			layout.Height = boxHeight;*#/
 			if (rowOffset == 0) //rowsPanel.ChildCount == 0)
 			{
-				layoutParams.AddRule(LayoutRules.AlignParentBottom);
+				layout.AddRule(LayoutRules.AlignParentBottom);
 				if (rowsPanel.ChildCount >= 1) // if there are already children, update old-row-0 to anchor to this new row-0
 				{
 					var oldRow0 = rowsPanel.GetChildAt(rowsPanel.ChildCount - 1);
-                    var oldRow0Layout = oldRow0.LayoutParameters as PercentRelativeLayout.LayoutParams;
+					var oldRow0Layout = oldRow0.LayoutParameters as PercentRelativeLayout.LayoutParams;
 					oldRow0Layout.RemoveRule(LayoutRules.AlignParentBottom);
 					oldRow0Layout.AddRule(LayoutRules.Above, result.Id);
 					oldRow0.LayoutParameters = oldRow0Layout;
 				}
 			}
 			else
-				layoutParams.AddRule(LayoutRules.Above, rowsPanel.GetChildAt(0).Id);
-			layoutParams.PercentLayoutInfo.heightPercent = (float)(1d / mainData.settings.daysVisibleAtOnce);
-			result.LayoutParameters = layoutParams;
+				layout.AddRule(LayoutRules.Above, rowsPanel.GetChildAt(0).Id);
+				//layout.AddRule(LayoutRules.Above, rowsPanel.GetChildAt(rowsPanel.IndexOfChild(result) + 1).Id);
+			result.LayoutParameters = layout;
+			//});*/
+			result.LayoutParameters = new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent);
+			if (rowsPanelScroller.Height <= 1)
+				result.Post(()=>result.LayoutParameters = result.LayoutParameters.VAct(a=>a.Height = rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce));
+			else
+				result.LayoutParameters = result.LayoutParameters.VAct(a=>a.Height = rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce);
+			//result.LayoutParameters = new LinearLayout.LayoutParams(V.MatchParent, rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce);
 
-			var rect = new RectShape();
+			/*var rect = new RectShape();
 			var shape = new ShapeDrawable(rect);
 			shape.Paint.Color = new Color(255, 255, 255, 128);
 			shape.Paint.SetStyle(Paint.Style.Stroke);
 			shape.Paint.StrokeWidth = 1;
 			//result.Background = new InsetDrawable(shape, -1, -1, -1, 0);
 			result.Background = shape;
-			result.SetPadding(1, 1, 1, 1);
+			result.SetPadding(1, 1, 1, 1);*/
+			result.Background = new BorderDrawable(new Color(255, 255, 255, 128), 0, 0, 0, 1);
+			result.SetPadding(0, 0, 0, 1);
 
 			const int minutesInDay = 60 * 24;
 			var firstColumnUtcHourTime = Row_GetFirstColumnDateTime(rowOffset);
@@ -477,18 +532,18 @@ namespace Main
 				Session lastSubsessionSession = null;
 				DateTime lastSubsessionEndTime = firstColumnUtcHourTime;
 
-				foreach (Session session in rowDays.SelectMany(a=>a.sessions))
+				var sessions = rowDays.SelectMany(a=>a.sessions).ToList();
+				// add fake session at end of row (if not last row), or current-pos-marker (if last row) (so the gap-segment for the inactive-time period up to that point shows up)
+				var finalGapStopTime = justAfterLastColumnUtcHourTime < DateTime.UtcNow ? justAfterLastColumnUtcHourTime : DateTime.UtcNow;
+				sessions.Add(new Session(mainData.settings.sessionTypes[0].name, finalGapStopTime, 0).VAct(a=>a.subsessions.Add(new Subsession(finalGapStopTime) {timeStopped = finalGapStopTime})));
+				foreach (Session session in sessions)
 				{
-					var subsessions = session.subsessions.ToList();
+					//var subsessions = session.subsessions.Where(a=>a.timeStarted < justAfterLastColumnUtcHourTime && (a.timeStopped == null || a.timeStopped >= firstColumnUtcHourTime)).ToList(); // if subsession partially within row's timespan
+					var subsessions = session.subsessions.Where(a=>a.timeStarted <= justAfterLastColumnUtcHourTime && (a.timeStopped == null || a.timeStopped >= firstColumnUtcHourTime)).ToList(); // if subsession partially within row's timespan
 					if (session.paused) // if session paused, add fake subsession after, so pause gap-segment shows up
 						subsessions.Add(session.timeStopped.HasValue ? new Subsession(session.timeStopped.Value) {timeStopped = session.timeStopped} : new Subsession(DateTime.UtcNow));
 					foreach (Subsession subsession in subsessions)
 					{
-						if (subsession.timeStopped < firstColumnUtcHourTime) // if subsession stopped before the current graph
-							continue;
-						if (subsession.timeStarted >= justAfterLastColumnUtcHourTime) // if subsession started after the current graph
-							break;
-
 						// gap
 						// ==========
 
@@ -524,6 +579,7 @@ namespace Main
 							//label.SetPadding(0, 0, 0, 3);
 							label.TextSize = 10;
 							label.Text = ((int)lowSegmentTime.TotalMinutes).ToString();
+							label.ShrinkTextUntilFitsInWidth(.9);
 							result.AddChild(label, labelLayout);
 						}
 
@@ -534,6 +590,7 @@ namespace Main
 						var timeStopped_orNow = subsession.timeStopped ?? DateTime.UtcNow;
 						var timeStopped_orNow_keptOnGraph = timeStopped_orNow < justAfterLastColumnUtcHourTime ? timeStopped_orNow : justAfterLastColumnUtcHourTime;
 						var highSegmentTime = timeStopped_orNow_keptOnGraph - timeStarted_keptOnGraph;
+						//highSegmentTime = new TimeSpan(0, 0, 10, 0); // for testing
 						//if (highSegmentTime.TotalMinutes >= 1)
 						{
 							var highSegment = new ImageView(this).SetID();
@@ -563,6 +620,7 @@ namespace Main
 							label.Gravity = GravityFlags.Center;
 							label.TextSize = 10;
 							label.Text = ((int)highSegmentTime.TotalMinutes).ToString();
+							label.ShrinkTextUntilFitsInWidth(.9);
 							result.AddChild(label, labelLayout);
 						}
 					}
@@ -573,18 +631,23 @@ namespace Main
 		}
         void UpdateRowBox(int rowOffset)
         {
+	        var oldScroll = rowsPanelScroller.ScrollY;
 	        var rowBoxIndex = (rowsPanel.ChildCount - 1) + rowOffset;
             var rowBoxAtIndex = rowsPanel.GetChildAt(rowBoxIndex);
 			if (rowBoxAtIndex.VTag<DateTime>() != Row_GetFirstColumnDateTime(0)) // if time to add new row-box (since row-offset-0 is now supposed to show data for the next 24-hour time-span)
 			{
 				rowsPanel.RemoveViewAt(0); // for now, remove the oldest day-row, when we add a new one (otherwise it'd exceed the numbers of rows at the start)
 				AddRowToGraph(0);
+				//rowsPanel.ScrollY = oldScroll;
+				rowsPanelScroller.VScrollTo(0, oldScroll, rowsPanel.GetChildren().Last());
 				return;
 			}
 
 			// maybe make-so: we just update the row, rather than recreate it like this
 			rowsPanel.RemoveViewAt(rowBoxIndex);
 			AddRowToGraph(rowOffset);
+			//rowsPanel.ScrollY = oldScroll;
+			rowsPanelScroller.VScrollTo(0, oldScroll, rowsPanel.GetChildren().Last());
 		}
 
 		public void UpdateHourMarkers()
@@ -649,7 +712,7 @@ namespace Main
 			// data
             CurrentSession.paused = true;
 			timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
-			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Right, ClipDrawableOrientation.Horizontal);
+			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Left, ClipDrawableOrientation.Horizontal);
 			Session_ProcessTimeUpToNow();
 			if (endSubsession)
 				CurrentSession.subsessions.Last().timeStopped = DateTime.UtcNow;
@@ -666,7 +729,7 @@ namespace Main
 			CurrentSession.processedTimeExtent = DateTime.UtcNow;
 			CurrentSession.paused = false;
 			timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
-			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Right, ClipDrawableOrientation.Horizontal);
+			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Left, ClipDrawableOrientation.Horizontal);
 			//ProcessTimeUpToNow();
 			if (startSubsession)
 				CurrentSession.subsessions.Add(new Subsession(DateTime.UtcNow));
@@ -778,13 +841,16 @@ namespace Main
 
 					//alarmPlayer = MediaPlayer.Create(this, new FileInfo(data.settings.alarmSoundFilePath).ToFile().ToURI_Android());
 					alarmPlayer = new MediaPlayer();
-					alarmPlayer.SetAudioStreamType(Stream.Alarm);
-					alarmPlayer.SetDataSource(this, new FileInfo(CurrentSession.sessionType.alarmSoundFilePath).ToFile().ToURI_Android());
-					alarmPlayer.Prepare();
-					alarmPlayer.Looping = true;
-					//audioPlayer.SeekTo(timeOver_withLocking * 1000);
-					//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
-					alarmPlayer.Start();
+					if (CurrentSession.sessionType.alarmSoundFilePath != null)
+					{
+						alarmPlayer.SetAudioStreamType(Stream.Alarm);
+						alarmPlayer.SetDataSource(this, new FileInfo(CurrentSession.sessionType.alarmSoundFilePath).ToFile().ToURI_Android());
+						alarmPlayer.Prepare();
+						alarmPlayer.Looping = true;
+						//audioPlayer.SeekTo(timeOver_withLocking * 1000);
+						//audioPlayer.SetWakeMode(this, WakeLockFlags.AcquireCausesWakeup);
+						alarmPlayer.Start();
+					}
 				}
 
 				var volume = V.Lerp(CurrentSession.sessionType.minVolume / 100d, CurrentSession.sessionType.maxVolume / 100d, percentThroughTimeOverBar);
@@ -801,6 +867,8 @@ namespace Main
 			
 			var timeLeftBar_clip = (ClipDrawable)timeLeftBar.Background;
             var timeOverBar_clip = (ClipDrawable)timeOverBar.Background;
+			if (timeLeftBar_clip == null) // if no timer started this launch
+				return;
 
 			if (CurrentSession != null)
 			{
@@ -1094,7 +1162,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 		}
 		public override bool OnKeyUp(Keycode key, KeyEvent e)
 		{
-			if ((DateTime.UtcNow - key_lastNonuppedDownTime[key]).TotalSeconds >= mainData.settings.keyHoldLength && key_lastNonuppedDownTime[key] != DateTime.MinValue)
+			if (key_lastNonuppedDownTime.ContainsKey(key) && (DateTime.UtcNow - key_lastNonuppedDownTime[key]).TotalSeconds >= mainData.settings.keyHoldLength && key_lastNonuppedDownTime[key] != DateTime.MinValue)
 			{
 				RunHotkeysFor(key);
 				key_lastNonuppedDownTime[key] = DateTime.MinValue;

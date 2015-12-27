@@ -13,6 +13,7 @@ using Android.Graphics.Drawables;
 using Android.Media;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using File = Java.IO.File;
@@ -54,6 +55,50 @@ public static class ClassExtensions
 		for (var i = 0; i < s.ChildCount; i++)
 			result.Add(s.GetChildAt(i));
 		return result;
+	}
+
+	// TextView
+	public static void ShrinkTextUntilFitsInWidth(this TextView s, double multiplier)
+	{
+		s.Post(()=>
+		{
+			var lastTextSize = s.TextSize;
+            while (s.Paint.MeasureText(s.Text) > Math.Max(1, s.MeasuredWidth) && lastTextSize > 1)
+				//s.SetTextSize(ComplexUnitType.Sp, label.TextSize * .9f);
+				//s.SetTextSize(ComplexUnitType.Px, label.TextSize * .9f);
+				s.SetTextSize(ComplexUnitType.Px, lastTextSize *= (float)multiplier);
+		});
+	}
+
+	// ScrollView
+	/*public static bool CanScrollUp(this ScrollView s)
+	{
+		if (android.os.Build.VERSION.SDK_INT < 14)
+			if (s is AbsListView)
+			{
+				var absListView = (AbsListView)s;
+				return absListView.getChildCount() > 0 && (absListView.getFirstVisiblePosition() > 0 || absListView.getChildAt(0).getTop() < absListView.getPaddingTop());
+			}
+			else
+				return s.getScrollY() > 0;
+		else
+			return ViewCompat.canScrollVertically(view, -1);
+	}*/
+	public static void VScrollTo(this ScrollView s, int x, int y, View viewToWaitOn = null)
+	{
+		if (viewToWaitOn == null)
+			viewToWaitOn = s;
+		Action action = ()=>
+		{
+			s.ScrollX = x;
+			s.ScrollY = y;
+			//s.ScrollTo(x, y);
+			//s.FullScroll(FocusSearchDirection.Down);
+		};
+		viewToWaitOn.Post(action);
+		viewToWaitOn.PostDelayed(action, 50);
+		viewToWaitOn.PostDelayed(action, 100);
+		viewToWaitOn.PostDelayed(action, 500);
 	}
 
 	// RelativeLayout.LayoutParams
