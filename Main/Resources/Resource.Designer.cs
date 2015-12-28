@@ -50,17 +50,17 @@ namespace Main
 		public partial class Color
 		{
 			
-			// aapt resource value: 0x7f060002
-			public const int daidalos_active_file = 2131099650;
+			// aapt resource value: 0x7f050002
+			public const int daidalos_active_file = 2131034114;
 			
-			// aapt resource value: 0x7f060001
-			public const int daidalos_background = 2131099649;
+			// aapt resource value: 0x7f050001
+			public const int daidalos_background = 2131034113;
 			
-			// aapt resource value: 0x7f060000
-			public const int daidalos_gray = 2131099648;
+			// aapt resource value: 0x7f050000
+			public const int daidalos_gray = 2131034112;
 			
-			// aapt resource value: 0x7f060003
-			public const int daidalos_inactive_file = 2131099651;
+			// aapt resource value: 0x7f050003
+			public const int daidalos_inactive_file = 2131034115;
 			
 			static Color()
 			{
@@ -68,31 +68,6 @@ namespace Main
 			}
 			
 			private Color()
-			{
-			}
-		}
-		
-		public partial class Dimension
-		{
-			
-			// aapt resource value: 0x7f040000
-			public const int ambilwarna_hsvHeight = 2130968576;
-			
-			// aapt resource value: 0x7f040001
-			public const int ambilwarna_hsvWidth = 2130968577;
-			
-			// aapt resource value: 0x7f040002
-			public const int ambilwarna_hueWidth = 2130968578;
-			
-			// aapt resource value: 0x7f040003
-			public const int ambilwarna_spacer = 2130968579;
-			
-			static Dimension()
-			{
-				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
-			}
-			
-			private Dimension()
 			{
 			}
 		}
@@ -176,68 +151,32 @@ namespace Main
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f070004
-			public const int ambilwarna_alphaCheckered = 2131165188;
+			// aapt resource value: 0x7f060000
+			public const int ambilwarna_pref_widget_box = 2131099648;
 			
-			// aapt resource value: 0x7f070007
-			public const int ambilwarna_alphaCursor = 2131165191;
+			// aapt resource value: 0x7f060005
+			public const int buttonAdd = 2131099653;
 			
-			// aapt resource value: 0x7f070006
-			public const int ambilwarna_cursor = 2131165190;
+			// aapt resource value: 0x7f060006
+			public const int buttonOk = 2131099654;
 			
-			// aapt resource value: 0x7f070000
-			public const int ambilwarna_dialogView = 2131165184;
+			// aapt resource value: 0x7f060007
+			public const int imageViewIcon = 2131099655;
 			
-			// aapt resource value: 0x7f07000b
-			public const int ambilwarna_newColor = 2131165195;
+			// aapt resource value: 0x7f060004
+			public const int linearLayoutButtons = 2131099652;
 			
-			// aapt resource value: 0x7f07000a
-			public const int ambilwarna_oldColor = 2131165194;
+			// aapt resource value: 0x7f060003
+			public const int linearLayoutFiles = 2131099651;
 			
-			// aapt resource value: 0x7f070005
-			public const int ambilwarna_overlay = 2131165189;
+			// aapt resource value: 0x7f060001
+			public const int rootLayout = 2131099649;
 			
-			// aapt resource value: 0x7f07000c
-			public const int ambilwarna_pref_widget_box = 2131165196;
+			// aapt resource value: 0x7f060002
+			public const int scrollView1 = 2131099650;
 			
-			// aapt resource value: 0x7f070009
-			public const int ambilwarna_state = 2131165193;
-			
-			// aapt resource value: 0x7f070008
-			public const int ambilwarna_target = 2131165192;
-			
-			// aapt resource value: 0x7f070001
-			public const int ambilwarna_viewContainer = 2131165185;
-			
-			// aapt resource value: 0x7f070003
-			public const int ambilwarna_viewHue = 2131165187;
-			
-			// aapt resource value: 0x7f070002
-			public const int ambilwarna_viewSatBri = 2131165186;
-			
-			// aapt resource value: 0x7f070011
-			public const int buttonAdd = 2131165201;
-			
-			// aapt resource value: 0x7f070012
-			public const int buttonOk = 2131165202;
-			
-			// aapt resource value: 0x7f070013
-			public const int imageViewIcon = 2131165203;
-			
-			// aapt resource value: 0x7f070010
-			public const int linearLayoutButtons = 2131165200;
-			
-			// aapt resource value: 0x7f07000f
-			public const int linearLayoutFiles = 2131165199;
-			
-			// aapt resource value: 0x7f07000d
-			public const int rootLayout = 2131165197;
-			
-			// aapt resource value: 0x7f07000e
-			public const int scrollView1 = 2131165198;
-			
-			// aapt resource value: 0x7f070014
-			public const int textViewLabel = 2131165204;
+			// aapt resource value: 0x7f060008
+			public const int textViewLabel = 2131099656;
 			
 			static Id()
 			{
@@ -253,16 +192,13 @@ namespace Main
 		{
 			
 			// aapt resource value: 0x7f030000
-			public const int ambilwarna_dialog = 2130903040;
+			public const int ambilwarna_pref_widget = 2130903040;
 			
 			// aapt resource value: 0x7f030001
-			public const int ambilwarna_pref_widget = 2130903041;
+			public const int daidalos_file_chooser = 2130903041;
 			
 			// aapt resource value: 0x7f030002
-			public const int daidalos_file_chooser = 2130903042;
-			
-			// aapt resource value: 0x7f030003
-			public const int daidalos_file_item = 2130903043;
+			public const int daidalos_file_item = 2130903042;
 			
 			static Layout()
 			{
@@ -277,62 +213,62 @@ namespace Main
 		public partial class String
 		{
 			
-			// aapt resource value: 0x7f050001
-			public const int ApplicationName = 2131034113;
+			// aapt resource value: 0x7f040001
+			public const int ApplicationName = 2130968577;
 			
-			// aapt resource value: 0x7f050000
-			public const int Hello = 2131034112;
+			// aapt resource value: 0x7f040000
+			public const int Hello = 2130968576;
 			
-			// aapt resource value: 0x7f05000a
-			public const int daidalos_accept = 2131034122;
+			// aapt resource value: 0x7f04000a
+			public const int daidalos_accept = 2130968586;
 			
-			// aapt resource value: 0x7f050003
-			public const int daidalos_app_name = 2131034115;
+			// aapt resource value: 0x7f040003
+			public const int daidalos_app_name = 2130968579;
 			
-			// aapt resource value: 0x7f050005
-			public const int daidalos_cancel = 2131034117;
+			// aapt resource value: 0x7f040005
+			public const int daidalos_cancel = 2130968581;
 			
-			// aapt resource value: 0x7f050010
-			public const int daidalos_confirm_create_file = 2131034128;
+			// aapt resource value: 0x7f040010
+			public const int daidalos_confirm_create_file = 2130968592;
 			
-			// aapt resource value: 0x7f050012
-			public const int daidalos_confirm_create_folder = 2131034130;
+			// aapt resource value: 0x7f040012
+			public const int daidalos_confirm_create_folder = 2130968594;
 			
-			// aapt resource value: 0x7f05000f
-			public const int daidalos_confirm_select_file = 2131034127;
+			// aapt resource value: 0x7f04000f
+			public const int daidalos_confirm_select_file = 2130968591;
 			
-			// aapt resource value: 0x7f050011
-			public const int daidalos_confirm_select_folder = 2131034129;
+			// aapt resource value: 0x7f040011
+			public const int daidalos_confirm_select_folder = 2130968593;
 			
-			// aapt resource value: 0x7f050008
-			public const int daidalos_create_file = 2131034120;
+			// aapt resource value: 0x7f040008
+			public const int daidalos_create_file = 2130968584;
 			
-			// aapt resource value: 0x7f050009
-			public const int daidalos_create_folder = 2131034121;
+			// aapt resource value: 0x7f040009
+			public const int daidalos_create_folder = 2130968585;
 			
-			// aapt resource value: 0x7f05000b
-			public const int daidalos_enter_file_name = 2131034123;
+			// aapt resource value: 0x7f04000b
+			public const int daidalos_enter_file_name = 2130968587;
 			
-			// aapt resource value: 0x7f05000c
-			public const int daidalos_enter_folder_name = 2131034124;
+			// aapt resource value: 0x7f04000c
+			public const int daidalos_enter_folder_name = 2130968588;
 			
-			// aapt resource value: 0x7f050002
-			public const int daidalos_hello = 2131034114;
+			// aapt resource value: 0x7f040002
+			public const int daidalos_hello = 2130968578;
 			
-			// aapt resource value: 0x7f050007
-			public const int daidalos_new_file = 2131034119;
+			// aapt resource value: 0x7f040007
+			public const int daidalos_new_file = 2130968583;
 			
-			// aapt resource value: 0x7f05000e
-			public const int daidalos_no = 2131034126;
+			// aapt resource value: 0x7f04000e
+			public const int daidalos_no = 2130968590;
 			
-			// aapt resource value: 0x7f050006
-			public const int daidalos_ok = 2131034118;
+			// aapt resource value: 0x7f040006
+			public const int daidalos_ok = 2130968582;
 			
-			// aapt resource value: 0x7f050004
-			public const int daidalos_select = 2131034116;
+			// aapt resource value: 0x7f040004
+			public const int daidalos_select = 2130968580;
 			
-			// aapt resource value: 0x7f05000d
-			public const int daidalos_yes = 2131034125;
+			// aapt resource value: 0x7f04000d
+			public const int daidalos_yes = 2130968589;
 			
 			static String()
 			{

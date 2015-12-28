@@ -91,10 +91,24 @@ public class BorderDrawable : Drawable
 
 	public override void Draw(Canvas canvas)
 	{
-		canvas.DrawRect(new RectF(0, 0, leftWidth, canvas.Height), paint);
-		canvas.DrawRect(new RectF(0, 0, canvas.Width, topWidth), paint);
-		canvas.DrawRect(new RectF(canvas.Width - rightWidth, 0, canvas.Width, canvas.Height), paint);
-		canvas.DrawRect(new RectF(0, canvas.Height - bottomWidth, canvas.Width, canvas.Height), paint);
+		Bitmap drawCanvas_bitmap = null;
+		Canvas drawCanvas = canvas;
+		// if drawing to special canvas (i.e. not the internal same-size-as-view one)
+		//if (canvas.Width > Width || canvas.Height > Height)
+		if (canvas.Width != canvas.ClipBounds.Width() || canvas.Height != canvas.ClipBounds.Height())
+		{
+			drawCanvas_bitmap = Bitmap.CreateBitmap(canvas.ClipBounds.Width(), canvas.ClipBounds.Height(), Bitmap.Config.Argb8888);
+			drawCanvas = new Canvas(drawCanvas_bitmap);
+		}
+
+		drawCanvas.DrawRect(new RectF(0, 0, leftWidth, drawCanvas.Height), paint);
+		drawCanvas.DrawRect(new RectF(0, 0, drawCanvas.Width, topWidth), paint);
+		drawCanvas.DrawRect(new RectF(drawCanvas.Width - rightWidth, 0, drawCanvas.Width, drawCanvas.Height), paint);
+		drawCanvas.DrawRect(new RectF(0, drawCanvas.Height - bottomWidth, drawCanvas.Width, drawCanvas.Height), paint);
+
+		if (drawCanvas_bitmap != null)
+			//canvas.DrawBitmap(drawCanvas_bitmap, this.GetPositionFrom().x, this.GetPositionFrom().y, null);
+			canvas.DrawBitmap(drawCanvas_bitmap, 0, 0, null); // just draw at '0 0', since a matrix is apparently auto-applied for drawing at correct place on overall-canvas
 	}
 	
 	// required members

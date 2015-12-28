@@ -62,7 +62,8 @@ namespace Main
 		// session types
 		// ==========
 
-		public List<SessionType> sessionTypes = new List<SessionType> {new SessionType("Rest"), new SessionType("Work")};
+		public string untracked_graphExportText = "Untracked";
+        public List<SessionType> sessionTypes = new List<SessionType> {new SessionType("Rest"), new SessionType("Work")};
 		public string selectedSessionTypeName;
 
 		// others
@@ -79,6 +80,7 @@ namespace Main
 		public SessionType(string name) { this.name = name; }
 
 		public string name;
+		public string graphExportText;
 		public Color color = Color.Black;
 		public int setMasterAlarmVolume = -1;
 		public string alarmSoundFilePath;

@@ -14,8 +14,24 @@ namespace Main
 		public void AddShape(VShape shape) { shapes.Add(shape); }
 		protected override void OnDraw(Canvas canvas)
 		{
+			if (Width == 0 || Height == 0)
+				return;
+
+			Bitmap drawCanvas_bitmap = null;
+			Canvas drawCanvas = canvas;
+			// if drawing to special canvas (i.e. not the internal same-size-as-view one)
+			if (canvas.Width > Width || canvas.Height > Height)
+			{
+				drawCanvas_bitmap = Bitmap.CreateBitmap(Width, Height, Bitmap.Config.Argb8888);
+				drawCanvas = new Canvas(drawCanvas_bitmap);
+			}
+
 			foreach (VShape shape in shapes)
-				shape.Draw(canvas);
+				shape.Draw(drawCanvas);
+
+			if (drawCanvas_bitmap != null)
+				//canvas.DrawBitmap(drawCanvas_bitmap, this.GetPositionFrom().x, this.GetPositionFrom().y, null);
+				canvas.DrawBitmap(drawCanvas_bitmap, 0, 0, null); // just draw at '0 0', since a matrix is apparently auto-applied for drawing at correct place on overall-canvas
 		}
 	}
 	// probably make-so: ShapeDrawer is powerful enough for BorderDrawer to work just by sending different prop-values to it

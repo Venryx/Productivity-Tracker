@@ -229,6 +229,29 @@ namespace Main
 			// ==========
 
 			{
+				var row = AddRow_PercentRelativeLayout(list);
+				row.AddChild(new TextView(this) {Text = "Untracked - graph export text", TextSize = largeTextSize}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.AlignParentTop));
+				var valuePreview = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.AlignParentBottom));
+				valuePreview.Text = settings.untracked_graphExportText;
+				row.Click += delegate
+				{
+					var layout = new FrameLayout(this);
+					layout.SetPadding(30, 30, 30, 30);
+					var input = layout.AddChild(new EditText(this) {Text = settings.untracked_graphExportText});
+					input.SetSingleLine(true);
+					new AlertDialog.Builder(this).SetTitle("Untracked - graph export text")
+						.SetView(layout)
+						.SetPositiveButton("OK", (sender2, e2)=>
+						{
+							settings.untracked_graphExportText = input.Text;
+							valuePreview.Text = settings.untracked_graphExportText;
+						})
+						.SetNegativeButton("Cancel", (sender2, e2)=>{})
+						.Show();
+				};
+			}
+
+			{
 				var row = AddRow(list, V.WrapContent, addSeparator: false);
 				//row.AddChild(new TextView(this) {Text = "Session Types", TextSize = largeTextSize}, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, 55));
 
@@ -439,6 +462,30 @@ namespace Main
 						RefreshSelectedSessionTypeUI(settings, propsUI);
 					};
 					dialog.show();
+				};
+			}
+
+			{
+				//var row = AddRow(propsUI, vertical: false);
+				var row = AddRow_PercentRelativeLayout(propsUI);
+				row.AddChild(new TextView(this) {Text = "Graph export text", TextSize = largeTextSize }, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.AlignParentTop));
+				var valuePreview = row.AddChild(new TextView(this) {TextSize = smallTextSize}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.AlignParentBottom));
+				valuePreview.Text = sessionType.graphExportText;
+				row.Click += delegate
+				{
+					var layout = new FrameLayout(this);
+					layout.SetPadding(30, 30, 30, 30);
+					var input = layout.AddChild(new EditText(this) {Text = sessionType.graphExportText });
+					input.SetSingleLine(true);
+					new AlertDialog.Builder(this).SetTitle("Graph export text")
+						.SetView(layout)
+						.SetPositiveButton("OK", (sender2, e2)=>
+						{
+							sessionType.graphExportText = input.Text != "" ? input.Text : null;
+							valuePreview.Text = sessionType.graphExportText;
+						})
+						.SetNegativeButton("Cancel", (sender2, e2)=>{})
+						.Show();
 				};
 			}
 
@@ -707,15 +754,16 @@ namespace Main
 			var result = root.AddChild(new LinearLayout(this) {Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal}, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
 			//if (root.ChildCount > 1)
 			if (addSeparator)
-				//result.SetBackgroundResource(Resource.Drawable.Border_1_Bottom_LightGray);
-				/*var rect = new RectShape();
-				var shape = new ShapeDrawable(rect);
-				shape.Paint.Color = new Color(255, 255, 255, 128);
-				shape.Paint.SetStyle(Paint.Style.Stroke);
-				shape.Paint.StrokeWidth = 1;
-				result.Background = new InsetDrawable(shape, -1, -1, -1, 1);*/
 				result.Background = new BorderDrawable(new Color(255, 255, 255, 128), 0, 0, 0, 1);
-				//result.SetPadding(0, 0, 0, 5);
+				//result.SetPadding(0, 0, 0, 1);
+			result.SetPadding(15, 15, 15, 15); // must come after
+			return result;
+		}
+		PercentRelativeLayout AddRow_PercentRelativeLayout(LinearLayout root, int height = 110, bool addSeparator = true)
+		{
+			var result = root.AddChild(new PercentRelativeLayout(this), new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, height));
+			if (addSeparator)
+				result.Background = new BorderDrawable(new Color(255, 255, 255, 128), 0, 0, 0, 1);
 			result.SetPadding(15, 15, 15, 15); // must come after
 			return result;
 		}

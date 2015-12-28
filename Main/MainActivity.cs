@@ -168,7 +168,6 @@ namespace Main
 		{
 			main = this;
 			base.OnCreate(bundle);
-			//SetContentView(Resource.Layout.Main);
 			//var rootHolderGroup = (ViewGroup)Window.DecorView.RootView;
 			var rootHolder = FindViewById<FrameLayout>(Android.Resource.Id.Content);
 			//var root = (LinearLayout)rootHolder.GetChildAt(0);
@@ -178,20 +177,47 @@ namespace Main
 			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, 1));
 			{
 				graphRoot = left.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .93f));
-				/*var shape = new ShapeDrawable(new RectShape());
-				shape.Paint.Color = new Color(0, 0, 0, 255);
-				shape.Paint.SetStyle(Paint.Style.Stroke);
-				shape.Paint.StrokeWidth = 5;
-				graphRoot.Background = new InsetDrawable(shape, -5, -5, 5, 5); // top is pushed-out/outset, so bottom should be pulled-in/inset (so final vertical size is same, just offset, keeping the bottom-border on-screen)
-				graphRoot.Background = shape;*/
 				graphRoot.Background = new BorderDrawable(Color.Black, 0, 0, 5, 5);
 				graphRoot.SetPadding(0, 0, 5, 5);
+				{
+					graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+					{
+						rowsPanelScroller = graph_nonOverlayRoot.AddChild(new ScrollView(this), new LinearLayout.LayoutParams(V.MatchParent, 0, 1));
+						/*rowsPanelScroller.ViewTreeObserver.ScrollChanged += (sender, e)=>
+						{
+							if (rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
+							{
+								LoadDaysTillReachesXCount(days.Count + 1);
+								AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
+								//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
+							}
+						};*/
+						rowsPanelScroller.Touch += (sender, e)=>
+						{
+							if (e.Event.Action == MotionEventActions.Up && rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
+							{
+								LoadDaysTillReachesXCount(days.Count + 1);
+								AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
+								//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
+							}
+							e.Handled = false;
+						};
+
+						// ugh; need because a scroll-view can't contain a relative-layout directly, apparently (the relative-layout's rules don't all work)
+						//var rowsPanelContent = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+						//rowsPanel = rowsPanelContent.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent));
+						rowsPanel = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.WrapContent));
+						graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 30));
+					}
+					graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+				}
 
 				var timeOverPanelHolder = left.AddChild(new LinearLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .07f));
 				{
 					stopButton = timeOverPanelHolder.AddChild(new Button(this) {Text = "Stop"}, new LinearLayout.LayoutParams(0, V.MatchParent, .075f));
 					stopButton.Click += delegate { StopSession(); };
 					pauseButton = timeOverPanelHolder.AddChild(new Button(this) {Text = "Stop"}, new LinearLayout.LayoutParams(0, V.MatchParent, .075f));
+					pauseButton.SetPadding(0, 0, 0, 0);
 					pauseButton.Click += delegate
 					{
 						if (CurrentSession.paused)
@@ -234,66 +260,29 @@ namespace Main
 			//timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
 			//timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Left, ClipDrawableOrientation.Horizontal);
 
-			// productivity graph
+			// ui loading (i.e. after data is loaded from file)
 			// ==========
 
-			graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
-			{
-				rowsPanelScroller = graph_nonOverlayRoot.AddChild(new ScrollView(this), new LinearLayout.LayoutParams(V.MatchParent, 0, 1));
-				/*rowsPanelScroller.ViewTreeObserver.ScrollChanged += (sender, e)=>
-				{
-					if (rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
-					{
-						LoadDaysTillReachesXCount(days.Count + 1);
-						AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
-						//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
-					}
-				};*/
-				rowsPanelScroller.Touch += (sender, e)=>
-				{
-					if (e.Event.Action == MotionEventActions.Up && rowsPanelScroller.ScrollY == 0) // if scrolled to top of list, load another row
-					{
-						LoadDaysTillReachesXCount(days.Count + 1);
-						AddRowsToGraphTillReachesXCount(rowsPanel.ChildCount + 1);
-						//rowsPanelScroller.ScrollY += rowsPanel.GetChildren().Last().Height;
-					}
-					e.Handled = false;
-				};
+			GenerateGraphOverlay();
+			UpdateHourMarkers();
+			currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(80, 48));
+			//currentTimeMarker.SetPadding(-40, 0, 0, 0);
+			currentTimeMarker.SetImageResource(Resource.Drawable.UpArrow);
+			//UpdateCurrentTimerMarkerPosition();
+			currentTimeMarker.Post(UpdateCurrentTimerMarkerPosition);
 
-				// ugh; need because a scroll-view can't contain a relative-layout directly, apparently (the relative-layout's rules don't all work)
-				//var rowsPanelContent = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
-				//rowsPanel = rowsPanelContent.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent));
-				rowsPanel = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.WrapContent));
-				{
-					AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
-					//rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce);
-					onWindowGainInitialFocus += ()=>rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
-					/*rowsPanel.Post(()=>
-					{
-						AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
-						rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
-					});*/
-				}
-				graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 30));
-				{
-					//currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(V.WrapContent, V.WrapContent));
-					currentTimeMarker = graphBottomBar.AddChild(new ImageView(this), new PercentRelativeLayout.LayoutParams(80, 48));
-					//currentTimeMarker.SetPadding(-40, 0, 0, 0);
-					currentTimeMarker.SetImageResource(Resource.Drawable.UpArrow);
-					UpdateCurrentTimerMarkerPosition();
-					//V.WaitXSecondsThenRun(.1, ()=>RunOnUiThread(UpdateCurrentTimerMarkerPosition));
-
-					UpdateHourMarkers();
-				}
-			}
-			graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
+			AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+			//rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Height / mainData.settings.daysVisibleAtOnce);
+			onWindowGainInitialFocus += ()=>rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
+			/*rowsPanel.Post(()=>
 			{
-				GenerateGraphOverlay();
-			}
+				AddRowsToGraphTillReachesXCount(mainData.settings.daysVisibleAtOnce + 1);
+				rowsPanelScroller.VScrollTo(0, rowsPanelScroller.Bottom);
+			});*/
 
 			// general
 			// ==========
-			
+
 			UpdateKeepScreenOn();
 
 			var overlayHolder = rootHolder.AddChild(new FrameLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
@@ -1066,6 +1055,7 @@ namespace Main
 			};
 
 			menu.Add("Settings");
+			menu.Add("Export graph");
 			menu.Add("Block mouse input");
 			menu.Add("About");
 			return base.OnCreateOptionsMenu(menu);
@@ -1078,15 +1068,86 @@ namespace Main
 			//if (item.ItemId == Resource.Id.Settings)
 			if (item.TitleFormatted.ToString() == "Settings")
 				StartActivity(new Intent(this, typeof(SettingsActivity)));
+			else if (item.TitleFormatted.ToString() == "Export graph")
+			{
+				const int largeTextSize = 15;
+				const int smallTextSize = 12;
+
+				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
+				linear.SetPadding(30, 30, 30, 30);
+
+				CheckBox colorReferenceBar;
+				{
+					var row = linear.AddChild(new PercentRelativeLayout(this));
+					row.AddChild(new TextView(this) {Text = "Color reference bar", TextSize = largeTextSize}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.CenterVertical));
+					colorReferenceBar = row.AddChild(new CheckBox(this) {Clickable = false, Checked = true}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentRight).VAddRule(LayoutRules.CenterVertical));
+					row.Click += delegate { colorReferenceBar.Checked = !colorReferenceBar.Checked; };
+				}
+
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.SetTitle("Export graph");
+				//alert.SetMessage("\"Set the options below, then press export to save the graph to disk (and open for sharing).\"");
+				alert.SetMessage("Set the options below, then press export to save the graph to disk.");
+				alert.SetView(linear);
+				alert.SetPositiveButton("Export", (sender, e)=>
+				{
+					currentTimeMarker.Visibility = ViewStates.Gone;
+					var baseImage = graphRoot.TakeScreenshot();
+					currentTimeMarker.Visibility = ViewStates.Visible;
+					Bitmap finalImage = baseImage;
+
+					if (colorReferenceBar.Checked)
+					{
+						finalImage = Bitmap.CreateBitmap(baseImage.Width, baseImage.Height + 100, Bitmap.Config.Argb8888);
+						var canvas = new Canvas(finalImage);
+
+						canvas.DrawRect(0, 0, finalImage.Width, 100, new Paint().VAct(a=>a.Color = new Color(30, 30, 30, 255)));
+						var titlePaint = new Paint {TextSize = 35}.VAct(a=>a.Color = new Color(255, 255, 255, 255));
+						//titlePaint.SetTypeface(Typeface.Create(baseTypeface, TypefaceStyle.Bold));
+						//titlePaint.SetTypeface(Typeface.Create(titlePaint.Typeface, TypefaceStyle.Bold));
+						canvas.DrawText("Productivity Tracker", 30, 63, titlePaint);
+						//var titleWidth = titlePaint.MeasureText("Productivity Tracker");
+
+						var xPos = finalImage.Width - 30;
+						var sessionTypes = mainData.settings.sessionTypes.ToList();
+						sessionTypes.Insert(0, new SessionType("Untracked") {color = new Color(60, 60, 60, 255), graphExportText = mainData.settings.untracked_graphExportText});
+						foreach (SessionType sessionType in sessionTypes.OrderByDescending(a=>mainData.settings.sessionTypes.IndexOf(a))) // reverse order, since coming from right edge
+						{
+							var sessionTypeTextPaint = new Paint {TextSize = 20}.VAct(a=>a.Color = new Color(255, 255, 255, 255));
+							xPos -= (int)sessionTypeTextPaint.MeasureText(sessionType.graphExportText ?? sessionType.name);
+							canvas.DrawText(sessionType.graphExportText ?? sessionType.name, xPos, 58, sessionTypeTextPaint);
+							xPos -= 10; // text left-margin
+							xPos -= 80; // box
+							canvas.DrawRect(xPos, 20, xPos + 80, 80, new Paint().VAct(a=>a.Color = sessionType.color));
+							xPos -= 30; // box left-margin
+						}
+
+						// add graph background, since TakeScreenshot() method doesn't do that automatically
+						canvas.DrawRect(0, 100, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = new Color(60, 60, 60, 255)));
+						canvas.DrawBitmap(baseImage, 0, 100, null);
+					}
+					else
+					{
+						// add graph background, since TakeScreenshot() method doesn't do that automatically
+						finalImage = Bitmap.CreateBitmap(baseImage.Width, baseImage.Height, Bitmap.Config.Argb8888);
+						var canvas = new Canvas(finalImage);
+						canvas.DrawRect(0, 0, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = new Color(60, 60, 60, 255)));
+						canvas.DrawBitmap(baseImage, 0, 0, null);
+					}
+
+					var file = RootFolder.GetFolder("Graph Exports").GetFile(DateTime.UtcNow.ToString_U() + ".png").CreateFolders();
+					var stream = file.Create();
+					finalImage.Compress(Bitmap.CompressFormat.Png, 100, stream);
+					stream.Close();
+				});
+				alert.SetNegativeButton("Cancel", (sender, e)=>{});
+				alert.Show();
+			}
 			else if (item.TitleFormatted.ToString() == "Block mouse input")
 				mouseInputBlocker.Visibility = ViewStates.Visible;
 			//else if (item.ItemId == Resource.Id.About)
 			else if (item.TitleFormatted.ToString() == "About")
 			{
-				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-				alert.SetTitle("About Productivity Tracker");
-				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
-
 				LinearLayout linear = new LinearLayout(this) {Orientation = Orientation.Vertical};
 				linear.SetPadding(30, 30, 30, 30);
 				var text = linear.AddChild(new TextView(this));
@@ -1096,9 +1157,12 @@ Author: Stephen Wicklund (Venryx)
 This is an open source project, under the GPLv2 license.
 The source code is available to view and modify.
 Link: http://github.com/Venryx/Productivity-Tracker".Trim();
-				alert.SetView(linear);
 
-				alert.SetPositiveButton("Ok", (sender, e)=> { });
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.SetTitle("About Productivity Tracker");
+				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
+				alert.SetView(linear);
+				alert.SetPositiveButton("Ok", (sender, e)=>{});
 				alert.Show();
 			}
 			return base.OnOptionsItemSelected(item);
@@ -1222,7 +1286,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 			text.Text = recentKeys_strings.JoinUsing("\n");
 			alert.SetView(linear);
 
-			alert.SetPositiveButton("Ok", (sender, e) => { });
+			alert.SetPositiveButton("Ok", (sender, e)=>{});
 			alert.Show();
 		}
 	}

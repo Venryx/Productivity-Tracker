@@ -28,6 +28,23 @@ public static class ClassExtensions
 	// View
 	public static int lastViewAutoID = 1000;
 	public static T SetID<T>(this T s, int id = -1) where T : View { s.Id = id != -1 ? id : ++lastViewAutoID; return s; }
+	public static Bitmap TakeScreenshot(this View s)
+	{
+		/*var bitmap = Bitmap.CreateBitmap(s.Width, s.Height, Bitmap.Config.Argb8888);
+		var canvas = new Canvas(bitmap);
+		s.Draw(canvas);
+		return bitmap;*/
+
+		s.DrawingCacheEnabled = true;
+        var result = Bitmap.CreateBitmap(s.DrawingCache);
+        s.DrawingCacheEnabled = false;
+		return result;
+
+		/*s.RootView.DrawingCacheEnabled = true;
+		var result = Bitmap.CreateBitmap(s.RootView.DrawingCache);
+		s.RootView.DrawingCacheEnabled = false;
+		return result;*/
+	}
 
 	// ViewGroup
 	public static T AddChild<T>(this ViewGroup s, T view, ViewGroup.LayoutParams layout = null, int index = -1) where T : View
