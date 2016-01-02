@@ -154,10 +154,14 @@ namespace Main
 		public Timer dayUpdateTimer;
 		static void LogErrorMessageToFile(string message)
 		{
-			var file = RootFolder.GetFolder("Errors").GetFile(DateTime.UtcNow.ToString_U() + ".txt").CreateFolders();
+			/*var file = RootFolder.GetFolder("Errors").GetFile(DateTime.UtcNow.ToString_U()).CreateFolders();
+			file = file.FullName.UntilMatchesX_Increment(a=>!new FileInfo(a + ".txt").Exists, "_0") + ".txt";*/
+			/*var file = RootFolder.GetFolder("Errors").GetFile(DateTime.UtcNow.ToString_U()).CreateFolders();
 			while (file.Exists)
-				file = file.Directory.GetFile(file.NameWithoutExtension() + "_2.txt");
-			File.WriteAllText(file.FullName, message);
+				file = file.Directory.GetFile(file.NameWithoutExtension() + "_2.txt");*/
+			var fileName = RootFolder.GetFolder("Errors").GetFile(DateTime.UtcNow.ToString_U()).CreateFolders().FullName;
+			fileName = fileName.UntilMatchesX_Increment(a=>!new FileInfo(a + ".txt").Exists, "_0") + ".txt";
+			File.WriteAllText(fileName, message);
 		}
 		class JavaExceptionCatcher : Java.Lang.Object, Thread.IUncaughtExceptionHandler
 		{
@@ -767,7 +771,8 @@ namespace Main
 			// actors
 			Session_UpdateOutflow();
 			UpdateRowBox(0);
-            sessionUpdateTimer.Enabled = false;
+			if (sessionUpdateTimer != null) // app may have been reloaded, while in a paused state (thus not triggering ResumeSession method's timer-init code)
+				sessionUpdateTimer.Enabled = false;
 			((AlarmManager)GetSystemService(AlarmService)).Cancel(GetPendingIntent_LaunchMain());
 		}
 
