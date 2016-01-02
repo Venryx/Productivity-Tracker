@@ -528,9 +528,11 @@ namespace Main
 				foreach (Session session in sessions)
 				{
 					//var subsessions = session.subsessions.Where(a=>a.timeStarted < justAfterLastColumnUtcHourTime && (a.timeStopped == null || a.timeStopped >= firstColumnUtcHourTime)).ToList(); // if subsession partially within row's timespan
-					var subsessions = session.subsessions.Where(a=>a.timeStarted <= justAfterLastColumnUtcHourTime && (a.timeStopped == null || a.timeStopped >= firstColumnUtcHourTime)).ToList(); // if subsession partially within row's timespan
+					var subsessions = session.subsessions.ToList();
 					if (session.paused) // if session paused, add fake subsession after, so pause gap-segment shows up
 						subsessions.Add(session.timeStopped.HasValue ? new Subsession(session.timeStopped.Value) {timeStopped = session.timeStopped} : new Subsession(DateTime.UtcNow));
+					// filter subsessions to only be those which are at-least-partially within row's timespan
+					subsessions = subsessions.Where(a=>a.timeStarted <= justAfterLastColumnUtcHourTime && (a.timeStopped == null || a.timeStopped >= firstColumnUtcHourTime)).ToList();
 					foreach (Subsession subsession in subsessions)
 					{
 						// gap
@@ -582,6 +584,9 @@ namespace Main
 						//highSegmentTime = new TimeSpan(0, 0, 10, 0); // for testing
 						//if (highSegmentTime.TotalMinutes >= 1)
 						{
+							if (highSegmentTime.TotalMinutes < 0)
+								V.Nothing();
+
 							var highSegment = new ImageView(this).SetID();
 							highSegment.Background = Drawables.CreateFill(session.sessionType.color);
 							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent);
