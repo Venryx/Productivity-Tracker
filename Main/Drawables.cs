@@ -97,6 +97,8 @@ public class BorderDrawable : Drawable
 		//if (canvas.Width > Width || canvas.Height > Height)
 		if (canvas.Width != canvas.ClipBounds.Width() || canvas.Height != canvas.ClipBounds.Height())
 		{
+			if (canvas.ClipBounds.Width() == 0 || canvas.ClipBounds.Height() == 0) // (happens when the "Snap to nearest row" option is enabled, for the graph exporter; not sure why)
+				return;
 			drawCanvas_bitmap = Bitmap.CreateBitmap(canvas.ClipBounds.Width(), canvas.ClipBounds.Height(), Bitmap.Config.Argb8888);
 			drawCanvas = new Canvas(drawCanvas_bitmap);
 		}

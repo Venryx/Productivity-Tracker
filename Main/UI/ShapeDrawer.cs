@@ -19,8 +19,8 @@ namespace Main
 
 			Bitmap drawCanvas_bitmap = null;
 			Canvas drawCanvas = canvas;
-			// if drawing to special canvas (i.e. not the internal same-size-as-view one)
-			if (canvas.Width > Width || canvas.Height > Height)
+			// if drawing to shared/special canvas (i.e. not the internal same-size-as-view one)
+            if (canvas.Width > Width || canvas.Height > Height)
 			{
 				drawCanvas_bitmap = Bitmap.CreateBitmap(Width, Height, Bitmap.Config.Argb8888);
 				drawCanvas = new Canvas(drawCanvas_bitmap);
@@ -115,9 +115,8 @@ public class VRectangle : VShape
 	public override void Draw(Canvas canvas)
 	{
 		//canvas.DrawRect((float)(canvas.Width * left), (float)(canvas.Height * top), (float)(canvas.Width * right), (float)(canvas.Height * bottom), paint);
-		//canvas.ClipRect(ClipRect?.Times(canvas.Width, canvas.Height).Extend(0, 0, 0, -1) ?? canvas.GetRect(), Region.Op.Replace);
-		canvas.ClipRect(ClipRect?.Times(canvas.Width, canvas.Height) ?? canvas.GetRect(), Region.Op.Replace);
-		canvas.DrawRect(rect.Times(canvas.Width, canvas.Height), paint);
+		canvas.ClipRect(ClipRect?.Times(canvas.Width, canvas.Height).RoundToInts() ?? canvas.GetRect(), Region.Op.Replace);
+		canvas.DrawRect(rect.Times(canvas.Width, canvas.Height).RoundToInts(), paint);
 	}
 }
 public class VOval : VShape
@@ -127,7 +126,7 @@ public class VOval : VShape
 	public override void Draw(Canvas canvas)
 	{
 		//canvas.DrawOval((float)(canvas.Width * left), (float)(canvas.Height * top), (float)(canvas.Width * right), (float)(canvas.Height * bottom), paint);
-		canvas.ClipRect(ClipRect?.Times(canvas.Width, canvas.Height) ?? canvas.GetRect(), Region.Op.Replace);
-		canvas.DrawOval(rect.Times(canvas.Width, canvas.Height), paint);
+		canvas.ClipRect(ClipRect?.Times(canvas.Width, canvas.Height).RoundToInts() ?? canvas.GetRect(), Region.Op.Replace);
+		canvas.DrawOval(rect.Times(canvas.Width, canvas.Height).RoundToInts(), paint);
 	}
 }

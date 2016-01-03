@@ -371,6 +371,7 @@ public static class ClassExtensions
 	// RectF
 	public static RectF Times(this RectF s, float width, float height) { return new RectF(s.Left * width, s.Top * height, s.Right * width, s.Bottom * height); }
 	public static RectF Extend(this RectF s, float left, float top, float right, float bottom) { return new RectF(s.Left + left, s.Top + top, s.Right + right, s.Bottom + bottom); }
+	public static RectF RoundToInts(this RectF s) { return new RectF((float)Math.Round(s.Left), (float)Math.Round(s.Top), (float)Math.Round(s.Right), (float)Math.Round(s.Bottom)); }
 
 	// MediaPlayer
 	// minor: maybe make-so: it's known for sure what the MediaPlayer treats passed values as!

@@ -39,12 +39,22 @@ using Stream = Android.Media.Stream;
 
 namespace Main
 {
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Holo")]
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Holo.Light")]
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material")]
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material.Light")]
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material.Light.DarkActionBar")]
 	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
 	public class MainActivity : Activity
 	{
 		public static MainActivity main;
 		static MainActivity() { VDFExtensions.Init(); }
 		const int ActivityID = 100;
+
+		//static readonly Color darkBackground = new Color(60, 60, 60, 255); // for header
+		//static readonly Color lightBackground = new Color(30, 30, 30, 255); // for rows-panel (and such)
+		Color darkBackground; // for header; corresponds to Android.Resource.Attribute.ColorPrimary
+		Color lightBackground; // for rows-panel (and such); corresponds to Android.Resource.Attribute.WindowBackground
 
 		static DirectoryInfo RootFolder=>new DirectoryInfo("/storage/sdcard0/Productivity Tracker/");
 		public MainData mainData = new MainData();
@@ -178,11 +188,19 @@ namespace Main
 			var root = new LinearLayout(this);
 			SetContentView(root);
 
+			//darkBackground = Resources.GetColor(Android.Resource.Color.BackgroundDark);
+			//lightBackground = Resources.GetColor(Android.Resource.Color.BackgroundLight);
+			/*var attr = new TypedValue();
+			Theme.ResolveAttribute(Android.Resource.Attribute.ColorPrimary, attr, true);
+			darkBackground = new Color(attr.Data);*/
+			darkBackground = Resources.GetColor(Theme.ObtainStyledAttributes(Android.Resource.Style.ThemeMaterial, new[] {Android.Resource.Attribute.ColorPrimary}).GetResourceId(0, 0));
+			lightBackground = Resources.GetColor(Theme.ObtainStyledAttributes(Android.Resource.Style.ThemeMaterial, new[] {Android.Resource.Attribute.WindowBackground}).GetResourceId(0, 0));
+
 			var left = root.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new LinearLayout.LayoutParams(0, V.MatchParent, 1));
 			{
 				graphRoot = left.AddChild(new FrameLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 0, .93f));
-				graphRoot.Background = new BorderDrawable(Color.Black, 0, 0, 5, 5);
 				graphRoot.SetPadding(0, 0, 5, 5);
+				graphRoot.Background = new BorderDrawable(Color.Black, 0, 0, 5, 5);
 				{
 					graph_nonOverlayRoot = graphRoot.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 					{
@@ -211,7 +229,10 @@ namespace Main
 						//var rowsPanelContent = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 						//rowsPanel = rowsPanelContent.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, V.WrapContent));
 						rowsPanel = rowsPanelScroller.AddChild(new LinearLayout(this) {Orientation = Orientation.Vertical}, new FrameLayout.LayoutParams(V.MatchParent, V.WrapContent));
+
 						graphBottomBar = graph_nonOverlayRoot.AddChild(new PercentRelativeLayout(this), new LinearLayout.LayoutParams(V.MatchParent, 30));
+						graphBottomBar.Background = Drawables.CreateColor(lightBackground); // background needs to be set, so that see-through to stuff in the rows-panel doesn't happen (which shouldn't happen, but does...)
+						graph_nonOverlayRoot.Post(RefreshSizeOfGraphBottomBar);
 					}
 					graph_overlayRoot = graphRoot.AddChild(new PercentRelativeLayout(this), new FrameLayout.LayoutParams(V.MatchParent, V.MatchParent));
 				}
@@ -420,6 +441,17 @@ namespace Main
 				layoutParams.PercentLayoutInfo.leftMarginPercent = (float)(i / 24d);
 				hourMarker.LayoutParameters = layoutParams;
 			}
+		}
+		public void RefreshSizeOfGraphBottomBar()
+		{
+			var maxSpaceTakenByRows = graph_nonOverlayRoot.Height - 30;
+			var rowHeight = maxSpaceTakenByRows / mainData.settings.daysVisibleAtOnce;
+			var spaceForRows = rowHeight * mainData.settings.daysVisibleAtOnce;
+            var spaceNotTakenByRows = graph_nonOverlayRoot.Height - spaceForRows;
+			graphBottomBar.LayoutParameters = (graphBottomBar.LayoutParameters as LinearLayout.LayoutParams).VAct(a=>a.Height = spaceNotTakenByRows);
+
+			// apparently layout-params for rows-panel-scroller needs to be set again, for height to be updated (even though should auto-update by using height-0 and weight-1)
+			//rowsPanelScroller.LayoutParameters = (rowsPanelScroller.LayoutParameters as LinearLayout.LayoutParams).VAct(a=>a.Height = spaceForRows).VAct(a=>a.Weight = 0);
 		}
 		public void UpdateGraphVisibleRows()
 		{
@@ -1094,6 +1126,14 @@ namespace Main
 					row.Click += delegate { colorReferenceBar.Checked = !colorReferenceBar.Checked; };
 				}
 
+				CheckBox snapToNearestRow;
+				{
+					var row = linear.AddChild(new PercentRelativeLayout(this));
+					row.AddChild(new TextView(this) {Text = "Snap to nearest row", TextSize = largeTextSize}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentLeft).VAddRule(LayoutRules.CenterVertical));
+					snapToNearestRow = row.AddChild(new CheckBox(this) {Clickable = false, Checked = true}, new PercentRelativeLayout.LayoutParams().VAddRule(LayoutRules.AlignParentRight).VAddRule(LayoutRules.CenterVertical));
+					row.Click += delegate { snapToNearestRow.Checked = !snapToNearestRow.Checked; };
+				}
+
 				AlertDialog.Builder alert = new AlertDialog.Builder(this);
 				alert.SetTitle("Export graph");
 				//alert.SetMessage("\"Set the options below, then press export to save the graph to disk (and open for sharing).\"");
@@ -1101,17 +1141,51 @@ namespace Main
 				alert.SetView(linear);
 				alert.SetPositiveButton("Export", (sender, e)=>
 				{
+					// take screenshot for base-image
+					// ==========
+
+					/*var graphRoot_oldPadding = new[] {graphRoot.PaddingLeft, graphRoot.PaddingTop, graphRoot.PaddingRight, graphRoot.PaddingBottom};
+					graphRoot.SetPadding(0, 0, 0, 0);*/
+					/*var graphGraph_oldBackground = graphRoot.Background;
+					graphRoot.Background = null;*/
 					currentTimeMarker.Visibility = ViewStates.Gone;
+					if (snapToNearestRow.Checked)
+					{
+						View closestRow_view = null;
+						var closestRow_distance = int.MaxValue;
+						for (var i = 0; i < rowsPanel.ChildCount; i++)
+						{
+							var view = rowsPanel.GetChildAt(i);
+                            var distance = Math.Abs(view.Top - rowsPanelScroller.ScrollY);
+							if (distance < closestRow_distance)
+							{
+								closestRow_view = view;
+								closestRow_distance = distance;
+							}
+						}
+						rowsPanelScroller.ScrollY = closestRow_view.Top;
+						rowsPanelScroller.VerticalScrollBarEnabled = false;
+					}
+
 					var baseImage = graphRoot.TakeScreenshot();
+
+					//graphRoot.SetPadding(graphRoot_oldPadding[0], graphRoot_oldPadding[1], graphRoot_oldPadding[2], graphRoot_oldPadding[3]);
+					//graphRoot.Background = graphGraph_oldBackground;
 					currentTimeMarker.Visibility = ViewStates.Visible;
+					//rowsPanelScroller.ScrollY = rowsPanelScroller_oldScrollY;
+					rowsPanelScroller.VerticalScrollBarEnabled = true;
 					Bitmap finalImage = baseImage;
 
+					// add color-reference bar (if enabled), and finalize
+					// ==========
+
+					const int graphRootPadding = 5; // workaround for that setting padding to 0,0,0,0 (as seen above) doesn't work instantly, apparently
 					if (colorReferenceBar.Checked)
 					{
-						finalImage = Bitmap.CreateBitmap(baseImage.Width, baseImage.Height + 100, Bitmap.Config.Argb8888);
+						finalImage = Bitmap.CreateBitmap(baseImage.Width - graphRootPadding, (baseImage.Height + 100) - graphRootPadding, Bitmap.Config.Argb8888);
 						var canvas = new Canvas(finalImage);
 
-						canvas.DrawRect(0, 0, finalImage.Width, 100, new Paint().VAct(a=>a.Color = new Color(30, 30, 30, 255)));
+						canvas.DrawRect(0, 0, finalImage.Width, 100, new Paint().VAct(a=>a.Color = darkBackground));
 						var titlePaint = new Paint {TextSize = 35}.VAct(a=>a.Color = new Color(255, 255, 255, 255));
 						//titlePaint.SetTypeface(Typeface.Create(baseTypeface, TypefaceStyle.Bold));
 						//titlePaint.SetTypeface(Typeface.Create(titlePaint.Typeface, TypefaceStyle.Bold));
@@ -1120,7 +1194,7 @@ namespace Main
 
 						var xPos = finalImage.Width - 30;
 						var sessionTypes = mainData.settings.sessionTypes.ToList();
-						sessionTypes.Insert(0, new SessionType("Untracked") {color = new Color(60, 60, 60, 255), graphExportText = mainData.settings.untracked_graphExportText});
+						sessionTypes.Insert(0, new SessionType("Untracked") {color = lightBackground, graphExportText = mainData.settings.untracked_graphExportText});
 						foreach (SessionType sessionType in sessionTypes.OrderByDescending(a=>mainData.settings.sessionTypes.IndexOf(a))) // reverse order, since coming from right edge
 						{
 							var sessionTypeTextPaint = new Paint {TextSize = 20}.VAct(a=>a.Color = new Color(255, 255, 255, 255));
@@ -1133,7 +1207,7 @@ namespace Main
 						}
 
 						// add graph background, since TakeScreenshot() method doesn't do that automatically
-						canvas.DrawRect(0, 100, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = new Color(60, 60, 60, 255)));
+						canvas.DrawRect(0, 100, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = lightBackground));
 						canvas.DrawBitmap(baseImage, 0, 100, null);
 					}
 					else
@@ -1141,9 +1215,12 @@ namespace Main
 						// add graph background, since TakeScreenshot() method doesn't do that automatically
 						finalImage = Bitmap.CreateBitmap(baseImage.Width, baseImage.Height, Bitmap.Config.Argb8888);
 						var canvas = new Canvas(finalImage);
-						canvas.DrawRect(0, 0, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = new Color(60, 60, 60, 255)));
+						canvas.DrawRect(0, 0, finalImage.Width, finalImage.Height, new Paint().VAct(a=>a.Color = lightBackground));
 						canvas.DrawBitmap(baseImage, 0, 0, null);
 					}
+
+					// save to file
+					// ==========
 
 					var file = RootFolder.GetFolder("Graph Exports").GetFile(DateTime.UtcNow.ToString_U() + ".png").CreateFolders();
 					var stream = file.Create();

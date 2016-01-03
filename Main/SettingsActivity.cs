@@ -101,6 +101,7 @@ namespace Main
 							settings.daysVisibleAtOnce = seek.Progress;
 							label.Text = settings.daysVisibleAtOnce.ToString();
 							MainActivity.main.UpdateGraphVisibleRows();
+							MainActivity.main.RefreshSizeOfGraphBottomBar();
 						})
 						.SetNegativeButton("Cancel", (sender, e)=>{})
 						.Show();
