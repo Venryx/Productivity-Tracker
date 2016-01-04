@@ -63,7 +63,11 @@ namespace Main
 		// ==========
 
 		public string untracked_graphExportText = "Untracked";
-        public List<SessionType> sessionTypes = new List<SessionType> {new SessionType("Rest"), new SessionType("Work")};
+		public List<SessionType> sessionTypes = new List<SessionType>
+		{
+			new SessionType("Rest") {color = new Color(0, 0, 255)},
+			new SessionType("Work") {color = new Color(0, 255, 0)}
+		};
 		public string selectedSessionTypeName;
 
 		// others
@@ -94,11 +98,12 @@ namespace Main
 		None,
 		StartSession,
 		PauseSession,
+		ResumeSession,
 		ToggleSessionPaused,
 		StopSession,
-		TurnScreenOff,
+		/*TurnScreenOff,
 		TurnScreenOn,
-		ToggleScreenOn
+		ToggleScreenOn*/
 	}
 	[VDFType(propIncludeRegexL1: "")] public class Hotkey
 	{

@@ -44,7 +44,8 @@ namespace Main
 	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material")]
 	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material.Light")]
 	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon", Theme = "@android:style/Theme.Material.Light.DarkActionBar")]
-	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
+	//[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/icon")]
+	[Activity(Label = "Productivity Tracker", MainLauncher = true, Icon = "@drawable/Logo_72")]
 	public class MainActivity : Activity
 	{
 		public static MainActivity main;
@@ -620,9 +621,6 @@ namespace Main
 						//highSegmentTime = new TimeSpan(0, 0, 10, 0); // for testing
 						//if (highSegmentTime.TotalMinutes >= 1)
 						{
-							if (highSegmentTime.TotalMinutes < 0)
-								V.Nothing();
-
 							var highSegment = new ImageView(this).SetID();
 							highSegment.Background = Drawables.CreateFill(session.sessionType.color);
 							var highSegmentLayout = new PercentRelativeLayout.LayoutParams(V.MatchParent, V.MatchParent);
@@ -739,8 +737,11 @@ namespace Main
 		}
 		void PauseSession(bool endSubsession = true)
 		{
+			if (CurrentSession == null)
+				return;
+
 			// data
-            CurrentSession.paused = true;
+			CurrentSession.paused = true;
 			timeLeftBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Bottom, ClipDrawableOrientation.Vertical);
 			timeOverBar.Background = new ClipDrawable(new ColorDrawable(CurrentSession.sessionType.color), GravityFlags.Left, ClipDrawableOrientation.Horizontal);
 			Session_ProcessTimeUpToNow();
@@ -755,6 +756,9 @@ namespace Main
 		}
 		void ResumeSession(bool startSubsession = true)
 		{
+			if (CurrentSession == null)
+				return;
+
 			// data
 			CurrentSession.processedTimeExtent = DateTime.UtcNow;
 			CurrentSession.paused = false;
@@ -959,7 +963,7 @@ namespace Main
 		}
 		Notification.Builder notificationBuilder;
 
-		bool IsScreenOn()
+		/*bool IsScreenOn()
 		{
 			var dm = (DisplayManager)GetSystemService(DisplayService);
 			foreach (Display display in dm.GetDisplays())
@@ -984,7 +988,7 @@ namespace Main
 
 			/*var policyManager = (DevicePolicyManager)GetSystemService(DevicePolicyService);
 			policyManager.LockNow();*#/
-		}*/
+		}*#/
 		public class QuickBroadcastReceiver : BroadcastReceiver
 		{
 			public QuickBroadcastReceiver(Action onReceive) { this.onReceive = onReceive; }
@@ -1019,7 +1023,7 @@ namespace Main
 			});
 			RegisterReceiver(receiver, new IntentFilter(Intent.ActionScreenOff));
 			turningScreenOff = true;
-		}
+		}*/
 		PowerManager.WakeLock waker;
 		void TurnScreenOn()
 		{
@@ -1059,7 +1063,7 @@ namespace Main
 					notificationBuilder.SetContentTitle("Productivity tracker");
 					//notificationBuilder.SetContentText("Timer running. Time left: " + timeLeftText);
 					//notificationBuilder.SetSubText("[Extra info]");
-					notificationBuilder.SetSmallIcon(Resource.Drawable.Icon);
+					notificationBuilder.SetSmallIcon(Resource.Drawable.Logo_72);
 					notificationBuilder.SetContentIntent(launchMain_pending);
 					notificationBuilder.SetOngoing(true);
 				}
@@ -1239,15 +1243,26 @@ namespace Main
 				linear.SetPadding(30, 30, 30, 30);
 				var text = linear.AddChild(new TextView(this));
 				text.Text = @"
-Author: Stephen Wicklund (Venryx)
+An app I made to help me:
+* Keep track of how well I'm meeting my productivity goals, in a visual way.
+* Spot patterns in my work-and-rest flow where I could make improvements.
+* Motivate me to work harder by means of an easy graph export function. (I share mine weekly)
 
-This is an open source project, under the GPLv2 license.
-The source code is available to view and modify.
-Link: http://github.com/Venryx/Productivity-Tracker".Trim();
+Other features:
+* Easily begin timers for new 'sessions' from the main view, and see them show up on both the timer bar and productivity graph.
+* Lock the timer-bar for an open-ended session, pause it if you're leaving for a bit, or stop it to end it completely.
+* Configure the name, color, alarm sound, fade-in length, etc. for each session type separately.
+* Link a remote device (e.g. bluetooth clicker) up to various actions by way of the hotkey system.
+
+Note: App is designed for use on tablets, and in landscape mode. Till better support is added, it's recommended not to use it on phones or in portrait mode. (it should still work, but will look really bad/stretched)
+
+Author: Stephen Wicklund (Venryx)
+Language: C# (Xamarin framework)
+Code: Open source (GPLv2) at: http://github.com/Venryx/Productivity-Tracker".Trim();
 
 				AlertDialog.Builder alert = new AlertDialog.Builder(this);
 				alert.SetTitle("About Productivity Tracker");
-				alert.SetMessage("\"Improve productivity using a timer-assisted work-and-rest cycle, and track it on your lifetime productivity graph.\"");
+				alert.SetMessage("\"Timer-assisted work-and-rest cycle, tracked on a lifetime productivity graph.\"");
 				alert.SetView(linear);
 				alert.SetPositiveButton("Ok", (sender, e)=>{});
 				alert.Show();
@@ -1287,6 +1302,8 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 						StartSession(hotkey.action_startSession_type, hotkey.action_startSession_length);
 					else if (hotkey.action == HotkeyAction.PauseSession)
 						PauseSession();
+					else if (hotkey.action == HotkeyAction.ResumeSession)
+						ResumeSession();
 					else if (hotkey.action == HotkeyAction.ToggleSessionPaused)
 					{
 						if (CurrentSession != null)
@@ -1297,7 +1314,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 					}
 					else if (hotkey.action == HotkeyAction.StopSession)
 						StopSession();
-					else if (hotkey.action == HotkeyAction.TurnScreenOff)
+					/*else if (hotkey.action == HotkeyAction.TurnScreenOff)
 						TurnScreenOff();
 					else if (hotkey.action == HotkeyAction.TurnScreenOn)
 						TurnScreenOn();
@@ -1307,7 +1324,7 @@ Link: http://github.com/Venryx/Productivity-Tracker".Trim();
 							TurnScreenOff();
 						else
 							TurnScreenOn();
-					}
+					}*/
 				}
 			//return usedKey;
 		}
