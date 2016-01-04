@@ -13,5 +13,7 @@ Other features:
 Note: App is designed for use on tablets, and in landscape mode. Till better support is added, it's recommended not to use it on phones or in portrait mode. (it should still work, but will look really bad/stretched)
 
 Author: Stephen Wicklund (Venryx)
+
 Language: C# (Xamarin framework)
-Code: Open source (GPLv2) at: http://github.com/Venryx/Productivity-Tracker
+
+Code: Open source (GPLv2)
